@@ -1,0 +1,60 @@
+﻿00:00 +0: loading C:/Users/Admin/Desktop/EngineeringWerk/test/widget/design_review_dashboard_test.dart
+00:00 +0: Dashboard shows empty state when no reviews
+00:00 +1: Dashboard displays active reviews
+00:00 +2: Dialog should appear and allow creating a review
+ΓòÉΓòÉΓòí EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK Γò₧ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+The following StateError was thrown running a test:
+Bad state: A test tried to use `any` or `captureAny` on a parameter of type `DesignReview`, but
+registerFallbackValue was not previously called to register a fallback value for `DesignReview`.
+
+To fix, do:
+
+```
+void main() {
+  setUpAll(() {
+    registerFallbackValue(/* create a dummy instance of `DesignReview` */);
+  });
+}
+```
+
+This instance of `DesignReview` will only be passed around, but never be interacted with.
+Therefore, if `DesignReview` is a function, it does not have to return a valid object and
+could throw unconditionally.
+If you cannot easily create an instance of `DesignReview`, consider defining a `Fake`:
+
+```
+class MyTypeFake extends Fake implements MyType {}
+
+void main() {
+  setUpAll(() {
+    registerFallbackValue(MyTypeFake());
+  });
+}
+```
+
+Fallbacks are required because mocktail has to know of a valid `DesignReview` to prevent
+TypeErrors from being thrown in Dart's sound null safe mode, while still
+providing a convenient syntax.
+
+When the exception was thrown, this was the stack:
+#0      _getFallbackValue (package:mocktail/src/_register_matcher.dart:49:5)
+#1      _registerMatcher (package:mocktail/src/_register_matcher.dart:160:25)
+#2      any (package:mocktail/src/_register_matcher.dart:104:10)
+#3      main.<anonymous closure>.<anonymous closure> (file:///C:/Users/Admin/Desktop/EngineeringWerk/test/widget/design_review_dashboard_test.dart:64:36)
+#4      when.<anonymous closure> (package:mocktail/src/mocktail.dart:211:9)
+#5      main.<anonymous closure> (file:///C:/Users/Admin/Desktop/EngineeringWerk/test/widget/design_review_dashboard_test.dart:64:9)
+#6      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:29)
+<asynchronous suspension>
+#7      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1682:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided one frame from package:stack_trace)
+
+The test description was:
+  Dialog should appear and allow creating a review
+ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+00:00 +2 -1: Dialog should appear and allow creating a review [E]
+  Test failed. See exception logs above.
+  The test description was: Dialog should appear and allow creating a review
+  
+00:01 +2 -1: Some tests failed.

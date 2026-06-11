@@ -1,0 +1,132 @@
+00:00 +0: loading C:/Users/Admin/Desktop/EngineeringWerk/test/widget/dashboard_test.dart
+flutter : test/widget/dashboa
+rd_test.dart:9:53: Error: 
+Type 'ProjectRepository' not 
+found.
+At line:1 char:1
++ flutter test test/widget/da
+shboard_test.dart > 
+test_output.txt 2>&1
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~
+    + CategoryInfo           
+   : NotSpecified: (test/wi  
+  dget/das...ory' not foun   
+ d.:String) [], RemoteExc    
+eption
+    + FullyQualifiedErrorId  
+   : NativeCommandError
+ 
+class MockProjectRepository 
+extends Mock implements 
+ProjectRepository {}
+                             
+                       
+^^^^^^^^^^^^^^^^^
+test/widget/dashboard_test.da
+rt:19:31: Error: The method 
+'watchProjects' isn't 
+defined for the type 
+'MockProjectRepository'.
+ - 'MockProjectRepository' 
+is from 'test/widget/dashboar
+d_test.dart'.
+Try correcting the name to 
+the name of an existing 
+method, or defining a method 
+named 'watchProjects'.
+    when(() => mockRepository
+.watchProjects()).thenAnswer(
+(_) => Stream.value([]));
+                             
+ ^^^^^^^^^^^^^
+test/widget/dashboard_test.da
+rt:24:55: Error: The 
+argument type 
+'MockProjectRepository' 
+can't be assigned to the 
+parameter type 
+'ProjectRepository'.
+ - 'MockProjectRepository' 
+is from 'test/widget/dashboar
+d_test.dart'.
+ - 'ProjectRepository' is 
+from 'package:engineering_wer
+k/features/projects/domain/re
+positories/project_repository
+.dart' ('lib/features/project
+s/domain/repositories/project
+_repository.dart').
+          projectRepositoryPr
+ovider.overrideWithValue(mock
+Repository),
+                             
+                         ^
+test/widget/dashboard_test.da
+rt:47:31: Error: The method 
+'watchProjects' isn't 
+defined for the type 
+'MockProjectRepository'.
+ - 'MockProjectRepository' 
+is from 'test/widget/dashboar
+d_test.dart'.
+Try correcting the name to 
+the name of an existing 
+method, or defining a method 
+named 'watchProjects'.
+    when(() => mockRepository
+.watchProjects()).thenAnswer(
+(_) => 
+Stream.value(projects));
+                             
+ ^^^^^^^^^^^^^
+test/widget/dashboard_test.da
+rt:52:55: Error: The 
+argument type 
+'MockProjectRepository' 
+can't be assigned to the 
+parameter type 
+'ProjectRepository'.
+ - 'MockProjectRepository' 
+is from 'test/widget/dashboar
+d_test.dart'.
+ - 'ProjectRepository' is 
+from 'package:engineering_wer
+k/features/projects/domain/re
+positories/project_repository
+.dart' ('lib/features/project
+s/domain/repositories/project
+_repository.dart').
+          projectRepositoryPr
+ovider.overrideWithValue(mock
+Repository),
+                             
+                         ^
+00:00 +0 -1: loading C:/Users/Admin/Desktop/EngineeringWerk/test/widget/dashboard_test.dart [E]
+  Failed to load "C:/Users/Admin/Desktop/EngineeringWerk/test/widget/dashboard_test.dart":
+  Compilation failed for testPath=C:/Users/Admin/Desktop/EngineeringWerk/test/widget/dashboard_test.dart: test/widget/dashboard_test.dart:9:53: Error: Type 'ProjectRepository' not found.
+  class MockProjectRepository extends Mock implements ProjectRepository {}
+                                                      ^^^^^^^^^^^^^^^^^
+  test/widget/dashboard_test.dart:19:31: Error: The method 'watchProjects' isn't defined for the type 'MockProjectRepository'.
+   - 'MockProjectRepository' is from 'test/widget/dashboard_test.dart'.
+  Try correcting the name to the name of an existing method, or defining a method named 'watchProjects'.
+      when(() => mockRepository.watchProjects()).thenAnswer((_) => Stream.value([]));
+                                ^^^^^^^^^^^^^
+  test/widget/dashboard_test.dart:24:55: Error: The argument type 'MockProjectRepository' can't be assigned to the parameter type 'ProjectRepository'.
+   - 'MockProjectRepository' is from 'test/widget/dashboard_test.dart'.
+   - 'ProjectRepository' is from 'package:engineering_werk/features/projects/domain/repositories/project_repository.dart' ('lib/features/projects/domain/repositories/project_repository.dart').
+            projectRepositoryProvider.overrideWithValue(mockRepository),
+                                                        ^
+  test/widget/dashboard_test.dart:47:31: Error: The method 'watchProjects' isn't defined for the type 'MockProjectRepository'.
+   - 'MockProjectRepository' is from 'test/widget/dashboard_test.dart'.
+  Try correcting the name to the name of an existing method, or defining a method named 'watchProjects'.
+      when(() => mockRepository.watchProjects()).thenAnswer((_) => Stream.value(projects));
+                                ^^^^^^^^^^^^^
+  test/widget/dashboard_test.dart:52:55: Error: The argument type 'MockProjectRepository' can't be assigned to the parameter type 'ProjectRepository'.
+   - 'MockProjectRepository' is from 'test/widget/dashboard_test.dart'.
+   - 'ProjectRepository' is from 'package:engineering_werk/features/projects/domain/repositories/project_repository.dart' ('lib/features/projects/domain/repositories/project_repository.dart').
+            projectRepositoryProvider.overrideWithValue(mockRepository),
+                                                        ^
+  .
+00:00 +0 -1: Some tests failed.

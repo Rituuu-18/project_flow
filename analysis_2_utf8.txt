@@ -1,0 +1,59 @@
+Analyzing EngineeringWerk...                                    
+
+warning - 'getByIndex' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:184:12 - experimental_member_use
+warning - 'getByIndexSync' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:188:12 - experimental_member_use
+warning - 'deleteByIndex' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:192:12 - experimental_member_use
+warning - 'deleteByIndexSync' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:196:12 - experimental_member_use
+warning - 'getAllByIndex' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:201:12 - experimental_member_use
+warning - 'getAllByIndexSync' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:206:12 - experimental_member_use
+warning - 'deleteAllByIndex' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:211:12 - experimental_member_use
+warning - 'deleteAllByIndexSync' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:216:12 - experimental_member_use
+warning - 'putByIndex' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:220:12 - experimental_member_use
+warning - 'putByIndexSync' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:224:12 - experimental_member_use
+warning - 'putAllByIndex' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:228:12 - experimental_member_use
+warning - 'putAllByIndexSync' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:233:12 - experimental_member_use
+warning - 'getByIndex' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:1494:12 - experimental_member_use
+warning - 'getByIndexSync' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:1498:12 - experimental_member_use
+warning - 'deleteByIndex' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:1502:12 - experimental_member_use
+warning - 'deleteByIndexSync' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:1506:12 - experimental_member_use
+warning - 'getAllByIndex' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:1511:12 - experimental_member_use
+warning - 'getAllByIndexSync' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:1516:12 - experimental_member_use
+warning - 'deleteAllByIndex' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:1521:12 - experimental_member_use
+warning - 'deleteAllByIndexSync' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:1526:12 - experimental_member_use
+warning - 'putByIndex' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:1530:12 - experimental_member_use
+warning - 'putByIndexSync' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:1534:12 - experimental_member_use
+warning - 'putAllByIndex' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:1538:12 - experimental_member_use
+warning - 'putAllByIndexSync' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:1542:12 - experimental_member_use
+warning - 'getByIndex' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:2801:12 - experimental_member_use
+warning - 'getByIndexSync' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:2805:12 - experimental_member_use
+warning - 'deleteByIndex' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:2809:12 - experimental_member_use
+warning - 'deleteByIndexSync' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:2813:12 - experimental_member_use
+warning - 'getAllByIndex' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:2818:12 - experimental_member_use
+warning - 'getAllByIndexSync' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:2823:12 - experimental_member_use
+warning - 'deleteAllByIndex' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:2828:12 - experimental_member_use
+warning - 'deleteAllByIndexSync' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:2833:12 - experimental_member_use
+warning - 'putByIndex' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:2837:12 - experimental_member_use
+warning - 'putByIndexSync' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:2841:12 - experimental_member_use
+warning - 'putAllByIndex' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:2845:12 - experimental_member_use
+warning - 'putAllByIndexSync' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:2850:12 - experimental_member_use
+warning - 'getByIndex' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:5107:12 - experimental_member_use
+warning - 'getByIndexSync' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:5111:12 - experimental_member_use
+warning - 'deleteByIndex' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:5115:12 - experimental_member_use
+warning - 'deleteByIndexSync' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:5119:12 - experimental_member_use
+warning - 'getAllByIndex' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:5124:12 - experimental_member_use
+warning - 'getAllByIndexSync' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:5129:12 - experimental_member_use
+warning - 'deleteAllByIndex' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:5134:12 - experimental_member_use
+warning - 'deleteAllByIndexSync' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:5139:12 - experimental_member_use
+warning - 'putByIndex' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:5143:12 - experimental_member_use
+warning - 'putByIndexSync' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:5147:12 - experimental_member_use
+warning - 'putAllByIndex' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:5151:12 - experimental_member_use
+warning - 'putAllByIndexSync' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:5156:12 - experimental_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\projects\presentation\pages\project_details_screen.dart:85:65 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\projects\presentation\pages\project_details_screen.dart:158:65 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\projects\presentation\pages\project_details_screen.dart:233:22 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\workspace\presentation\pages\workspace_screen.dart:207:47 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\workspace\presentation\pages\workspace_screen.dart:300:28 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\shared\widgets\project_card.dart:136:22 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\shared\widgets\stats_card.dart:26:33 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\shared\widgets\stats_card.dart:38:28 - deprecated_member_use
+

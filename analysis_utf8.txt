@@ -1,0 +1,98 @@
+﻿Analyzing EngineeringWerk...                                    
+
+warning - 'getByIndex' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:184:12 - experimental_member_use
+warning - 'getByIndexSync' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:188:12 - experimental_member_use
+warning - 'deleteByIndex' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:192:12 - experimental_member_use
+warning - 'deleteByIndexSync' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:196:12 - experimental_member_use
+warning - 'getAllByIndex' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:201:12 - experimental_member_use
+warning - 'getAllByIndexSync' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:206:12 - experimental_member_use
+warning - 'deleteAllByIndex' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:211:12 - experimental_member_use
+warning - 'deleteAllByIndexSync' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:216:12 - experimental_member_use
+warning - 'putByIndex' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:220:12 - experimental_member_use
+warning - 'putByIndexSync' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:224:12 - experimental_member_use
+warning - 'putAllByIndex' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:228:12 - experimental_member_use
+warning - 'putAllByIndexSync' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:233:12 - experimental_member_use
+warning - 'getByIndex' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:1494:12 - experimental_member_use
+warning - 'getByIndexSync' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:1498:12 - experimental_member_use
+warning - 'deleteByIndex' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:1502:12 - experimental_member_use
+warning - 'deleteByIndexSync' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:1506:12 - experimental_member_use
+warning - 'getAllByIndex' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:1511:12 - experimental_member_use
+warning - 'getAllByIndexSync' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:1516:12 - experimental_member_use
+warning - 'deleteAllByIndex' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:1521:12 - experimental_member_use
+warning - 'deleteAllByIndexSync' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:1526:12 - experimental_member_use
+warning - 'putByIndex' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:1530:12 - experimental_member_use
+warning - 'putByIndexSync' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:1534:12 - experimental_member_use
+warning - 'putAllByIndex' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:1538:12 - experimental_member_use
+warning - 'putAllByIndexSync' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:1542:12 - experimental_member_use
+warning - 'getByIndex' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:2801:12 - experimental_member_use
+warning - 'getByIndexSync' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:2805:12 - experimental_member_use
+warning - 'deleteByIndex' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:2809:12 - experimental_member_use
+warning - 'deleteByIndexSync' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:2813:12 - experimental_member_use
+warning - 'getAllByIndex' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:2818:12 - experimental_member_use
+warning - 'getAllByIndexSync' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:2823:12 - experimental_member_use
+warning - 'deleteAllByIndex' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:2828:12 - experimental_member_use
+warning - 'deleteAllByIndexSync' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:2833:12 - experimental_member_use
+warning - 'putByIndex' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:2837:12 - experimental_member_use
+warning - 'putByIndexSync' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:2841:12 - experimental_member_use
+warning - 'putAllByIndex' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:2845:12 - experimental_member_use
+warning - 'putAllByIndexSync' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:2850:12 - experimental_member_use
+warning - 'getByIndex' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:5107:12 - experimental_member_use
+warning - 'getByIndexSync' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:5111:12 - experimental_member_use
+warning - 'deleteByIndex' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:5115:12 - experimental_member_use
+warning - 'deleteByIndexSync' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:5119:12 - experimental_member_use
+warning - 'getAllByIndex' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:5124:12 - experimental_member_use
+warning - 'getAllByIndexSync' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:5129:12 - experimental_member_use
+warning - 'deleteAllByIndex' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:5134:12 - experimental_member_use
+warning - 'deleteAllByIndexSync' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:5139:12 - experimental_member_use
+warning - 'putByIndex' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:5143:12 - experimental_member_use
+warning - 'putByIndexSync' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:5147:12 - experimental_member_use
+warning - 'putAllByIndex' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:5151:12 - experimental_member_use
+warning - 'putAllByIndexSync' is experimental and could be removed or changed at any time - lib\core\database\isar_models.g.dart:5156:12 - experimental_member_use
+warning - Unused import: 'package:flutter/material.dart' - lib\core\router\router.dart:1:8 - unused_import
+   info - 'background' is deprecated and shouldn't be used. Use surface instead. This feature was deprecated after v3.18.0-0.1.pre - lib\core\theme\app_theme.dart:20:7 - deprecated_member_use
+  error - The argument type 'CardTheme' can't be assigned to the parameter type 'CardThemeData?'.  - lib\core\theme\app_theme.dart:24:16 - argument_type_not_assignable
+   info - 'background' is deprecated and shouldn't be used. Use surface instead. This feature was deprecated after v3.18.0-0.1.pre - lib\core\theme\app_theme.dart:46:7 - deprecated_member_use
+  error - The argument type 'CardTheme' can't be assigned to the parameter type 'CardThemeData?'.  - lib\core\theme\app_theme.dart:50:16 - argument_type_not_assignable
+  error - The property 'name' can't be unconditionally accessed because the receiver can be 'null' - lib\features\dashboard\presentation\pages\dashboard_screen.dart:67:23 - unchecked_use_of_nullable_value
+  error - The property 'status' can't be unconditionally accessed because the receiver can be 'null' - lib\features\dashboard\presentation\pages\dashboard_screen.dart:68:64 - unchecked_use_of_nullable_value
+  error - The method 'Project' isn't defined for the type '_DashboardScreenState' - lib\features\dashboard\presentation\pages\dashboard_screen.dart:248:33 - undefined_method
+  error - Undefined class 'Stage' - lib\features\dashboard\presentation\pages\dashboard_screen.dart:266:3 - undefined_class
+  error - The method 'Stage' isn't defined for the type '_DashboardScreenState' - lib\features\dashboard\presentation\pages\dashboard_screen.dart:268:12 - undefined_method
+warning - Unused import: '../../../../core/utils/enums.dart' - lib\features\projects\data\models\project_mapper.dart:4:8 - unused_import
+  error - Target of URI doesn't exist: '../../../core/utils/enums.dart' - lib\features\projects\presentation\pages\project_details_screen.dart:6:8 - uri_does_not_exist
+  error - Target of URI doesn't exist: '../../reviews/domain/entities/stage.dart' - lib\features\projects\presentation\pages\project_details_screen.dart:8:8 - uri_does_not_exist
+  error - The property 'id' can't be unconditionally accessed because the receiver can be 'null' - lib\features\projects\presentation\pages\project_details_screen.dart:22:56 - unchecked_use_of_nullable_value
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\projects\presentation\pages\project_details_screen.dart:81:65 - deprecated_member_use
+  error - Undefined class 'Stage' - lib\features\projects\presentation\pages\project_details_screen.dart:93:48 - undefined_class
+  error - Undefined name 'StageStatus' - lib\features\projects\presentation\pages\project_details_screen.dart:94:41 - undefined_identifier
+  error - Undefined name 'StageStatus' - lib\features\projects\presentation\pages\project_details_screen.dart:108:41 - undefined_identifier
+  error - Undefined name 'StageStatus' - lib\features\projects\presentation\pages\project_details_screen.dart:119:52 - undefined_identifier
+  error - Undefined name 'StageStatus' - lib\features\projects\presentation\pages\project_details_screen.dart:153:44 - undefined_identifier
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\projects\presentation\pages\project_details_screen.dart:154:65 - deprecated_member_use
+  error - Undefined name 'StageStatus' - lib\features\projects\presentation\pages\project_details_screen.dart:187:41 - undefined_identifier
+  error - Undefined class 'StageStatus' - lib\features\projects\presentation\pages\project_details_screen.dart:208:26 - undefined_class
+  error - Undefined name 'StageStatus' - lib\features\projects\presentation\pages\project_details_screen.dart:212:12 - undefined_identifier
+  error - Undefined name 'StageStatus' - lib\features\projects\presentation\pages\project_details_screen.dart:216:12 - undefined_identifier
+  error - Undefined name 'StageStatus' - lib\features\projects\presentation\pages\project_details_screen.dart:220:12 - undefined_identifier
+  error - The non-nullable local variable 'color' must be assigned before it can be used - lib\features\projects\presentation\pages\project_details_screen.dart:229:16 - not_assigned_potentially_non_nullable_local_variable
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\projects\presentation\pages\project_details_screen.dart:229:22 - deprecated_member_use
+  error - The non-nullable local variable 'label' must be assigned before it can be used - lib\features\projects\presentation\pages\project_details_screen.dart:233:9 - not_assigned_potentially_non_nullable_local_variable
+  error - The non-nullable local variable 'color' must be assigned before it can be used - lib\features\projects\presentation\pages\project_details_screen.dart:234:33 - not_assigned_potentially_non_nullable_local_variable
+  error - The name 'Project' isn't a type, so it can't be used as a type argument - lib\features\projects\presentation\providers\project_provider.dart:9:52 - non_type_as_type_argument
+  error - Target of URI doesn't exist: '../../../core/utils/enums.dart' - lib\features\workspace\presentation\pages\workspace_screen.dart:6:8 - uri_does_not_exist
+  error - Target of URI doesn't exist: '../../workspace/domain/entities/workspace_data.dart' - lib\features\workspace\presentation\pages\workspace_screen.dart:7:8 - uri_does_not_exist
+  error - Target of URI doesn't exist: '../../workspace/domain/entities/comment.dart' - lib\features\workspace\presentation\pages\workspace_screen.dart:8:8 - uri_does_not_exist
+  error - Target of URI doesn't exist: '../../workspace/presentation/providers/workspace_provider.dart' - lib\features\workspace\presentation\pages\workspace_screen.dart:9:8 - uri_does_not_exist
+  error - Undefined class 'WorkspaceData' - lib\features\workspace\presentation\pages\workspace_screen.dart:32:3 - undefined_class
+  error - Undefined name 'workspaceRepositoryProvider' - lib\features\workspace\presentation\pages\workspace_screen.dart:47:27 - undefined_identifier
+  error - The method 'WorkspaceData' isn't defined for the type '_WorkspaceScreenState' - lib\features\workspace\presentation\pages\workspace_screen.dart:59:22 - undefined_method
+  error - Undefined name 'workspaceRepositoryProvider' - lib\features\workspace\presentation\pages\workspace_screen.dart:65:27 - undefined_identifier
+  error - The method 'WorkspaceData' isn't defined for the type '_WorkspaceScreenState' - lib\features\workspace\presentation\pages\workspace_screen.dart:66:38 - undefined_method
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\workspace\presentation\pages\workspace_screen.dart:210:47 - deprecated_member_use
+  error - The method 'Comment' isn't defined for the type '_WorkspaceScreenState' - lib\features\workspace\presentation\pages\workspace_screen.dart:275:38 - undefined_method
+  error - Undefined class 'Comment' - lib\features\workspace\presentation\pages\workspace_screen.dart:297:28 - undefined_class
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\workspace\presentation\pages\workspace_screen.dart:303:28 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\shared\widgets\project_card.dart:136:22 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\shared\widgets\stats_card.dart:26:33 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\shared\widgets\stats_card.dart:38:28 - deprecated_member_use
+
