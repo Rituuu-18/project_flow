@@ -1,13 +1,24 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
 
-import 'package:engineering_werk/features/reviews/domain/entities/design_review.dart';
-import 'package:engineering_werk/features/reviews/presentation/providers/design_review_provider.dart';
-import 'package:engineering_werk/core/utils/enums.dart';
-import 'package:engineering_werk/features/settings/presentation/providers/theme_provider.dart';
+import '../../../../core/utils/enums.dart';
+import '../../../reviews/domain/entities/design_review.dart';
+import '../../../reviews/presentation/providers/design_review_provider.dart';
+import '../../../settings/presentation/providers/theme_provider.dart';
+import '../theme/dashboard_design.dart';
+import '../widgets/clean_header.dart';
+import '../widgets/dashboard_motion.dart';
+import '../widgets/dashboard_states.dart';
+import '../widgets/hero_section.dart';
+import '../widgets/new_review_dialog.dart';
+import '../widgets/portfolio_summary.dart';
+import '../widgets/premium_review_card.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -16,344 +27,248 @@ class DashboardScreen extends ConsumerStatefulWidget {
   ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends ConsumerState<DashboardScreen> {
-  final TextEditingController _searchController = TextEditingController();
+class _DashboardScreenState extends ConsumerState<DashboardScreen>
+    with SingleTickerProviderStateMixin {
+  final _searchController = TextEditingController();
+  final _searchQuery = ValueNotifier<String>('');
+
+  late final AnimationController _entranceController;
+  bool _entranceScheduled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _entranceController = AnimationController(
+      vsync: this,
+      duration: DashboardMotion.entranceDuration,
+    );
+  }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _searchQuery.dispose();
+    _entranceController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final reviewsAsync = ref.watch(designReviewsStreamProvider);
-    final themeMode = ref.watch(themeProvider);
-    final isDark = themeMode == ThemeMode.dark || 
-                 (themeMode == ThemeMode.system && MediaQuery.of(context).platformBrightness == Brightness.dark);
+    final width = MediaQuery.sizeOf(context).width;
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF111827) : Colors.white,
+      backgroundColor: DashboardDesign.canvas(context),
       body: SafeArea(
+        bottom: false,
         child: CustomScrollView(
+          scrollCacheExtent: const ScrollCacheExtent.pixels(900),
           slivers: [
+            SliverPersistentHeader(
+              pinned: true,
+              delegate: _CleanHeaderDelegate(
+                searchController: _searchController,
+                onSearchChanged: _onSearchChanged,
+                onToggleTheme: _toggleTheme,
+                brightness: Theme.of(context).brightness,
+              ),
+            ),
             SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
+              child: _ContentWidth(
+                child: StaggeredReveal(
+                  animation: _entranceController,
+                  interval: const Interval(
+                    0,
+                    0.46,
+                    curve: DashboardMotion.entranceCurve,
+                  ),
+                  child: HeroSection(
+                    onCreateReview: _showCreateReviewDialog,
+                    searchController: _searchController,
+                    onSearchChanged: _onSearchChanged,
+                  ),
+                ),
+              ),
+            ),
+            ..._buildReviewSlivers(reviewsAsync, width),
+            const SliverToBoxAdapter(child: SizedBox(height: 56)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _buildReviewSlivers(
+    AsyncValue<List<DesignReview>> reviewsAsync,
+    double width,
+  ) {
+    return reviewsAsync.when(
+      loading: () => const [
+        SliverToBoxAdapter(
+          child: _ContentWidth(child: DashboardLoadingState()),
+        ),
+      ],
+      error: (error, stackTrace) => [
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: DashboardErrorState(
+            onRetry: () => ref.invalidate(designReviewsStreamProvider),
+          ),
+        ),
+      ],
+      data: (reviews) {
+        _scheduleEntrance();
+        return [
+          ValueListenableBuilder<String>(
+            valueListenable: _searchQuery,
+            builder: (context, query, _) {
+              final filtered = _filterReviews(reviews, query);
+              if (filtered.isEmpty) {
+                return SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: DashboardEmptyState(
+                    isSearchResult: query.isNotEmpty,
+                    onCreateReview: _showCreateReviewDialog,
+                  ),
+                );
+              }
+
+              final active = filtered
+                  .where((review) => review.status != ProjectStatus.completed)
+                  .toList();
+              final completed = filtered
+                  .where((review) => review.status == ProjectStatus.completed)
+                  .toList();
+              final averageProgress = active.isEmpty
+                  ? 0.0
+                  : active.fold<double>(
+                          0,
+                          (sum, review) => sum + review.progress,
+                        ) /
+                        active.length;
+              final pendingCount = active
+                  .where(
+                    (review) => review.status == ProjectStatus.reviewPending,
+                  )
+                  .length;
+
+              return SliverMainAxisGroup(
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: _ContentWidth(
+                      child: StaggeredReveal(
+                        animation: _entranceController,
+                        interval: const Interval(
+                          0.16,
+                          0.58,
+                          curve: DashboardMotion.entranceCurve,
+                        ),
+                        child: PortfolioSummary(
+                          averageProgress: averageProgress,
+                          activeCount: active.length,
+                          pendingCount: pendingCount,
+                          completedCount: completed.length,
+                        ),
+                      ),
+                    ),
+                  ),
+                  if (active.isNotEmpty) ...[
+                    _sectionHeader(
+                      width: width,
+                      title: 'Active Design Reviews',
+                      description: 'In progress and awaiting review',
+                      count: active.length,
+                    ),
+                    _reviewGrid(active, width, startIndex: 0),
+                  ],
+                  if (completed.isNotEmpty) ...[
+                    _sectionHeader(
+                      width: width,
+                      title: 'Completed Design Reviews',
+                      description: 'Approved records and decision history',
+                      count: completed.length,
+                    ),
+                    _reviewGrid(completed, width, startIndex: active.length),
+                  ],
+                ],
+              );
+            },
+          ),
+        ];
+      },
+    );
+  }
+
+  Widget _sectionHeader({
+    required double width,
+    required String title,
+    required String description,
+    required int count,
+  }) {
+    return SliverPadding(
+      padding: EdgeInsets.fromLTRB(
+        _horizontalGutter(width),
+        36,
+        _horizontalGutter(width),
+        16,
+      ),
+      sliver: SliverToBoxAdapter(
+        child: StaggeredReveal(
+          animation: _entranceController,
+          interval: const Interval(
+            0.28,
+            0.68,
+            curve: DashboardMotion.entranceCurve,
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildHeader(isDark),
-                    const SizedBox(height: 32),
-                    _buildMainSearchField(isDark),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF006D6A),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 18),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          elevation: 0,
-                        ),
-                        onPressed: () => _showAddReviewDialog(context, isDark),
-                        child: const Text(
-                          '+ New Design Review',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                        ),
+                    Text(
+                      title,
+                      style: TextStyle(
+                        color: DashboardDesign.text(context),
+                        fontSize: width < DashboardDesign.mobileBreakpoint
+                            ? 21
+                            : 24,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.7,
                       ),
                     ),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 4),
+                    Text(
+                      description,
+                      style: TextStyle(
+                        color: DashboardDesign.mutedText(context),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   ],
                 ),
               ),
-            ),
-            reviewsAsync.when(
-              data: (reviews) {
-                final filtered = reviews.where((r) {
-                  final sq = _searchController.text.toLowerCase();
-                  if (sq.isEmpty) return true;
-                  return r.name.toLowerCase().contains(sq);
-                }).toList();
-
-                if (filtered.isEmpty) {
-                  return SliverFillRemaining(
-                    child: Center(
-                      child: Text(
-                        _searchController.text.isEmpty 
-                            ? 'No Design Reviews yet.\nClick the button above to start one.'
-                            : 'No results matching your search.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: isDark ? Colors.grey[500] : Colors.grey[400], fontSize: 16),
-                      ),
-                    ),
-                  );
-                }
-
-                final active = filtered.where((r) => r.status != ProjectStatus.completed).toList();
-                final completed = filtered.where((r) => r.status == ProjectStatus.completed).toList();
-
-                final averageProgress = active.isEmpty 
-                    ? 0.0 
-                    : active.fold(0.0, (sum, r) => sum + r.progress) / active.length;
-
-                return SliverList(
-                  delegate: SliverChildListDelegate([
-                    _buildMainProgressCard(active, isDark),
-                    _buildListSection(
-                      title: 'Active Design Reviews',
-                      subtitle: 'PROJECT COMPLETION ${(averageProgress * 100).toInt()}%',
-                      items: active,
-                      isDark: isDark,
-                    ),
-                    if (completed.isNotEmpty)
-                      _buildListSection(
-                        title: 'Completed Design Reviews',
-                        subtitle: 'COMPLETED',
-                        items: completed,
-                        isDark: isDark,
-                      ),
-                    const SizedBox(height: 60),
-                  ]),
-                );
-              },
-              loading: () => const SliverFillRemaining(child: Center(child: CircularProgressIndicator())),
-              error: (err, stack) => SliverFillRemaining(child: Center(child: Text('Error: $err'))),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader(bool isDark) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: Row(
-                children: [
-                  Image.asset(
-                    'assets/logo.jpeg',
-                    height: 32,
-                    errorBuilder: (context, error, stackTrace) => const Icon(
-                      Icons.broken_image_outlined,
-                      color: Color(0xFF006D6A),
-                      size: 32,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Flexible(
-                    child: Text(
-                      'Design reviews',
-                      style: TextStyle(
-                        fontSize: 28, 
-                        fontWeight: FontWeight.bold, 
-                        color: isDark ? Colors.white : const Color(0xFF1F2937),
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            IconButton(
-              onPressed: () => ref.read(themeProvider.notifier).toggleTheme(),
-              icon: Icon(
-                isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
-                color: isDark ? Colors.yellow[600] : Colors.grey[700],
-              ),
-              style: IconButton.styleFrom(
-                backgroundColor: isDark ? Colors.grey[800] : Colors.grey[100],
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Text(
-          'Track active reviews, open completed records,\nand start a new design review from one place.',
-          style: TextStyle(fontSize: 15, color: isDark ? Colors.grey[400] : Colors.grey[600], height: 1.5),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildMainSearchField(bool isDark) {
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1F2937) : Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: isDark ? Colors.transparent : Colors.grey[200]!),
-        boxShadow: isDark ? [] : [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4)),
-        ],
-      ),
-      child: TextField(
-        controller: _searchController,
-        style: TextStyle(color: isDark ? Colors.white : Colors.black87),
-        decoration: InputDecoration(
-          hintText: 'Search projects...',
-          hintStyle: TextStyle(fontSize: 16, color: isDark ? Colors.grey[500] : Colors.grey[400]),
-          prefixIcon: Icon(Icons.search, color: isDark ? Colors.grey[500] : Colors.grey[400]),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          border: InputBorder.none,
-        ),
-        onChanged: (_) => setState(() {}),
-      ),
-    );
-  }
-
-  Widget _buildListSection({
-    required String title, 
-    required String subtitle, 
-    required List<DesignReview> items,
-    required bool isDark,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title, 
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF1F2937)),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            subtitle, 
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: isDark ? Colors.grey[500] : Colors.grey[400], letterSpacing: 1.2),
-          ),
-          const SizedBox(height: 20),
-          ...items.map((item) => _buildReviewCard(item, isDark)),
-          const SizedBox(height: 24),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildReviewCard(DesignReview review, bool isDark) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 20),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1F2937) : const Color(0xFFF9FAFB),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: isDark ? Colors.grey[800]! : Colors.grey[200]!),
-        boxShadow: isDark ? [] : [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 15, offset: const Offset(0, 8)),
-        ],
-      ),
-      child: InkWell(
-        onTap: () {
-          if (!context.mounted) return;
-          context.push('/project/${review.id}');
-        },
-        borderRadius: BorderRadius.circular(20),
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  width: double.infinity,
-                  height: 160,
-                  color: const Color(0xFF006D6A).withValues(alpha: 0.05),
-                  child: Image.asset(
-                    review.imageUrl ?? 'assets/pump-housing.png',
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.image_outlined, color: isDark ? Colors.grey[600] : Colors.grey[400], size: 32),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Project preview image', 
-                            style: TextStyle(color: isDark ? Colors.grey[600] : Colors.grey[400], fontSize: 14),
-                          ),
-                        ],
-                      ),
-                    ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: DashboardDesign.subtleSurface(context),
+                  borderRadius: BorderRadius.circular(99),
+                  border: Border.all(color: DashboardDesign.border(context)),
+                ),
+                child: Text(
+                  '$count',
+                  style: TextStyle(
+                    color: DashboardDesign.text(context),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
-              const SizedBox(height: 24),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  _buildActionButton(review, isDark),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Text(
-                      review.name,
-                      style: TextStyle(
-                        fontSize: 22, 
-                        fontWeight: FontWeight.bold, 
-                        color: isDark ? Colors.white : const Color(0xFF111827),
-                      ),
-                    ),
-                  ),
-                  if (review.owner.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(left: 16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            'Owner: ${review.owner}',
-                            style: TextStyle(
-                              fontSize: 15, 
-                              color: isDark ? Colors.grey[300] : Colors.black87,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Progress',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: isDark ? Colors.grey[400] : Colors.grey[600],
-                    ),
-                  ),
-                  Text(
-                    '${(review.progress * 100).toInt()}%',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF006D6A),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(4),
-                child: LinearProgressIndicator(
-                  value: review.progress,
-                  minHeight: 6,
-                  backgroundColor: isDark ? Colors.grey[800] : Colors.grey[200],
-                  valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF006D6A)),
-                ),
-              ),
-              const SizedBox(height: 20),
-              _buildStatusDropdown(review, isDark),
             ],
           ),
         ),
@@ -361,309 +276,279 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
-  Widget _buildActionButton(DesignReview review, bool isDark) {
-    return PopupMenuButton<String>(
-      onSelected: (val) => _handleMenuAction(val, review),
-      itemBuilder: (context) => [
-        const PopupMenuItem(value: 'upload', child: Text('Upload Image')),
-        const PopupMenuItem(value: 'prepare_slide', child: Text('Prepare slide')),
-        const PopupMenuItem(value: 'copy', child: Text('Copy')),
-        const PopupMenuItem(value: 'delete', child: Text('Delete')),
-      ],
-      offset: const Offset(0, 48),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: isDark ? Colors.grey[800] : Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: isDark ? Colors.grey[700]! : Colors.grey[300]!),
-        ),
-        child: Text(
-          '...', 
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black),
-        ),
-      ),
-    );
-  }
+  Widget _reviewGrid(
+    List<DesignReview> reviews,
+    double width, {
+    required int startIndex,
+  }) {
+    final columnCount = width >= DashboardDesign.desktopBreakpoint
+        ? 3
+        : (width >= DashboardDesign.mobileBreakpoint ? 2 : 1);
 
-  Widget _buildStatusDropdown(DesignReview review, bool isDark) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      decoration: BoxDecoration(
-        color: isDark ? Colors.grey[800] : Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: isDark ? Colors.grey[700]! : Colors.grey[300]!),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<ProjectStatus>(
-          value: review.status,
-          isDense: true,
-          dropdownColor: isDark ? Colors.grey[850] : Colors.white,
-          icon: Icon(Icons.arrow_drop_down, color: isDark ? Colors.grey[400] : Colors.grey[600]),
-          style: TextStyle(fontSize: 15, color: isDark ? Colors.white : Colors.black87),
-          items: const [
-            DropdownMenuItem(value: ProjectStatus.active, child: Text('In Progress')),
-            DropdownMenuItem(value: ProjectStatus.reviewPending, child: Text('Review Pending')),
-            DropdownMenuItem(value: ProjectStatus.completed, child: Text('Completed')),
-          ],
-          onChanged: (val) {
-            if (val != null) {
-              ref.read(designReviewNotifierProvider.notifier).updateReview(review.copyWith(status: val));
-            }
+    return SliverPadding(
+      padding: EdgeInsets.symmetric(horizontal: _horizontalGutter(width)),
+      sliver: SliverGrid(
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: columnCount,
+          crossAxisSpacing: 18,
+          mainAxisSpacing: 18,
+          mainAxisExtent: 356,
+        ),
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            final review = reviews[index];
+            final staggerIndex = (startIndex + index).clamp(0, 8).toDouble();
+            final start = 0.38 + staggerIndex * 0.045;
+            final end = (start + 0.32).clamp(0.0, 1.0).toDouble();
+
+            return StaggeredReveal(
+              animation: _entranceController,
+              interval: Interval(
+                start,
+                end,
+                curve: DashboardMotion.entranceCurve,
+              ),
+              child: PremiumReviewCard(
+                review: review,
+                onOpen: () => context.push('/project/${review.id}'),
+                onAction: (action) => _handleCardAction(action, review),
+                onStatusChanged: (status) => _updateStatus(review, status),
+              ),
+            );
           },
+          childCount: reviews.length,
+          addAutomaticKeepAlives: false,
+          addRepaintBoundaries: true,
+          addSemanticIndexes: true,
         ),
       ),
     );
   }
 
-  void _showAddReviewDialog(BuildContext context, bool isDark) {
-    final nameController = TextEditingController();
-    final ownerController = TextEditingController();
-    final disciplineController = TextEditingController();
-    final formKey = GlobalKey<FormState>();
+  List<DesignReview> _filterReviews(
+    List<DesignReview> reviews,
+    String rawQuery,
+  ) {
+    final query = rawQuery.trim().toLowerCase();
+    if (query.isEmpty) return reviews;
 
-    showDialog(
+    return reviews.where((review) {
+      final status = switch (review.status) {
+        ProjectStatus.active => 'in progress active',
+        ProjectStatus.reviewPending => 'review pending',
+        ProjectStatus.completed => 'completed',
+      };
+      return [
+        review.name,
+        review.owner,
+        review.discipline,
+        status,
+      ].any((value) => value.toLowerCase().contains(query));
+    }).toList();
+  }
+
+  double _horizontalGutter(double width) {
+    final base = width < DashboardDesign.mobileBreakpoint ? 18.0 : 28.0;
+    final centered = (width - DashboardDesign.maxContentWidth) / 2;
+    return centered > 0 ? centered + base : base;
+  }
+
+  void _onSearchChanged(String value) {
+    _searchQuery.value = value;
+  }
+
+  void _scheduleEntrance() {
+    if (_entranceScheduled ||
+        _entranceController.status != AnimationStatus.dismissed) {
+      return;
+    }
+    _entranceScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _entranceController.forward();
+    });
+  }
+
+  void _toggleTheme() {
+    ref.read(themeProvider.notifier).toggleTheme();
+  }
+
+  Future<void> _showCreateReviewDialog() async {
+    final draft = await showDialog<NewReviewDraft>(
       context: context,
-      barrierColor: Colors.black.withValues(alpha: 0.6),
-      builder: (context) => Dialog(
-        backgroundColor: isDark ? const Color(0xFF1F2937) : Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        insetPadding: const EdgeInsets.symmetric(horizontal: 20),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(28),
-          child: Form(
-            key: formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'CREATE DESIGN REVIEW',
-                      style: TextStyle(
-                        fontSize: 11, 
-                        fontWeight: FontWeight.bold, 
-                        color: isDark ? Colors.grey[400] : Colors.grey[600], 
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: Icon(Icons.close, size: 20, color: isDark ? Colors.grey[400] : Colors.grey[500]),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'New Design Review',
-                  style: TextStyle(
-                    fontSize: 26, 
-                    fontWeight: FontWeight.bold, 
-                    color: isDark ? Colors.white : const Color(0xFF111827),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'Add a design review name, owner, and discipline. New reviews start in progress by default with no image required.',
-                  style: TextStyle(
-                    fontSize: 15, 
-                    color: isDark ? Colors.grey[400] : Colors.grey[600], 
-                    height: 1.4,
-                  ),
-                ),
-                const SizedBox(height: 28),
-                _buildFieldLabel('DESIGN REVIEW NAME', isDark),
-                _buildTextField(nameController, 'e.g. Gearbox Cover Rev A', isDark),
-                const SizedBox(height: 20),
-                _buildFieldLabel('OWNER', isDark),
-                _buildTextField(ownerController, 'Owner', isDark),
-                const SizedBox(height: 20),
-                _buildFieldLabel('DISCIPLINE', isDark),
-                _buildTextField(disciplineController, 'Discipline', isDark),
-                const SizedBox(height: 36),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                      ),
-                      onPressed: () => Navigator.pop(context),
-                      child: Text(
-                        'Cancel', 
-                        style: TextStyle(
-                          color: isDark ? Colors.grey[300] : Colors.black87, 
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF006D6A),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        elevation: 0,
-                      ),
-                      onPressed: () async {
-                        if (formKey.currentState!.validate()) {
-                          final review = DesignReview(
-                            id: const Uuid().v4(),
-                            name: nameController.text,
-                            owner: ownerController.text,
-                            discipline: disciplineController.text,
-                            createdAt: DateTime.now(),
-                            lastUpdated: DateTime.now(),
-                          );
-                          await ref.read(designReviewNotifierProvider.notifier).createReview(review);
-                          if (context.mounted) Navigator.pop(context);
-                        }
-                      },
-                      child: const Text('Create', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+      barrierColor: Colors.black.withValues(alpha: 0.42),
+      builder: (context) => const NewReviewDialog(),
+    );
+    if (draft == null) return;
+
+    final now = DateTime.now();
+    await ref
+        .read(designReviewNotifierProvider.notifier)
+        .createReview(
+          DesignReview(
+            id: const Uuid().v4(),
+            name: draft.name,
+            owner: draft.owner,
+            discipline: draft.discipline,
+            createdAt: now,
+            lastUpdated: now,
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFieldLabel(String label, bool isDark) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 11, 
-          fontWeight: FontWeight.bold, 
-          color: isDark ? Colors.grey[400] : Colors.grey[700], 
-          letterSpacing: 0.8,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTextField(TextEditingController controller, String hint, bool isDark) {
-    return TextFormField(
-      controller: controller,
-      style: TextStyle(color: isDark ? Colors.white : Colors.black87),
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: TextStyle(color: isDark ? Colors.grey[600] : Colors.grey[400], fontSize: 16),
-        filled: true,
-        fillColor: isDark ? const Color(0xFF111827) : Colors.white,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: isDark ? Colors.grey[800]! : Colors.grey[300]!),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFF006D6A), width: 2),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.redAccent, width: 1),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.redAccent, width: 2),
-        ),
-      ),
-      validator: (v) => v == null || v.isEmpty ? 'Required' : null,
-    );
-  }
-
-  void _handleMenuAction(String action, DesignReview review) async {
-    if (action == 'upload') {
-      final picker = ImagePicker();
-      final notifier = ref.read(designReviewNotifierProvider.notifier);
-      final file = await picker.pickImage(source: ImageSource.gallery);
-      if (file != null) {
-        await notifier.updateReview(review.copyWith(imageUrl: file.path));
-      }
-    } else if (action == 'prepare_slide') {
-      // TODO: Implement prepare slide logic
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Prepare slide clicked')),
         );
-      }
-    } else if (action == 'copy') {
-      final newReview = review.copyWith(
-        id: const Uuid().v4(),
-        name: 'Copy of ${review.name}',
-        createdAt: DateTime.now(),
-        lastUpdated: DateTime.now(),
-      );
-      await ref.read(designReviewNotifierProvider.notifier).createReview(newReview);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Review copied successfully')),
-        );
-      }
-    } else if (action == 'delete') {
-      await ref.read(designReviewNotifierProvider.notifier).deleteReview(review.id);
+  }
+
+  Future<void> _handleCardAction(
+    ReviewCardAction action,
+    DesignReview review,
+  ) async {
+    switch (action) {
+      case ReviewCardAction.uploadImage:
+        await _uploadImage(review);
+        return;
+      case ReviewCardAction.copy:
+        await _copyReview(review);
+        return;
+      case ReviewCardAction.delete:
+        await _confirmDelete(review);
+        return;
     }
   }
 
-  Widget _buildMainProgressCard(List<DesignReview> activeReviews, bool isDark) {
-    if (activeReviews.isEmpty) return const SizedBox.shrink();
-    final averageProgress = activeReviews.fold(0.0, (sum, r) => sum + r.progress) / activeReviews.length;
-    
-    return Container(
-      margin: const EdgeInsets.only(bottom: 32),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1F2937) : const Color(0xFFF3FBFB),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: isDark ? Colors.grey[800]! : const Color(0xFFCCE2E1)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'PROJECT COMPLETION',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: isDark ? Colors.grey[400] : const Color(0xFF006D6A),
-                  letterSpacing: 1.2,
-                ),
-              ),
-              Text(
-                '${(averageProgress * 100).toInt()}%',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: isDark ? Colors.white : const Color(0xFF006D6A),
-                ),
-              ),
-            ],
+  Future<void> _uploadImage(DesignReview review) async {
+    final file = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1600,
+      imageQuality: 86,
+    );
+    if (file == null) return;
+
+    final bytes = await file.readAsBytes();
+    final encoded = 'data:image/*;base64,${base64Encode(bytes)}';
+    await ref
+        .read(designReviewNotifierProvider.notifier)
+        .updateReview(
+          review.copyWith(imageUrl: encoded, lastUpdated: DateTime.now()),
+        );
+    _showMessage('Preview image updated');
+  }
+
+  Future<void> _copyReview(DesignReview review) async {
+    final now = DateTime.now();
+    await ref
+        .read(designReviewNotifierProvider.notifier)
+        .createReview(
+          review.copyWith(
+            id: const Uuid().v4(),
+            name: 'Copy of ${review.name}',
+            status: ProjectStatus.active,
+            createdAt: now,
+            lastUpdated: now,
           ),
-          const SizedBox(height: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(6),
-            child: LinearProgressIndicator(
-              value: averageProgress,
-              minHeight: 10,
-              backgroundColor: isDark ? Colors.grey[800] : const Color(0xFFE0F2F1),
-              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF006D6A)),
+        );
+    _showMessage('Review copied');
+  }
+
+  Future<void> _confirmDelete(DesignReview review) async {
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete design review?'),
+        content: Text(
+          '"${review.name}" and its saved review data will be permanently removed.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: DashboardDesign.destructive,
             ),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete'),
           ),
         ],
+      ),
+    );
+    if (shouldDelete != true) return;
+
+    await ref
+        .read(designReviewNotifierProvider.notifier)
+        .deleteReview(review.id);
+    _showMessage('Review deleted');
+  }
+
+  Future<void> _updateStatus(DesignReview review, ProjectStatus status) async {
+    if (review.status == status) return;
+    await ref
+        .read(designReviewNotifierProvider.notifier)
+        .updateReview(
+          review.copyWith(status: status, lastUpdated: DateTime.now()),
+        );
+  }
+
+  void _showMessage(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
+  }
+}
+
+class _ContentWidth extends StatelessWidget {
+  const _ContentWidth({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.topCenter,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(
+          maxWidth: DashboardDesign.maxContentWidth,
+        ),
+        child: child,
       ),
     );
   }
 }
 
+class _CleanHeaderDelegate extends SliverPersistentHeaderDelegate {
+  const _CleanHeaderDelegate({
+    required this.searchController,
+    required this.onSearchChanged,
+    required this.onToggleTheme,
+    required this.brightness,
+  });
 
+  final TextEditingController searchController;
+  final ValueChanged<String> onSearchChanged;
+  final VoidCallback onToggleTheme;
+  final Brightness brightness;
+
+  @override
+  double get minExtent => 72;
+
+  @override
+  double get maxExtent => 72;
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return RepaintBoundary(
+      child: CleanHeader(
+        searchController: searchController,
+        onSearchChanged: onSearchChanged,
+        onToggleTheme: onToggleTheme,
+      ),
+    );
+  }
+
+  @override
+  bool shouldRebuild(covariant _CleanHeaderDelegate oldDelegate) {
+    return brightness != oldDelegate.brightness;
+  }
+}

@@ -72,7 +72,7 @@ class _DesignReviewDetailScreenState extends ConsumerState<DesignReviewDetailScr
                   const SizedBox(height: 48),
                   ...review.stages.asMap().entries.map((e) {
                     return _buildStageCard(review, e.value, e.key, isDark);
-                  }).toList(),
+                  }),
                   const SizedBox(height: 100),
                 ],
               ),

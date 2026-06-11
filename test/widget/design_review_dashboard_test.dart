@@ -7,7 +7,8 @@ import 'package:engineering_werk/features/reviews/domain/entities/design_review.
 import 'package:engineering_werk/features/reviews/domain/repositories/design_review_repository.dart';
 import 'package:engineering_werk/features/reviews/presentation/providers/design_review_provider.dart';
 
-class MockDesignReviewRepository extends Mock implements DesignReviewRepository {}
+class MockDesignReviewRepository extends Mock
+    implements DesignReviewRepository {}
 
 void main() {
   late MockDesignReviewRepository mockRepo;
@@ -15,10 +16,16 @@ void main() {
   setUp(() {
     mockRepo = MockDesignReviewRepository();
     // Register fallback for DesignReview for mocktail 'any' matcher
-    registerFallbackValue(DesignReview(
-      id: '', name: '', owner: '', discipline: '', 
-      createdAt: DateTime.now(), lastUpdated: DateTime.now()
-    ));
+    registerFallbackValue(
+      DesignReview(
+        id: '',
+        name: '',
+        owner: '',
+        discipline: '',
+        createdAt: DateTime.now(),
+        lastUpdated: DateTime.now(),
+      ),
+    );
 
     // Default fallback for watchReviews
     when(() => mockRepo.watchReviews()).thenAnswer((_) => Stream.value([]));
@@ -27,12 +34,8 @@ void main() {
 
   Widget createTestWidget() {
     return ProviderScope(
-      overrides: [
-        designReviewRepositoryProvider.overrideWithValue(mockRepo),
-      ],
-      child: const MaterialApp(
-        home: DashboardScreen(),
-      ),
+      overrides: [designReviewRepositoryProvider.overrideWithValue(mockRepo)],
+      child: const MaterialApp(home: DashboardScreen()),
     );
   }
 
@@ -40,7 +43,8 @@ void main() {
     await tester.pumpWidget(createTestWidget());
     await tester.pump(); // Handle loading state
 
-    expect(find.text('No Design Reviews yet.\nClick the button above to start one.'), findsOneWidget);
+    expect(find.text('No Design Reviews yet.'), findsOneWidget);
+    expect(find.text('Click the button above to start one.'), findsOneWidget);
   });
 
   testWidgets('Dashboard displays active reviews', (tester) async {
@@ -55,25 +59,28 @@ void main() {
       ),
     ];
 
-    when(() => mockRepo.watchReviews()).thenAnswer((_) => Stream.value(reviews));
-    
+    when(
+      () => mockRepo.watchReviews(),
+    ).thenAnswer((_) => Stream.value(reviews));
+
     await tester.pumpWidget(createTestWidget());
     await tester.pump();
 
     expect(find.text('Active Design Reviews'), findsOneWidget);
     expect(find.text('Pump Housing Rev C'), findsOneWidget);
-    expect(find.text('Owner: Sunil'), findsOneWidget);
+    expect(find.textContaining('Owner: Sunil'), findsOneWidget);
   });
 
-  testWidgets('Dialog should appear and allow creating a review', (tester) async {
+  testWidgets('Dialog should appear and allow creating a review', (
+    tester,
+  ) async {
     when(() => mockRepo.saveReview(any())).thenAnswer((_) => Future.value());
-
 
     await tester.pumpWidget(createTestWidget());
     await tester.pump();
 
     // Click New Design Review button
-    await tester.tap(find.text('+ New Design Review'));
+    await tester.tap(find.text('New Design Review'));
     await tester.pumpAndSettle();
 
     // Verify Dialog titles
@@ -81,9 +88,18 @@ void main() {
     expect(find.text('New Design Review'), findsOneWidget);
 
     // Enter data
-    await tester.enterText(find.widgetWithText(TextFormField, 'e.g. Gearbox Cover Rev A'), 'Test Gearbox');
-    await tester.enterText(find.widgetWithText(TextFormField, 'Owner'), 'Alice');
-    await tester.enterText(find.widgetWithText(TextFormField, 'Discipline'), 'Electronics');
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'e.g. Gearbox Cover Rev A'),
+      'Test Gearbox',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Owner'),
+      'Alice',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Discipline'),
+      'Electronics',
+    );
 
     // Click Create
     await tester.tap(find.text('Create'));
@@ -91,7 +107,7 @@ void main() {
 
     // Verify repository was called
     verify(() => mockRepo.saveReview(any())).called(1);
-    
+
     // Dialog should be closed
     expect(find.text('CREATE DESIGN REVIEW'), findsNothing);
   });
