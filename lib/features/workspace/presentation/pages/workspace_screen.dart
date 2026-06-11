@@ -4,9 +4,11 @@ import 'package:intl/intl.dart';
 import 'package:engineering_werk/features/workspace/domain/entities/workspace_data.dart';
 import 'package:engineering_werk/features/workspace/presentation/providers/workspace_provider.dart';
 import 'package:engineering_werk/features/settings/presentation/providers/theme_provider.dart';
+import 'package:engineering_werk/features/reviews/presentation/providers/design_review_provider.dart';
 
 class WorkspaceScreen extends ConsumerStatefulWidget {
   final String workspaceId;
+  final String reviewId;
   final String projectName;
   final String stageName;
   final String subStepName;
@@ -14,6 +16,7 @@ class WorkspaceScreen extends ConsumerStatefulWidget {
   const WorkspaceScreen({
     super.key,
     required this.workspaceId,
+    required this.reviewId,
     required this.projectName,
     required this.stageName,
     required this.subStepName,
@@ -33,6 +36,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
   late TextEditingController _actionDescController;
   late TextEditingController _assigneeController;
   late TextEditingController _priorityController;
+  late TextEditingController _disciplineController;
 
   @override
   void initState() {
@@ -43,16 +47,85 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
     _actionDescController = TextEditingController();
     _assigneeController = TextEditingController();
     _priorityController = TextEditingController(text: 'Medium');
+    _disciplineController = TextEditingController();
     _initData();
+  }
+
+  @override
+  void dispose() {
+    _descController.dispose();
+    _notesController.dispose();
+    _engCommentsController.dispose();
+    _actionDescController.dispose();
+    _assigneeController.dispose();
+    _priorityController.dispose();
+    _disciplineController.dispose();
+    super.dispose();
+  }
+
+  Map<String, String> _getDefaultInfo(String name) {
+    const data = {
+      "Define the problem and scope": {
+        "description": "Clarify the core problem the product must solve and for whom by defining use cases, user personas, and operating context, then define what is included in the project and what is explicitly out of scope to prevent feature creep.",
+        "discipline": "Systems Engineering"
+      },
+      "Identify stakeholders and interfaces": {
+        "description": "List all stakeholders including customers, internal departments, regulatory bodies, and suppliers, then identify the products, standards, infrastructure, or software interfaces the system must connect to or remain compatible with.",
+        "discipline": "Systems Engineering"
+      },
+      "Capture user and business needs": {
+        "description": "Gather high-level needs from interviews, workshops, field observations, issue reports, and competitor inputs, then translate them into structured needs such as reduced maintenance effort, faster installation, increased throughput, or compliance with a required standard.",
+        "discipline": "Product Definition"
+      },
+      "Derive functional requirements": {
+        "description": "Convert stakeholder and business needs into functions the system must perform, such as lifting a target load, logging data at a defined interval, or detecting overload and stopping, and define measurable success criteria for each function.",
+        "discipline": "Requirements"
+      },
+      "Define performance and quality targets": {
+        "description": "Specify targets for capacity, speed, efficiency, noise, energy use, lifetime, reliability, MTBF, and define robustness expectations such as temperature, vibration, IP rating, safety integrity, and allowed failure rates.",
+        "discipline": "Requirements"
+      },
+      "Establish constraints and boundaries": {
+        "description": "Document regulatory norms, company standards, safety rules, preferred technologies, material choices, platform reuse rules, and capture business constraints such as target cost, selling price, development budget, milestones, and target markets.",
+        "discipline": "Program Management"
+      },
+      "Non-functional requirements": {
+        "description": "Define usability and service expectations including ergonomics, accessibility, installation time, maintenance intervals, service access, required tools, and operational expectations such as maintainability, diagnostics, data logging, cybersecurity, documentation, and labeling.",
+        "discipline": "Lifecycle Engineering"
+      },
+      "Validation and testability definition": {
+        "description": "For each requirement, define how it will be verified through analysis, simulation, inspection, lab testing, field testing, or certification, and ensure each one is specific, measurable, achievable, relevant, time-bound, and traceable to a validation method.",
+        "discipline": "Verification"
+      },
+      "Requirements document and structure": {
+        "description": "Compile the requirements into a structured Requirements Specification or PRD with sections for scope, stakeholders, functional requirements, non-functional requirements, constraints, and verification, and use requirement IDs and hierarchy such as REQ-001 and REQ-001-a for traceability.",
+        "discipline": "Documentation"
+      },
+      "Review, negotiate, and freeze baseline": {
+        "description": "Hold a requirements review with key stakeholders to check completeness, consistency, conflicts, and feasibility, then resolve unrealistic requests, approve the final set, and baseline it so future changes are handled through change control.",
+        "discipline": "Review Board"
+      },
+      "Sealing interface verified": {
+        "description": "Explain what sealing conditions, materials, and tolerances must be verified for this interface.",
+        "discipline": "Mechanical Design"
+      }
+    };
+    return data[name] ?? {
+      "description": "Record observations, design decisions, tolerance notes, simulation comments, or review outcomes here.",
+      "discipline": "General Engineering"
+    };
   }
 
   Future<void> _initData() async {
     final repo = ref.read(workspaceRepositoryProvider);
     var data = await repo.getWorkspaceById(widget.workspaceId);
     if (data == null) {
+      final defaultInfo = _getDefaultInfo(widget.subStepName);
       data = WorkspaceData(
         id: widget.workspaceId,
         checklistItem: widget.subStepName,
+        itemDescription: defaultInfo['description'] ?? '',
+        discipline: defaultInfo['discipline'] ?? '',
       );
       await repo.saveWorkspace(data);
     }
@@ -66,6 +139,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
         _actionDescController.text = data.actionDescription;
         _assigneeController.text = data.assignee;
         _priorityController.text = data.priority;
+        _disciplineController.text = data.discipline;
         _isLoading = false;
       });
     }
@@ -80,6 +154,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
       actionDescription: _actionDescController.text,
       assignee: _assigneeController.text,
       priority: _priorityController.text,
+      discipline: _disciplineController.text,
     );
     await repo.saveWorkspace(updated);
     setState(() {
@@ -307,6 +382,11 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
   }
 
   Widget _buildAssignmentCard(bool isDark) {
+    final reviewsAsync = ref.watch(designReviewsStreamProvider);
+    final reviews = reviewsAsync.value ?? [];
+    final review = reviews.where((r) => r.id == widget.reviewId).firstOrNull;
+    final hasStakeholders = review != null && review.stakeholders.isNotEmpty;
+
     return _SectionCard(
       title: 'Assignment',
       isDark: isDark,
@@ -314,14 +394,56 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _LabelText('Responsible Person', isDark: isDark),
-          TextField(
-            controller: _assigneeController,
-            style: TextStyle(color: isDark ? Colors.white : Colors.black87),
-            decoration: _boxDecoration('Assignee name...', isDark),
-          ),
+          if (hasStakeholders)
+            DropdownButtonFormField<String>(
+              value: review.stakeholders.any((s) => s.name == _assigneeController.text) && _assigneeController.text.isNotEmpty
+                  ? _assigneeController.text
+                  : null,
+              dropdownColor: isDark ? const Color(0xFF1F2937) : Colors.white,
+              style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+              decoration: _boxDecoration('Select responsible...', isDark),
+              items: review.stakeholders.map((s) => DropdownMenuItem(value: s.name, child: Text(s.name))).toList(),
+              onChanged: (val) {
+                if (val != null) {
+                  final st = review.stakeholders.firstWhere((s) => s.name == val);
+                  setState(() {
+                    _assigneeController.text = val;
+                    _disciplineController.text = st.role;
+                    _currentData = _currentData!.copyWith(
+                      assignee: val,
+                      discipline: st.role,
+                    );
+                  });
+                  _addActivityLog('Assigned responsible person to $val (${st.role})');
+                }
+              },
+            )
+          else
+            TextField(
+              controller: _assigneeController,
+              style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+              decoration: _boxDecoration('Assignee name...', isDark),
+              onChanged: (val) {
+                setState(() {
+                  _currentData = _currentData!.copyWith(assignee: val);
+                });
+              },
+            ),
           const SizedBox(height: 12),
           _LabelText('Discipline', isDark: isDark),
-          _BoxContext(_currentData!.discipline.isEmpty ? 'Not set' : _currentData!.discipline, isDark: isDark), 
+          if (hasStakeholders)
+            _BoxContext(_disciplineController.text.isEmpty ? 'Not set' : _disciplineController.text, isDark: isDark)
+          else
+            TextField(
+              controller: _disciplineController,
+              style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+              decoration: _boxDecoration('Discipline...', isDark),
+              onChanged: (val) {
+                setState(() {
+                  _currentData = _currentData!.copyWith(discipline: val);
+                });
+              },
+            ),
           const SizedBox(height: 12),
           _LabelText('Due Date', isDark: isDark),
           InkWell(
@@ -355,40 +477,29 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
   }
 
   Widget _buildStakeholdersCard(bool isDark) {
+    final reviewsAsync = ref.watch(designReviewsStreamProvider);
+    final reviews = reviewsAsync.value ?? [];
+    final review = reviews.where((r) => r.id == widget.reviewId).firstOrNull;
+    final displayStakeholders = review != null 
+        ? review.stakeholders.map((s) => '${s.name} - ${s.role}').toList()
+        : _currentData!.stakeholders;
+
     return _SectionCard(
-     title: 'Stakeholders',
-     isDark: isDark,
-     child: Column(
-       children: [
-         ...?_currentData?.stakeholders.map((s) => ListTile(
-           title: Text(s, style: TextStyle(fontSize: 14, color: isDark ? Colors.white : Colors.black87)),
-           trailing: IconButton(
-             icon: const Icon(Icons.remove_circle, color: Colors.redAccent, size: 18), 
-             onPressed: (){
-               setState(() {
-                 _currentData = _currentData!.copyWith(
-                   stakeholders: _currentData!.stakeholders.where((x) => x != s).toList()
-                 );
-               });
-               _addActivityLog('Removed stakeholder $s');
-             }
-           ),
-           dense: true,
-         )),
-         TextButton.icon(
-           onPressed: () {
-              setState(() {
-                _currentData = _currentData!.copyWith(
-                   stakeholders: [..._currentData!.stakeholders, 'New Stakeholder']
-                );
-              });
-              _addActivityLog('Added a new stakeholder');
-           },
-           icon: const Icon(Icons.add, color: Color(0xFF006D6A), size: 18), 
-           label: const Text('Add Stakeholder', style: TextStyle(color: Color(0xFF006D6A))),
-         )
-       ]
-     )
+      title: 'Stakeholders',
+      isDark: isDark,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ...displayStakeholders.map((s) => ListTile(
+            leading: const Icon(Icons.person_outline, size: 18, color: Color(0xFF006D6A)),
+            title: Text(s, style: TextStyle(fontSize: 14, color: isDark ? Colors.white : Colors.black87)),
+            dense: true,
+            contentPadding: EdgeInsets.zero,
+          )),
+          if (displayStakeholders.isEmpty)
+            Text('No stakeholders added yet.', style: TextStyle(color: isDark ? Colors.grey[500] : Colors.grey)),
+        ],
+      ),
     );
   }
 

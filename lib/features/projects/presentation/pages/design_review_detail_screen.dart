@@ -91,7 +91,15 @@ class _DesignReviewDetailScreenState extends ConsumerState<DesignReviewDetailScr
       children: [
         Row(
           children: [
-            const Icon(Icons.broken_image_outlined, color: Color(0xFF006D6A), size: 32),
+            Image.asset(
+              'assets/logo.jpeg',
+              height: 32,
+              errorBuilder: (context, error, stackTrace) => const Icon(
+                Icons.broken_image_outlined,
+                color: Color(0xFF006D6A),
+                size: 32,
+              ),
+            ),
             const SizedBox(width: 12),
             Flexible(
               child: Text(
@@ -444,6 +452,7 @@ class _DesignReviewDetailScreenState extends ConsumerState<DesignReviewDetailScr
                 Uri(
                   path: '/workspace/${ss.workspaceId}',
                   queryParameters: {
+                    'reviewId': review.id,
                     'projectName': review.name,
                     'stageName': stage.name,
                     'subStepName': ss.name,

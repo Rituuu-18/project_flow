@@ -39,11 +39,18 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/workspace/:id',
         pageBuilder: (context, state) {
           final id = state.pathParameters['id']!;
+          final reviewId = state.uri.queryParameters['reviewId'] ?? '';
           final projectName = state.uri.queryParameters['projectName'] ?? 'Project';
           final stageName = state.uri.queryParameters['stageName'] ?? 'Stage';
           final subStepName = state.uri.queryParameters['subStepName'] ?? 'Workspace';
           return CustomTransitionPage(
-            child: WorkspaceScreen(workspaceId: id, projectName: projectName, stageName: stageName, subStepName: subStepName),
+            child: WorkspaceScreen(
+              workspaceId: id,
+              reviewId: reviewId,
+              projectName: projectName,
+              stageName: stageName,
+              subStepName: subStepName,
+            ),
             transitionsBuilder: (context, animation, secondaryAnimation, child) =>
                 FadeTransition(opacity: animation, child: child),
           );

@@ -96,11 +96,16 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 final active = filtered.where((r) => r.status != ProjectStatus.completed).toList();
                 final completed = filtered.where((r) => r.status == ProjectStatus.completed).toList();
 
+                final averageProgress = active.isEmpty 
+                    ? 0.0 
+                    : active.fold(0.0, (sum, r) => sum + r.progress) / active.length;
+
                 return SliverList(
                   delegate: SliverChildListDelegate([
+                    _buildMainProgressCard(active, isDark),
                     _buildListSection(
                       title: 'Active Design Reviews',
-                      subtitle: 'PROJECT COMPLETION 0%',
+                      subtitle: 'PROJECT COMPLETION ${(averageProgress * 100).toInt()}%',
                       items: active,
                       isDark: isDark,
                     ),
@@ -134,7 +139,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             Expanded(
               child: Row(
                 children: [
-                  const Icon(Icons.broken_image_outlined, color: Color(0xFF006D6A), size: 32),
+                  Image.asset(
+                    'assets/logo.jpeg',
+                    height: 32,
+                    errorBuilder: (context, error, stackTrace) => const Icon(
+                      Icons.broken_image_outlined,
+                      color: Color(0xFF006D6A),
+                      size: 32,
+                    ),
+                  ),
                   const SizedBox(width: 12),
                   Flexible(
                     child: Text(
@@ -247,27 +260,31 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (review.imageUrl != null)
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Container(
-                    width: 140, 
-                    height: 40, 
-                    color: const Color(0xFF006D6A).withValues(alpha: 0.1),
-                    child: const Center(child: Icon(Icons.image, color: Color(0xFF006D6A))),
-                  ),
-                )
-              else
-                Row(
-                  children: [
-                    Icon(Icons.image_outlined, color: isDark ? Colors.grey[600] : Colors.grey[400], size: 20),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Project preview image', 
-                      style: TextStyle(color: isDark ? Colors.grey[600] : Colors.grey[400], fontSize: 15),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  width: double.infinity,
+                  height: 160,
+                  color: const Color(0xFF006D6A).withValues(alpha: 0.05),
+                  child: Image.asset(
+                    review.imageUrl ?? 'assets/pump-housing.png',
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.image_outlined, color: isDark ? Colors.grey[600] : Colors.grey[400], size: 32),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Project preview image', 
+                            style: TextStyle(color: isDark ? Colors.grey[600] : Colors.grey[400], fontSize: 14),
+                          ),
+                        ],
+                      ),
                     ),
-                  ],
+                  ),
                 ),
+              ),
               const SizedBox(height: 24),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -302,6 +319,38 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       ),
                     ),
                 ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Progress',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: isDark ? Colors.grey[400] : Colors.grey[600],
+                    ),
+                  ),
+                  Text(
+                    '${(review.progress * 100).toInt()}%',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF006D6A),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: review.progress,
+                  minHeight: 6,
+                  backgroundColor: isDark ? Colors.grey[800] : Colors.grey[200],
+                  valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF006D6A)),
+                ),
               ),
               const SizedBox(height: 20),
               _buildStatusDropdown(review, isDark),
@@ -562,6 +611,58 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     } else if (action == 'delete') {
       await ref.read(designReviewNotifierProvider.notifier).deleteReview(review.id);
     }
+  }
+
+  Widget _buildMainProgressCard(List<DesignReview> activeReviews, bool isDark) {
+    if (activeReviews.isEmpty) return const SizedBox.shrink();
+    final averageProgress = activeReviews.fold(0.0, (sum, r) => sum + r.progress) / activeReviews.length;
+    
+    return Container(
+      margin: const EdgeInsets.only(bottom: 32),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1F2937) : const Color(0xFFF3FBFB),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: isDark ? Colors.grey[800]! : const Color(0xFFCCE2E1)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'PROJECT COMPLETION',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.grey[400] : const Color(0xFF006D6A),
+                  letterSpacing: 1.2,
+                ),
+              ),
+              Text(
+                '${(averageProgress * 100).toInt()}%',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white : const Color(0xFF006D6A),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: LinearProgressIndicator(
+              value: averageProgress,
+              minHeight: 10,
+              backgroundColor: isDark ? Colors.grey[800] : const Color(0xFFE0F2F1),
+              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF006D6A)),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
