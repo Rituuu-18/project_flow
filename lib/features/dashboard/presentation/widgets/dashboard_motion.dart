@@ -38,6 +38,8 @@ class _PressScaleState extends State<PressScale> {
 
   @override
   Widget build(BuildContext context) {
+    final disableAnimations =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
     final scale = _isPressed
         ? widget.pressedScale
         : ((_isHovered || _isFocused) && widget.onTap != null
@@ -70,9 +72,11 @@ class _PressScaleState extends State<PressScale> {
           onTapUp: (_) => _setPressed(false),
           child: AnimatedScale(
             scale: scale,
-            duration: _isPressed
-                ? DashboardMotion.pressDuration
-                : DashboardMotion.hoverDuration,
+            duration: disableAnimations
+                ? Duration.zero
+                : (_isPressed
+                      ? DashboardMotion.pressDuration
+                      : DashboardMotion.hoverDuration),
             curve: DashboardMotion.interactionCurve,
             child: RepaintBoundary(child: widget.child),
           ),

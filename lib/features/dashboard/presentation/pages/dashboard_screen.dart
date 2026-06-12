@@ -1,7 +1,7 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
@@ -62,7 +62,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       body: SafeArea(
         bottom: false,
         child: CustomScrollView(
-          scrollCacheExtent: const ScrollCacheExtent.pixels(900),
           slivers: [
             SliverPersistentHeader(
               pinned: true,
@@ -363,6 +362,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       return;
     }
     _entranceScheduled = true;
+    if (MediaQuery.maybeOf(context)?.disableAnimations ?? false) {
+      _entranceController.value = 1;
+      return;
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _entranceController.forward();
     });
@@ -403,6 +406,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       case ReviewCardAction.uploadImage:
         await _uploadImage(review);
         return;
+      case ReviewCardAction.prepareSlide:
+        _prepareSlide(review);
+        return;
       case ReviewCardAction.copy:
         await _copyReview(review);
         return;
@@ -415,19 +421,24 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   Future<void> _uploadImage(DesignReview review) async {
     final file = await ImagePicker().pickImage(
       source: ImageSource.gallery,
-      maxWidth: 1600,
-      imageQuality: 86,
+      maxWidth: 1200,
+      imageQuality: 82,
     );
     if (file == null) return;
 
     final bytes = await file.readAsBytes();
-    final encoded = 'data:image/*;base64,${base64Encode(bytes)}';
+    final base64 = await compute(base64Encode, bytes);
+    final encoded = 'data:image/*;base64,$base64';
     await ref
         .read(designReviewNotifierProvider.notifier)
         .updateReview(
           review.copyWith(imageUrl: encoded, lastUpdated: DateTime.now()),
         );
     _showMessage('Preview image updated');
+  }
+
+  void _prepareSlide(DesignReview review) {
+    _showMessage('${review.name} is ready for the presentation export flow.');
   }
 
   Future<void> _copyReview(DesignReview review) async {

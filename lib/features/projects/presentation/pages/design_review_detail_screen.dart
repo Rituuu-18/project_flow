@@ -68,28 +68,51 @@ class _DesignReviewDetailScreenState
               );
             }
 
-            return SingleChildScrollView(
-              padding: EdgeInsets.symmetric(
-                horizontal: MediaQuery.sizeOf(context).width < 600 ? 16 : 24,
-                vertical: 24,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildHeader(isDark),
-                  const SizedBox(height: 32),
-                  _buildIntroSection(isDark),
-                  const SizedBox(height: 24),
-                  _buildBackButton(isDark),
-                  const SizedBox(height: 32),
-                  _buildStakeholdersSection(review, isDark),
-                  const SizedBox(height: 48),
-                  ...review.stages.asMap().entries.map((e) {
-                    return _buildStageCard(review, e.value, e.key, isDark);
-                  }),
-                  const SizedBox(height: 100),
-                ],
-              ),
+            final horizontalPadding = MediaQuery.sizeOf(context).width < 600
+                ? 16.0
+                : 24.0;
+
+            return CustomScrollView(
+              slivers: [
+                SliverPadding(
+                  padding: EdgeInsets.fromLTRB(
+                    horizontalPadding,
+                    24,
+                    horizontalPadding,
+                    0,
+                  ),
+                  sliver: SliverToBoxAdapter(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildHeader(isDark),
+                        const SizedBox(height: 32),
+                        _buildIntroSection(isDark),
+                        const SizedBox(height: 24),
+                        _buildBackButton(isDark),
+                        const SizedBox(height: 32),
+                        _buildStakeholdersSection(review, isDark),
+                        const SizedBox(height: 48),
+                      ],
+                    ),
+                  ),
+                ),
+                SliverPadding(
+                  padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                  sliver: SliverList.builder(
+                    itemCount: review.stages.length,
+                    itemBuilder: (context, index) => RepaintBoundary(
+                      child: _buildStageCard(
+                        review,
+                        review.stages[index],
+                        index,
+                        isDark,
+                      ),
+                    ),
+                  ),
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 100)),
+              ],
             );
           },
           loading: () => const Center(child: CircularProgressIndicator()),
@@ -472,7 +495,7 @@ class _DesignReviewDetailScreenState
             columnWidths: const {
               0: FlexColumnWidth(2.5),
               1: FlexColumnWidth(1.5),
-              2: IntrinsicColumnWidth(),
+              2: FixedColumnWidth(148),
             },
             defaultVerticalAlignment: TableCellVerticalAlignment.middle,
             children: [

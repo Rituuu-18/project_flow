@@ -166,9 +166,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
       discipline: _disciplineController.text,
     );
     await repo.saveWorkspace(updated);
-    setState(() {
-      _currentData = updated;
-    });
+    _currentData = updated;
   }
 
   void _addActivityLog(String log) {
@@ -523,7 +521,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
               'Low',
             ].map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
             onChanged: (v) {
-              if (v != null) setState(() => _priorityController.text = v);
+              if (v != null) _priorityController.text = v;
             },
           ),
         ],
@@ -543,11 +541,6 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
             controller: _assigneeController,
             style: TextStyle(color: isDark ? Colors.white : Colors.black87),
             decoration: _boxDecoration('Assignee name...', isDark),
-            onChanged: (val) {
-              setState(() {
-                _currentData = _currentData!.copyWith(assignee: val);
-              });
-            },
           ),
           const SizedBox(height: 12),
           _LabelText('Discipline', isDark: isDark),
@@ -555,11 +548,6 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
             controller: _disciplineController,
             style: TextStyle(color: isDark ? Colors.white : Colors.black87),
             decoration: _boxDecoration('Discipline...', isDark),
-            onChanged: (val) {
-              setState(() {
-                _currentData = _currentData!.copyWith(discipline: val);
-              });
-            },
           ),
           const SizedBox(height: 12),
           _LabelText('Due Date', isDark: isDark),
