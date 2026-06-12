@@ -17,12 +17,16 @@ class DesignReviewDetailScreen extends ConsumerStatefulWidget {
   const DesignReviewDetailScreen({super.key, required this.reviewId});
 
   @override
-  ConsumerState<DesignReviewDetailScreen> createState() => _DesignReviewDetailScreenState();
+  ConsumerState<DesignReviewDetailScreen> createState() =>
+      _DesignReviewDetailScreenState();
 }
 
-class _DesignReviewDetailScreenState extends ConsumerState<DesignReviewDetailScreen> {
-  final TextEditingController _stakeholderNameController = TextEditingController();
-  final TextEditingController _stakeholderRoleController = TextEditingController();
+class _DesignReviewDetailScreenState
+    extends ConsumerState<DesignReviewDetailScreen> {
+  final TextEditingController _stakeholderNameController =
+      TextEditingController();
+  final TextEditingController _stakeholderRoleController =
+      TextEditingController();
 
   @override
   void dispose() {
@@ -35,15 +39,19 @@ class _DesignReviewDetailScreenState extends ConsumerState<DesignReviewDetailScr
   Widget build(BuildContext context) {
     final reviewsAsync = ref.watch(designReviewsStreamProvider);
     final themeMode = ref.watch(themeProvider);
-    final isDark = themeMode == ThemeMode.dark || 
-                 (themeMode == ThemeMode.system && MediaQuery.of(context).platformBrightness == Brightness.dark);
+    final isDark =
+        themeMode == ThemeMode.dark ||
+        (themeMode == ThemeMode.system &&
+            MediaQuery.of(context).platformBrightness == Brightness.dark);
 
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF111827) : Colors.white,
       body: SafeArea(
         child: reviewsAsync.when(
           data: (reviews) {
-            final review = reviews.where((r) => r.id == widget.reviewId).firstOrNull;
+            final review = reviews
+                .where((r) => r.id == widget.reviewId)
+                .firstOrNull;
             if (review == null) {
               return Center(
                 child: Column(
@@ -51,14 +59,20 @@ class _DesignReviewDetailScreenState extends ConsumerState<DesignReviewDetailScr
                   children: [
                     const Text('Design Review not found'),
                     const SizedBox(height: 16),
-                    ElevatedButton(onPressed: () => context.pop(), child: const Text('Go Back')),
+                    ElevatedButton(
+                      onPressed: () => context.pop(),
+                      child: const Text('Go Back'),
+                    ),
                   ],
                 ),
               );
             }
 
             return SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+              padding: EdgeInsets.symmetric(
+                horizontal: MediaQuery.sizeOf(context).width < 600 ? 16 : 24,
+                vertical: 24,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -105,8 +119,8 @@ class _DesignReviewDetailScreenState extends ConsumerState<DesignReviewDetailScr
               child: Text(
                 'Design reviews',
                 style: TextStyle(
-                  fontSize: 28, 
-                  fontWeight: FontWeight.bold, 
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
                   color: isDark ? Colors.white : const Color(0xFF1F2937),
                 ),
                 overflow: TextOverflow.ellipsis,
@@ -117,7 +131,11 @@ class _DesignReviewDetailScreenState extends ConsumerState<DesignReviewDetailScr
         const SizedBox(height: 12),
         Text(
           'Track active reviews, open completed records,\nand start a new design review from one place.',
-          style: TextStyle(fontSize: 15, color: isDark ? Colors.grey[400] : Colors.grey[600], height: 1.5),
+          style: TextStyle(
+            fontSize: 15,
+            color: isDark ? Colors.grey[400] : Colors.grey[600],
+            height: 1.5,
+          ),
         ),
       ],
     );
@@ -132,8 +150,8 @@ class _DesignReviewDetailScreenState extends ConsumerState<DesignReviewDetailScr
         Text(
           'Design review steps',
           style: TextStyle(
-            fontSize: 32, 
-            fontWeight: FontWeight.bold, 
+            fontSize: 32,
+            fontWeight: FontWeight.bold,
             color: isDark ? Colors.white : const Color(0xFF1F2937),
           ),
         ),
@@ -141,8 +159,8 @@ class _DesignReviewDetailScreenState extends ConsumerState<DesignReviewDetailScr
         Text(
           'The second page shows the full engineering review lifecycle in sequence so the user can understand the project flow from requirements through continuous improvement.',
           style: TextStyle(
-            fontSize: 16, 
-            color: isDark ? Colors.grey[400] : Colors.grey[600], 
+            fontSize: 16,
+            color: isDark ? Colors.grey[400] : Colors.grey[600],
             height: 1.6,
           ),
         ),
@@ -175,66 +193,104 @@ class _DesignReviewDetailScreenState extends ConsumerState<DesignReviewDetailScr
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1F2937) : const Color(0xFFF9FAFB),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: isDark ? Colors.grey[800]! : Colors.grey[200]!),
+        border: Border.all(
+          color: isDark ? Colors.grey[800]! : Colors.grey[200]!,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final label = Text(
                 'STAKEHOLDERS',
                 style: TextStyle(
-                  fontSize: 12, 
-                  fontWeight: FontWeight.bold, 
-                  color: isDark ? Colors.grey[400] : Colors.grey[500], 
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.grey[400] : Colors.grey[500],
                   letterSpacing: 1.2,
                 ),
-              ),
-              const SizedBox(width: 24),
-              Expanded(
-                child: Column(
-                  children: [
-                    _buildSTField(_stakeholderNameController, 'Stakeholder name', isDark),
-                    const SizedBox(height: 12),
-                    _buildSTField(_stakeholderRoleController, 'Role or discipline', isDark),
-                    const SizedBox(height: 16),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: ElevatedButton(
-                        onPressed: () => _addStakeholder(review),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF006D6A),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          elevation: 0,
+              );
+              final fields = Column(
+                children: [
+                  _buildSTField(
+                    _stakeholderNameController,
+                    'Stakeholder name',
+                    isDark,
+                  ),
+                  const SizedBox(height: 12),
+                  _buildSTField(
+                    _stakeholderRoleController,
+                    'Role or discipline',
+                    isDark,
+                  ),
+                  const SizedBox(height: 16),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: ElevatedButton(
+                      onPressed: () => _addStakeholder(review),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF006D6A),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 14,
                         ),
-                        child: const Text('Add stakeholder', style: TextStyle(fontWeight: FontWeight.bold)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: const Text(
+                        'Add stakeholder',
+                        style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                     ),
-                  ],
-                ),
-              ),
-            ],
+                  ),
+                ],
+              );
+
+              if (constraints.maxWidth < 600) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [label, const SizedBox(height: 16), fields],
+                );
+              }
+
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  label,
+                  const SizedBox(width: 24),
+                  Expanded(child: fields),
+                ],
+              );
+            },
           ),
           if (review.stakeholders.isNotEmpty) ...[
             const SizedBox(height: 24),
             const Divider(),
             const SizedBox(height: 16),
-            ...review.stakeholders.map((s) => Padding(
-              padding: const EdgeInsets.only(bottom: 8.0),
-              child: Row(
-                children: [
-                  const Icon(Icons.person_outline, size: 18, color: Color(0xFF006D6A)),
-                  const SizedBox(width: 8),
-                  Text(
-                    '${s.name} - ${s.role}',
-                    style: TextStyle(color: isDark ? Colors.grey[300] : Colors.black87),
-                  ),
-                ],
-              )),
+            ...review.stakeholders.map(
+              (s) => Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.person_outline,
+                      size: 18,
+                      color: Color(0xFF006D6A),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '${s.name} - ${s.role}',
+                      style: TextStyle(
+                        color: isDark ? Colors.grey[300] : Colors.black87,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ],
         ],
@@ -242,19 +298,31 @@ class _DesignReviewDetailScreenState extends ConsumerState<DesignReviewDetailScr
     );
   }
 
-  Widget _buildSTField(TextEditingController controller, String hint, bool isDark) {
+  Widget _buildSTField(
+    TextEditingController controller,
+    String hint,
+    bool isDark,
+  ) {
     return TextField(
       controller: controller,
       style: TextStyle(color: isDark ? Colors.white : Colors.black87),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: TextStyle(color: isDark ? Colors.grey[600] : Colors.grey[400], fontSize: 16),
+        hintStyle: TextStyle(
+          color: isDark ? Colors.grey[600] : Colors.grey[400],
+          fontSize: 16,
+        ),
         filled: true,
         fillColor: isDark ? const Color(0xFF111827) : Colors.white,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: isDark ? Colors.grey[800]! : Colors.grey[300]!),
+          borderSide: BorderSide(
+            color: isDark ? Colors.grey[800]! : Colors.grey[300]!,
+          ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -264,7 +332,13 @@ class _DesignReviewDetailScreenState extends ConsumerState<DesignReviewDetailScr
     );
   }
 
-  Widget _buildStageCard(DesignReview review, Stage stage, int index, bool isDark) {
+  Widget _buildStageCard(
+    DesignReview review,
+    Stage stage,
+    int index,
+    bool isDark,
+  ) {
+    final isMobile = MediaQuery.sizeOf(context).width < 700;
     return Padding(
       padding: const EdgeInsets.only(bottom: 32),
       child: Column(
@@ -274,69 +348,35 @@ class _DesignReviewDetailScreenState extends ConsumerState<DesignReviewDetailScr
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                margin: const EdgeInsets.only(top: 10),
-                width: 24,
-                height: 24,
+                margin: EdgeInsets.only(top: isMobile ? 7 : 10),
+                width: isMobile ? 16 : 24,
+                height: isMobile ? 16 : 24,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFF006D6A), width: 4),
+                  border: Border.all(
+                    color: const Color(0xFF006D6A),
+                    width: isMobile ? 3 : 4,
+                  ),
                 ),
               ),
-              const SizedBox(width: 20),
+              SizedBox(width: isMobile ? 10 : 20),
               Expanded(
                 child: Container(
-                  padding: const EdgeInsets.all(28),
+                  padding: EdgeInsets.all(isMobile ? 16 : 28),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1F2937).withValues(alpha: 0.5) : const Color(0xFFF9FAFB),
+                    color: isDark
+                        ? const Color(0xFF1F2937).withValues(alpha: 0.5)
+                        : const Color(0xFFF9FAFB),
                     borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: isDark ? Colors.grey[800]! : Colors.grey[200]!),
+                    border: Border.all(
+                      color: isDark ? Colors.grey[800]! : Colors.grey[200]!,
+                    ),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'STEP ${index + 1}',
-                                  style: TextStyle(
-                                    fontSize: 12, 
-                                    fontWeight: FontWeight.bold, 
-                                    color: isDark ? Colors.grey[500] : Colors.grey[400], 
-                                    letterSpacing: 1.2,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  stage.name,
-                                  style: TextStyle(
-                                    fontSize: 28, 
-                                    fontWeight: FontWeight.bold, 
-                                    color: isDark ? Colors.white : const Color(0xFF111827),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            flex: 2,
-                            child: Text(
-                              _getStageDescription(stage.name),
-                              style: TextStyle(
-                                fontSize: 14, 
-                                color: isDark ? Colors.grey[400] : Colors.grey[600],
-                                height: 1.5,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 32),
+                      _buildStageHeading(stage, index, isDark, isMobile),
+                      SizedBox(height: isMobile ? 24 : 32),
                       _buildSubStepsTable(review, stage, isDark),
                     ],
                   ),
@@ -349,35 +389,218 @@ class _DesignReviewDetailScreenState extends ConsumerState<DesignReviewDetailScr
     );
   }
 
-  Widget _buildSubStepsTable(DesignReview review, Stage stage, bool isDark) {
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF111827) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: isDark ? Colors.grey[800]! : Colors.grey[200]!),
+  Widget _buildStageHeading(
+    Stage stage,
+    int index,
+    bool isDark,
+    bool isMobile,
+  ) {
+    final title = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'STEP ${index + 1}',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: isDark ? Colors.grey[500] : Colors.grey[400],
+            letterSpacing: 1.2,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          stage.name,
+          style: TextStyle(
+            fontSize: isMobile ? 24 : 28,
+            fontWeight: FontWeight.bold,
+            color: isDark ? Colors.white : const Color(0xFF111827),
+            height: 1.15,
+          ),
+        ),
+      ],
+    );
+    final description = Text(
+      _getStageDescription(stage.name),
+      style: TextStyle(
+        fontSize: 14,
+        color: isDark ? Colors.grey[400] : Colors.grey[600],
+        height: 1.5,
       ),
-      clipBehavior: Clip.antiAlias,
-      child: Table(
-        columnWidths: const {
-          0: FlexColumnWidth(2.5),
-          1: FlexColumnWidth(1.5),
-          2: IntrinsicColumnWidth(),
-        },
-        defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-        children: [
-          TableRow(
-            decoration: BoxDecoration(
-              color: isDark ? Colors.grey[800]!.withValues(alpha: 0.3) : const Color(0xFFF3F4F6),
+    );
+
+    if (isMobile) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [title, const SizedBox(height: 12), description],
+      );
+    }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: title),
+        const SizedBox(width: 16),
+        Expanded(flex: 2, child: description),
+      ],
+    );
+  }
+
+  Widget _buildSubStepsTable(DesignReview review, Stage stage, bool isDark) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 620) {
+          return Column(
+            children: stage.subSteps
+                .map(
+                  (subStep) =>
+                      _buildMobileSubStepCard(review, stage, subStep, isDark),
+                )
+                .toList(),
+          );
+        }
+
+        return Container(
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF111827) : Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isDark ? Colors.grey[800]! : Colors.grey[200]!,
             ),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Table(
+            columnWidths: const {
+              0: FlexColumnWidth(2.5),
+              1: FlexColumnWidth(1.5),
+              2: IntrinsicColumnWidth(),
+            },
+            defaultVerticalAlignment: TableCellVerticalAlignment.middle,
             children: [
-              _buildTableHeader('SUBSTEP', isDark),
-              _buildTableHeader('STATUS', isDark),
-              _buildTableHeader('ACTION', isDark),
+              TableRow(
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? Colors.grey[800]!.withValues(alpha: 0.3)
+                      : const Color(0xFFF3F4F6),
+                ),
+                children: [
+                  _buildTableHeader('SUBSTEP', isDark),
+                  _buildTableHeader('STATUS', isDark),
+                  _buildTableHeader('ACTION', isDark),
+                ],
+              ),
+              ...stage.subSteps.map(
+                (ss) => _buildSubStepRow(review, stage, ss, isDark),
+              ),
             ],
           ),
-          ...stage.subSteps.map((ss) => _buildSubStepRow(review, stage, ss, isDark)),
+        );
+      },
+    );
+  }
+
+  Widget _buildMobileSubStepCard(
+    DesignReview review,
+    Stage stage,
+    SubStep subStep,
+    bool isDark,
+  ) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF111827) : Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isDark ? Colors.grey[800]! : Colors.grey[200]!,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            subStep.name,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: isDark ? Colors.grey[200] : Colors.grey[800],
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 14),
+          DropdownButtonFormField<StageStatus>(
+            initialValue: subStep.status,
+            isExpanded: true,
+            dropdownColor: isDark ? const Color(0xFF1F2937) : Colors.white,
+            decoration: InputDecoration(
+              labelText: 'Status',
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 10,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            items: const [
+              DropdownMenuItem(
+                value: StageStatus.notStarted,
+                child: Text('Open'),
+              ),
+              DropdownMenuItem(
+                value: StageStatus.inProgress,
+                child: Text('In Progress'),
+              ),
+              DropdownMenuItem(
+                value: StageStatus.completed,
+                child: Text('Completed'),
+              ),
+            ],
+            onChanged: (value) {
+              if (value != null) {
+                _updateSubStepStatus(review, stage, subStep, value);
+              }
+            },
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              onPressed: () => _openWorkspace(review, stage, subStep),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                side: BorderSide(
+                  color: isDark ? Colors.grey[700]! : Colors.grey[400]!,
+                ),
+              ),
+              child: const Text(
+                'Open workspace',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
         ],
       ),
+    );
+  }
+
+  void _openWorkspace(DesignReview review, Stage stage, SubStep subStep) {
+    context.push(
+      Uri(
+        path: '/workspace/${subStep.workspaceId}',
+        queryParameters: {
+          'reviewId': review.id,
+          'projectName': review.name,
+          'stageName': stage.name,
+          'subStepName': subStep.name,
+        },
+      ).toString(),
     );
   }
 
@@ -387,19 +610,28 @@ class _DesignReviewDetailScreenState extends ConsumerState<DesignReviewDetailScr
       child: Text(
         label,
         style: TextStyle(
-          fontSize: 11, 
-          fontWeight: FontWeight.bold, 
-          color: isDark ? Colors.grey[400] : Colors.grey[500], 
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+          color: isDark ? Colors.grey[400] : Colors.grey[500],
           letterSpacing: 1.0,
         ),
       ),
     );
   }
 
-  TableRow _buildSubStepRow(DesignReview review, Stage stage, SubStep ss, bool isDark) {
+  TableRow _buildSubStepRow(
+    DesignReview review,
+    Stage stage,
+    SubStep ss,
+    bool isDark,
+  ) {
     return TableRow(
       decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: isDark ? Colors.grey[800]! : Colors.grey[100]!)),
+        border: Border(
+          bottom: BorderSide(
+            color: isDark ? Colors.grey[800]! : Colors.grey[100]!,
+          ),
+        ),
       ),
       children: [
         Padding(
@@ -407,7 +639,7 @@ class _DesignReviewDetailScreenState extends ConsumerState<DesignReviewDetailScr
           child: Text(
             ss.name,
             style: TextStyle(
-              fontSize: 14, 
+              fontSize: 14,
               color: isDark ? Colors.grey[300] : Colors.grey[800],
               height: 1.3,
             ),
@@ -420,7 +652,9 @@ class _DesignReviewDetailScreenState extends ConsumerState<DesignReviewDetailScr
             decoration: BoxDecoration(
               color: isDark ? Colors.grey[900] : Colors.white,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: isDark ? Colors.grey[800]! : Colors.grey[200]!),
+              border: Border.all(
+                color: isDark ? Colors.grey[800]! : Colors.grey[200]!,
+              ),
             ),
             child: DropdownButtonHideUnderline(
               child: DropdownButton<StageStatus>(
@@ -428,12 +662,28 @@ class _DesignReviewDetailScreenState extends ConsumerState<DesignReviewDetailScr
                 isDense: true,
                 isExpanded: true, // Allow it to fill the column
                 dropdownColor: isDark ? const Color(0xFF1F2937) : Colors.white,
-                icon: Icon(Icons.arrow_drop_down, color: isDark ? Colors.grey[500] : Colors.grey[400], size: 20),
-                style: TextStyle(fontSize: 13, color: isDark ? Colors.white : Colors.black87),
+                icon: Icon(
+                  Icons.arrow_drop_down,
+                  color: isDark ? Colors.grey[500] : Colors.grey[400],
+                  size: 20,
+                ),
+                style: TextStyle(
+                  fontSize: 13,
+                  color: isDark ? Colors.white : Colors.black87,
+                ),
                 items: const [
-                  DropdownMenuItem(value: StageStatus.notStarted, child: Text('Open', overflow: TextOverflow.ellipsis)),
-                  DropdownMenuItem(value: StageStatus.inProgress, child: Text('In Progress', overflow: TextOverflow.ellipsis)),
-                  DropdownMenuItem(value: StageStatus.completed, child: Text('Completed', overflow: TextOverflow.ellipsis)),
+                  DropdownMenuItem(
+                    value: StageStatus.notStarted,
+                    child: Text('Open', overflow: TextOverflow.ellipsis),
+                  ),
+                  DropdownMenuItem(
+                    value: StageStatus.inProgress,
+                    child: Text('In Progress', overflow: TextOverflow.ellipsis),
+                  ),
+                  DropdownMenuItem(
+                    value: StageStatus.completed,
+                    child: Text('Completed', overflow: TextOverflow.ellipsis),
+                  ),
                 ],
                 onChanged: (val) {
                   if (val != null) {
@@ -447,30 +697,22 @@ class _DesignReviewDetailScreenState extends ConsumerState<DesignReviewDetailScr
         Padding(
           padding: const EdgeInsets.all(8),
           child: OutlinedButton(
-            onPressed: () {
-              context.push(
-                Uri(
-                  path: '/workspace/${ss.workspaceId}',
-                  queryParameters: {
-                    'reviewId': review.id,
-                    'projectName': review.name,
-                    'stageName': stage.name,
-                    'subStepName': ss.name,
-                  },
-                ).toString(),
-              );
-            },
+            onPressed: () => _openWorkspace(review, stage, ss),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              side: BorderSide(color: isDark ? Colors.grey[700]! : Colors.grey[400]!),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              side: BorderSide(
+                color: isDark ? Colors.grey[700]! : Colors.grey[400]!,
+              ),
               backgroundColor: isDark ? Colors.transparent : Colors.white,
             ),
             child: Text(
               'Open workspace',
               style: TextStyle(
-                fontSize: 12, 
-                fontWeight: FontWeight.bold, 
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
                 color: isDark ? Colors.grey[200] : const Color(0xFF374151),
               ),
             ),
@@ -490,6 +732,18 @@ class _DesignReviewDetailScreenState extends ConsumerState<DesignReviewDetailScr
         return 'Confirm architecture, interfaces, requirement allocation, and early engineering evidence.';
       case 'Detailed Design Review':
         return 'Verify CAD, drawings, interfaces, materials, analyses, and manufacturability details.';
+      case 'Simulation Review':
+        return 'Review assumptions, load cases, model quality, and correlation plans.';
+      case 'Prototype Review':
+        return 'Check the first physical build, fit, function, and assembly or usability issues.';
+      case 'Testing Validation':
+        return 'Ensure test plans, execution, results, and corrective actions support compliance.';
+      case 'Manufacturing Readiness':
+        return 'Confirm tooling, suppliers, instructions, and process capability for production.';
+      case 'Final Release':
+        return 'Freeze the released configuration and complete cross-functional sign-off.';
+      case 'Continuous Improvement':
+        return 'Focus post-release work on weight, cost, and assembly improvements.';
       default:
         return 'Engineering review and validation for this development phase.';
     }
@@ -497,45 +751,65 @@ class _DesignReviewDetailScreenState extends ConsumerState<DesignReviewDetailScr
 
   void _addStakeholder(DesignReview review) {
     if (_stakeholderNameController.text.isEmpty) return;
-    
+
     final stakeholder = Stakeholder(
       id: const Uuid().v4(),
       name: _stakeholderNameController.text,
       role: _stakeholderRoleController.text,
     );
-    
-    ref.read(designReviewNotifierProvider.notifier).addStakeholder(review.id, stakeholder);
-    
+
+    ref
+        .read(designReviewNotifierProvider.notifier)
+        .addStakeholder(review.id, stakeholder);
+
     _stakeholderNameController.clear();
     _stakeholderRoleController.clear();
     FocusScope.of(context).unfocus();
   }
 
-  void _updateSubStepStatus(DesignReview review, Stage stage, SubStep ss, StageStatus newStatus) {
-    final updatedSubSteps = stage.subSteps.map((s) => s.id == ss.id ? s.copyWith(status: newStatus) : s).toList();
-    
+  void _updateSubStepStatus(
+    DesignReview review,
+    Stage stage,
+    SubStep ss,
+    StageStatus newStatus,
+  ) {
+    final updatedSubSteps = stage.subSteps
+        .map((s) => s.id == ss.id ? s.copyWith(status: newStatus) : s)
+        .toList();
+
     // Calculate progress
-    int completedCount = updatedSubSteps.where((s) => s.status == StageStatus.completed).length;
-    double progress = updatedSubSteps.isEmpty ? 0.0 : completedCount / updatedSubSteps.length;
-    
+    int completedCount = updatedSubSteps
+        .where((s) => s.status == StageStatus.completed)
+        .length;
+    double progress = updatedSubSteps.isEmpty
+        ? 0.0
+        : completedCount / updatedSubSteps.length;
+
     final updatedStage = stage.copyWith(
       subSteps: updatedSubSteps,
       progress: progress,
-      status: progress == 1.0 ? StageStatus.completed : (progress > 0 ? StageStatus.inProgress : StageStatus.notStarted),
+      status: progress == 1.0
+          ? StageStatus.completed
+          : (progress > 0 ? StageStatus.inProgress : StageStatus.notStarted),
     );
-    
-    final updatedStages = review.stages.map((s) => s.id == updatedStage.id ? updatedStage : s).toList();
-    
+
+    final updatedStages = review.stages
+        .map((s) => s.id == updatedStage.id ? updatedStage : s)
+        .toList();
+
     // Overall project progress
     int totalStages = updatedStages.length;
-    double totalProgress = updatedStages.fold(0.0, (sum, s) => sum + s.progress) / totalStages;
+    double totalProgress =
+        updatedStages.fold(0.0, (sum, s) => sum + s.progress) / totalStages;
 
     final updatedReview = review.copyWith(
       stages: updatedStages,
       progress: totalProgress,
-      status: totalProgress == 1.0 ? ProjectStatus.completed : ProjectStatus.active,
+      status: totalProgress == 1.0
+          ? ProjectStatus.completed
+          : ProjectStatus.active,
     );
-    
+
     ref.read(designReviewNotifierProvider.notifier).updateReview(updatedReview);
   }
 }

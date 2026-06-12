@@ -60,6 +60,7 @@ void main() {
 
       expect(find.text('Stakeholders'), findsNothing);
       expect(find.text('Managed by admin'), findsOneWidget);
+      expect(find.text('Back to review page'), findsOneWidget);
       expect(find.text('Admin checklist item'), findsOneWidget);
       expect(find.text('Admin-owned description'), findsOneWidget);
       expect(

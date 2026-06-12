@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:go_router/go_router.dart';
 import 'package:engineering_werk/features/workspace/domain/entities/workspace_data.dart';
 import 'package:engineering_werk/features/workspace/presentation/providers/workspace_provider.dart';
 import 'package:engineering_werk/features/settings/presentation/providers/theme_provider.dart';
@@ -221,6 +222,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
         title: Text(
           '${widget.projectName} / ${widget.stageName}',
           style: const TextStyle(fontSize: 16),
+          overflow: TextOverflow.ellipsis,
         ),
         backgroundColor: isDark ? const Color(0xFF1F2937) : Colors.white,
         foregroundColor: isDark ? Colors.white : Colors.black87,
@@ -247,10 +249,33 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(28),
+        padding: EdgeInsets.all(
+          MediaQuery.sizeOf(context).width < 600 ? 18 : 28,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            OutlinedButton.icon(
+              onPressed: () => context.go('/project/${widget.reviewId}'),
+              icon: const Icon(Icons.arrow_back_rounded, size: 18),
+              label: const Text('Back to review page'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: isDark
+                    ? Colors.grey[200]
+                    : const Color(0xFF374151),
+                side: BorderSide(
+                  color: isDark ? Colors.grey[700]! : Colors.grey[300]!,
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
             Text(
               'Substep workspace',
               style: TextStyle(

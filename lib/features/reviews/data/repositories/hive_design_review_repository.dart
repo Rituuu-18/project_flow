@@ -3,6 +3,7 @@ import '../../../../core/database/hive_models.dart';
 import '../../../../core/database/hive_service.dart';
 import '../../domain/entities/design_review.dart';
 import '../../domain/repositories/design_review_repository.dart';
+import '../../domain/utils/default_stages.dart';
 import '../models/design_review_mapper.dart';
 
 /// Hive-backed implementation of [DesignReviewRepository].
@@ -17,13 +18,19 @@ class HiveDesignReviewRepository implements DesignReviewRepository {
 
   @override
   Future<List<DesignReview>> getAllReviews() async {
-    return _box.values.map((m) => m.toEntity()).toList();
+    return _loadAndUpgradeReviews();
   }
 
   @override
   Future<DesignReview?> getReviewById(String id) async {
     final model = _box.values.where((m) => m.uuid == id).firstOrNull;
-    return model?.toEntity();
+    if (model == null) return null;
+    final review = model.toEntity();
+    final upgraded = _upgradeReview(review);
+    if (upgraded != review) {
+      await _box.put(upgraded.id, upgraded.toHiveModel());
+    }
+    return upgraded;
   }
 
   // ── Write ───────────────────────────────────────────────────────────────
@@ -45,11 +52,31 @@ class HiveDesignReviewRepository implements DesignReviewRepository {
 
   @override
   Stream<List<DesignReview>> watchReviews() async* {
-    // Emit the initial list immediately…
-    yield _box.values.map((m) => m.toEntity()).toList();
-    // …then re-emit on every box change.
+    yield await _loadAndUpgradeReviews();
     await for (final _ in _box.watch()) {
-      yield _box.values.map((m) => m.toEntity()).toList();
+      yield await _loadAndUpgradeReviews();
     }
+  }
+
+  Future<List<DesignReview>> _loadAndUpgradeReviews() async {
+    final reviews = _box.values.map((model) => model.toEntity()).toList();
+    final upgradedReviews = <DesignReview>[];
+
+    for (final review in reviews) {
+      final upgraded = _upgradeReview(review);
+      upgradedReviews.add(upgraded);
+      if (upgraded != review) {
+        await _box.put(upgraded.id, upgraded.toHiveModel());
+      }
+    }
+
+    return upgradedReviews;
+  }
+
+  DesignReview _upgradeReview(DesignReview review) {
+    final upgradedStages = upgradeLegacyDefaultStages(review.stages);
+    return identical(upgradedStages, review.stages)
+        ? review
+        : review.copyWith(stages: upgradedStages);
   }
 }

@@ -1,6 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:engineering_werk/features/reviews/domain/entities/design_review.dart';
 import 'package:engineering_werk/features/reviews/data/models/design_review_mapper.dart';
+import 'package:engineering_werk/features/reviews/domain/entities/stage.dart';
+import 'package:engineering_werk/features/reviews/domain/utils/default_stages.dart';
 import 'package:engineering_werk/core/utils/enums.dart';
 
 void main() {
@@ -26,7 +28,10 @@ void main() {
     });
 
     test('copyWith should return a new instance with updated values', () {
-      final updated = review.copyWith(name: 'Updated Name', status: ProjectStatus.completed);
+      final updated = review.copyWith(
+        name: 'Updated Name',
+        status: ProjectStatus.completed,
+      );
       expect(updated.name, 'Updated Name');
       expect(updated.status, ProjectStatus.completed);
       expect(updated.id, '1'); // remains unchanged
@@ -65,6 +70,52 @@ void main() {
 
       final backToEntity = hiveModel.toEntity();
       expect(backToEntity, equals(review));
+    });
+  });
+
+  group('Default review lifecycle', () {
+    test('contains the complete canonical Step 4-10 checklist', () {
+      final stages = getDefaultStages();
+
+      expect(stages, hasLength(10));
+      expect(stages[3].name, 'Detailed Design Review');
+      expect(stages[3].subSteps, hasLength(10));
+      expect(stages[4].name, 'Simulation Review');
+      expect(stages[4].subSteps, hasLength(10));
+      expect(stages[5].name, 'Prototype Review');
+      expect(stages[5].subSteps, hasLength(10));
+      expect(stages[6].name, 'Testing Validation');
+      expect(stages[6].subSteps, hasLength(10));
+      expect(stages[7].name, 'Manufacturing Readiness');
+      expect(stages[7].subSteps, hasLength(10));
+      expect(stages[8].name, 'Final Release');
+      expect(stages[8].subSteps, hasLength(10));
+      expect(stages[9].name, 'Continuous Improvement');
+      expect(stages[9].subSteps, hasLength(3));
+    });
+
+    test('upgrades the incomplete saved lifecycle', () {
+      final now = DateTime.now();
+      final current = getDefaultStages();
+      final legacy = [
+        ...current.take(4),
+        for (final name in [
+          'Critical Design Review',
+          'Integration & Test Review',
+          'Verification & Validation',
+          'Pre-Production Review',
+          'Production Readiness Review',
+          'Final Release',
+        ])
+          Stage(id: name, name: name, lastUpdated: now),
+      ];
+
+      final upgraded = upgradeLegacyDefaultStages(legacy);
+
+      expect(upgraded[4].name, 'Simulation Review');
+      expect(upgraded[4].subSteps, hasLength(10));
+      expect(upgraded[9].name, 'Continuous Improvement');
+      expect(upgraded[9].subSteps, hasLength(3));
     });
   });
 }
