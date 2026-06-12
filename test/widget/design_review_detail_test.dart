@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:go_router/go_router.dart';
 import 'package:engineering_werk/features/projects/presentation/pages/design_review_detail_screen.dart';
 import 'package:engineering_werk/features/reviews/domain/entities/design_review.dart';
 import 'package:engineering_werk/features/reviews/domain/entities/stage.dart';
@@ -39,6 +40,31 @@ void main() {
         designReviewRepositoryProvider.overrideWithValue(mockRepository),
       ],
       child: MaterialApp(home: DesignReviewDetailScreen(reviewId: reviewId)),
+    );
+  }
+
+  Widget createRoutedTestWidget(String reviewId) {
+    final router = GoRouter(
+      initialLocation: '/project/$reviewId',
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (context, state) =>
+              const Scaffold(body: Text('Dashboard route')),
+        ),
+        GoRoute(
+          path: '/project/:id',
+          builder: (context, state) =>
+              DesignReviewDetailScreen(reviewId: state.pathParameters['id']!),
+        ),
+      ],
+    );
+
+    return ProviderScope(
+      overrides: [
+        designReviewRepositoryProvider.overrideWithValue(mockRepository),
+      ],
+      child: MaterialApp.router(routerConfig: router),
     );
   }
 
@@ -82,6 +108,34 @@ void main() {
     expect(find.text('Design review steps'), findsOneWidget);
     expect(find.text('Requirements'), findsOneWidget);
     expect(find.text('Define scope'), findsOneWidget);
+  });
+
+  testWidgets('Back to Dashboard works from a directly loaded project route', (
+    WidgetTester tester,
+  ) async {
+    final review = DesignReview(
+      id: 'rev-1',
+      name: 'Test Review',
+      owner: 'Admin',
+      discipline: 'Mechanical',
+      createdAt: DateTime.now(),
+      lastUpdated: DateTime.now(),
+    );
+
+    when(
+      () => mockRepository.watchReviews(),
+    ).thenAnswer((_) => Stream.value([review]));
+    when(
+      () => mockRepository.getAllReviews(),
+    ).thenAnswer((_) => Future.value([review]));
+
+    await tester.pumpWidget(createRoutedTestWidget('rev-1'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Back to Dashboard'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Dashboard route'), findsOneWidget);
   });
 
   testWidgets('mobile review layout keeps stage content readable', (

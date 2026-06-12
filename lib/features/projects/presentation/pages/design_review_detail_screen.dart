@@ -60,7 +60,7 @@ class _DesignReviewDetailScreenState
                     const Text('Design Review not found'),
                     const SizedBox(height: 16),
                     ElevatedButton(
-                      onPressed: () => context.pop(),
+                      onPressed: () => context.go('/'),
                       child: const Text('Go Back'),
                     ),
                   ],
@@ -170,7 +170,7 @@ class _DesignReviewDetailScreenState
 
   Widget _buildBackButton(bool isDark) {
     return OutlinedButton(
-      onPressed: () => context.pop(),
+      onPressed: () => context.go('/'),
       style: OutlinedButton.styleFrom(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
