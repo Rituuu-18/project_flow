@@ -9,7 +9,7 @@ import '../../../reviews/domain/entities/design_review.dart';
 import '../theme/dashboard_design.dart';
 import 'dashboard_motion.dart';
 
-enum ReviewCardAction { uploadImage, copy, delete }
+enum ReviewCardAction { uploadImage, prepareSlide, copy, delete }
 
 class PremiumReviewCard extends StatelessWidget {
   const PremiumReviewCard({
@@ -155,6 +155,17 @@ class _ReviewImageState extends State<_ReviewImage> {
 
   @override
   Widget build(BuildContext context) {
+    final devicePixelRatio = MediaQuery.devicePixelRatioOf(context);
+    final imageProvider = _provider == null
+        ? null
+        : ResizeImage.resizeIfNeeded(
+            (480 * devicePixelRatio).round(),
+            (146 * devicePixelRatio).round(),
+            _provider!,
+          );
+    final disableAnimations =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+
     return SizedBox(
       height: 146,
       width: double.infinity,
@@ -162,17 +173,20 @@ class _ReviewImageState extends State<_ReviewImage> {
         decoration: BoxDecoration(
           color: DashboardDesign.offsetSurface(context),
         ),
-        child: _provider == null
+        child: imageProvider == null
             ? const _ImageFallback(hasCustomImage: false)
             : Image(
-                image: _provider!,
+                image: imageProvider,
                 fit: BoxFit.cover,
-                filterQuality: FilterQuality.medium,
+                filterQuality: FilterQuality.low,
+                gaplessPlayback: true,
                 frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
                   if (wasSynchronouslyLoaded) return child;
                   return AnimatedOpacity(
                     opacity: frame == null ? 0 : 1,
-                    duration: const Duration(milliseconds: 280),
+                    duration: disableAnimations
+                        ? Duration.zero
+                        : const Duration(milliseconds: 280),
                     curve: DashboardMotion.interactionCurve,
                     child: child,
                   );
@@ -358,6 +372,13 @@ class _ActionMenu extends StatelessWidget {
         PopupMenuItem(
           value: ReviewCardAction.uploadImage,
           child: _MenuLabel(icon: Icons.image_outlined, label: 'Upload image'),
+        ),
+        PopupMenuItem(
+          value: ReviewCardAction.prepareSlide,
+          child: _MenuLabel(
+            icon: Icons.slideshow_outlined,
+            label: 'Prepare slide',
+          ),
         ),
         PopupMenuItem(
           value: ReviewCardAction.copy,

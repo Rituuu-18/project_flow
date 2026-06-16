@@ -41,7 +41,7 @@ void main() {
 
   testWidgets('Dashboard shows empty state when no reviews', (tester) async {
     await tester.pumpWidget(createTestWidget());
-    await tester.pump(); // Handle loading state
+    await tester.pumpAndSettle();
 
     expect(find.text('No Design Reviews yet.'), findsOneWidget);
     expect(find.text('Click the button above to start one.'), findsOneWidget);
@@ -64,11 +64,48 @@ void main() {
     ).thenAnswer((_) => Stream.value(reviews));
 
     await tester.pumpWidget(createTestWidget());
-    await tester.pump();
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, -500));
+    await tester.pumpAndSettle();
 
     expect(find.text('Active Design Reviews'), findsOneWidget);
     expect(find.text('Pump Housing Rev C'), findsOneWidget);
     expect(find.textContaining('Owner: Sunil'), findsOneWidget);
+  });
+
+  testWidgets('Review menu can prepare a slide', (tester) async {
+    final review = DesignReview(
+      id: '1',
+      name: 'Pump Housing Rev C',
+      owner: 'Sunil',
+      discipline: 'Mechanical',
+      createdAt: DateTime.now(),
+      lastUpdated: DateTime.now(),
+    );
+
+    when(
+      () => mockRepo.watchReviews(),
+    ).thenAnswer((_) => Stream.value([review]));
+
+    await tester.pumpWidget(createTestWidget());
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, -500));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('More actions for Pump Housing Rev C'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Prepare slide'), findsOneWidget);
+
+    await tester.tap(find.text('Prepare slide'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Pump Housing Rev C is ready for the presentation export flow.',
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('Dialog should appear and allow creating a review', (
@@ -85,7 +122,7 @@ void main() {
 
     // Verify Dialog titles
     expect(find.text('CREATE DESIGN REVIEW'), findsOneWidget);
-    expect(find.text('New Design Review'), findsOneWidget);
+    expect(find.text('New Design Review'), findsWidgets);
 
     // Enter data
     await tester.enterText(
@@ -102,7 +139,9 @@ void main() {
     );
 
     // Click Create
-    await tester.tap(find.text('Create'));
+    final createButton = find.text('Create');
+    await tester.ensureVisible(createButton);
+    await tester.tap(createButton);
     await tester.pumpAndSettle();
 
     // Verify repository was called

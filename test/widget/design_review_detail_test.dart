@@ -178,13 +178,18 @@ void main() {
 
     await tester.pumpWidget(createTestWidget('rev-1'));
     await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(find.text('Detailed Design Review'), 300);
+    final subStepFinder = find.text(
+      'Detailed design documentation ready for release review',
+    );
+    await tester.scrollUntilVisible(
+      subStepFinder,
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pump();
 
     expect(find.text('Detailed Design Review'), findsOneWidget);
-    expect(
-      find.text('Detailed design documentation ready for release review'),
-      findsOneWidget,
-    );
+    expect(subStepFinder, findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -192,7 +197,9 @@ void main() {
     WidgetTester tester,
   ) async {
     tester.view.physicalSize = const Size(1200, 1200);
+    tester.view.devicePixelRatio = 1.0;
     addTearDown(() => tester.view.resetPhysicalSize());
+    addTearDown(() => tester.view.resetDevicePixelRatio());
 
     final review = DesignReview(
       id: 'rev-1',
@@ -218,10 +225,7 @@ void main() {
     await tester.pump();
 
     // Scroll to see stakeholders if needed
-    await tester.drag(
-      find.byType(SingleChildScrollView),
-      const Offset(0, -200),
-    );
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, -200));
     await tester.pump();
 
     await tester.enterText(find.byType(TextField).first, 'John Doe');
@@ -236,7 +240,9 @@ void main() {
     WidgetTester tester,
   ) async {
     tester.view.physicalSize = const Size(1200, 1200);
+    tester.view.devicePixelRatio = 1.0;
     addTearDown(() => tester.view.resetPhysicalSize());
+    addTearDown(() => tester.view.resetDevicePixelRatio());
 
     final review = DesignReview(
       id: 'rev-1',
@@ -275,14 +281,11 @@ void main() {
     await tester.pumpWidget(createTestWidget('rev-1'));
     await tester.pump();
 
-    // Scroll down to the table
-    await tester.drag(
-      find.byType(SingleChildScrollView),
-      const Offset(0, -600),
-    );
+    final statusDropdown = find.byType(DropdownButton<StageStatus>);
+    expect(statusDropdown, findsOneWidget);
+    await tester.ensureVisible(statusDropdown);
     await tester.pump();
-
-    await tester.tap(find.text('Open'));
+    await tester.tap(statusDropdown);
     await tester.pumpAndSettle();
 
     // Select 'Completed' from dropdown
@@ -290,5 +293,58 @@ void main() {
     await tester.pumpAndSettle();
 
     verify(() => mockRepository.saveReview(any())).called(1);
+  });
+
+  testWidgets('long review lifecycles build stages lazily', (tester) async {
+    tester.view.physicalSize = const Size(412, 700);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() => tester.view.resetPhysicalSize());
+    addTearDown(() => tester.view.resetDevicePixelRatio());
+
+    final stages = List.generate(
+      30,
+      (index) => Stage(
+        id: 'stage-$index',
+        name: 'Lifecycle stage $index',
+        lastUpdated: DateTime.now(),
+        subSteps: [
+          SubStep(
+            id: 'substep-$index',
+            name: 'Substep $index',
+            workspaceId: 'workspace-$index',
+          ),
+        ],
+      ),
+    );
+    final review = DesignReview(
+      id: 'rev-1',
+      name: 'Large Review',
+      owner: 'Admin',
+      discipline: 'Mechanical',
+      createdAt: DateTime.now(),
+      lastUpdated: DateTime.now(),
+      stages: stages,
+    );
+
+    when(
+      () => mockRepository.watchReviews(),
+    ).thenAnswer((_) => Stream.value([review]));
+    when(
+      () => mockRepository.getAllReviews(),
+    ).thenAnswer((_) => Future.value([review]));
+
+    await tester.pumpWidget(createTestWidget('rev-1'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Lifecycle stage 29'), findsNothing);
+
+    await tester.scrollUntilVisible(
+      find.text('Lifecycle stage 29'),
+      700,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pump();
+
+    expect(find.text('Lifecycle stage 29'), findsOneWidget);
   });
 }
