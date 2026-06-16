@@ -7,14 +7,12 @@ class PortfolioSummary extends StatelessWidget {
   const PortfolioSummary({
     required this.averageProgress,
     required this.activeCount,
-    required this.pendingCount,
     required this.completedCount,
     super.key,
   });
 
   final double averageProgress;
   final int activeCount;
-  final int pendingCount;
   final int completedCount;
 
   @override
@@ -40,7 +38,6 @@ class PortfolioSummary extends StatelessWidget {
                   const SizedBox(height: 18),
                   _MetricRow(
                     activeCount: activeCount,
-                    pendingCount: pendingCount,
                     completedCount: completedCount,
                   ),
                 ],
@@ -64,7 +61,6 @@ class PortfolioSummary extends StatelessWidget {
                     flex: 2,
                     child: _MetricRow(
                       activeCount: activeCount,
-                      pendingCount: pendingCount,
                       completedCount: completedCount,
                     ),
                   ),
@@ -140,12 +136,10 @@ class _ProgressSummary extends StatelessWidget {
 class _MetricRow extends StatelessWidget {
   const _MetricRow({
     required this.activeCount,
-    required this.pendingCount,
     required this.completedCount,
   });
 
   final int activeCount;
-  final int pendingCount;
   final int completedCount;
 
   @override
@@ -154,9 +148,6 @@ class _MetricRow extends StatelessWidget {
       children: [
         Expanded(
           child: _Metric(value: activeCount, label: 'Active'),
-        ),
-        Expanded(
-          child: _Metric(value: pendingCount, label: 'Pending'),
         ),
         Expanded(
           child: _Metric(value: completedCount, label: 'Complete'),

@@ -68,28 +68,47 @@ class _DesignReviewDetailScreenState
               );
             }
 
-            return SingleChildScrollView(
-              padding: EdgeInsets.symmetric(
-                horizontal: MediaQuery.sizeOf(context).width < 600 ? 16 : 24,
-                vertical: 24,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildHeader(isDark),
-                  const SizedBox(height: 32),
-                  _buildIntroSection(isDark),
-                  const SizedBox(height: 24),
-                  _buildBackButton(isDark),
-                  const SizedBox(height: 32),
-                  _buildStakeholdersSection(review, isDark),
-                  const SizedBox(height: 48),
-                  ...review.stages.asMap().entries.map((e) {
-                    return _buildStageCard(review, e.value, e.key, isDark);
-                  }),
-                  const SizedBox(height: 100),
-                ],
-              ),
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    MediaQuery.sizeOf(context).width < 600 ? 16 : 24,
+                    24,
+                    MediaQuery.sizeOf(context).width < 600 ? 16 : 24,
+                    0,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildHeader(isDark),
+                      const SizedBox(height: 32),
+                      _buildIntroSection(isDark),
+                      const SizedBox(height: 24),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: MediaQuery.sizeOf(context).width < 600 ? 16 : 24,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildBackButton(isDark),
+                        const SizedBox(height: 32),
+                        _buildStakeholdersSection(review, isDark),
+                        const SizedBox(height: 48),
+                        ...review.stages.asMap().entries.map((e) {
+                          return _buildStageCard(review, e.value, e.key, isDark);
+                        }),
+                        const SizedBox(height: 100),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             );
           },
           loading: () => const Center(child: CircularProgressIndicator()),
@@ -128,15 +147,6 @@ class _DesignReviewDetailScreenState
             ),
           ],
         ),
-        const SizedBox(height: 12),
-        Text(
-          'Track active reviews, open completed records,\nand start a new design review from one place.',
-          style: TextStyle(
-            fontSize: 15,
-            color: isDark ? Colors.grey[400] : Colors.grey[600],
-            height: 1.5,
-          ),
-        ),
       ],
     );
   }
@@ -153,15 +163,6 @@ class _DesignReviewDetailScreenState
             fontSize: 32,
             fontWeight: FontWeight.bold,
             color: isDark ? Colors.white : const Color(0xFF1F2937),
-          ),
-        ),
-        const SizedBox(height: 16),
-        Text(
-          'The second page shows the full engineering review lifecycle in sequence so the user can understand the project flow from requirements through continuous improvement.',
-          style: TextStyle(
-            fontSize: 16,
-            color: isDark ? Colors.grey[400] : Colors.grey[600],
-            height: 1.6,
           ),
         ),
       ],

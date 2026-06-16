@@ -32,20 +32,16 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
   bool _isLoading = true;
 
   late TextEditingController _notesController;
-  late TextEditingController _engCommentsController;
   late TextEditingController _actionDescController;
   late TextEditingController _assigneeController;
-  late TextEditingController _priorityController;
   late TextEditingController _disciplineController;
 
   @override
   void initState() {
     super.initState();
     _notesController = TextEditingController();
-    _engCommentsController = TextEditingController();
     _actionDescController = TextEditingController();
     _assigneeController = TextEditingController();
-    _priorityController = TextEditingController(text: 'Medium');
     _disciplineController = TextEditingController();
     _initData();
   }
@@ -53,10 +49,8 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
   @override
   void dispose() {
     _notesController.dispose();
-    _engCommentsController.dispose();
     _actionDescController.dispose();
     _assigneeController.dispose();
-    _priorityController.dispose();
     _disciplineController.dispose();
     super.dispose();
   }
@@ -65,58 +59,53 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
     const data = {
       "Define the problem and scope": {
         "description":
-            "Clarify the core problem the product must solve and for whom by defining use cases, user personas, and operating context, then define what is included in the project and what is explicitly out of scope to prevent feature creep.",
+            "Clarify the core problem the product must solve and for whom (use cases, user personas, operating context). Define the scope: what is included in this project and what is explicitly out of scope to prevent feature creep.",
         "discipline": "Systems Engineering",
       },
       "Identify stakeholders and interfaces": {
         "description":
-            "List all stakeholders including customers, internal departments, regulatory bodies, and suppliers, then identify the products, standards, infrastructure, or software interfaces the system must connect to or remain compatible with.",
+            "List all stakeholders: customers, internal departments (design, testing, manufacturing, service), regulatory bodies, suppliers. Identify system interfaces: other products, standards, infrastructure, or software that this product must connect to or be compatible with.",
         "discipline": "Systems Engineering",
       },
       "Capture user and business needs": {
         "description":
-            "Gather high-level needs from interviews, workshops, field observations, issue reports, and competitor inputs, then translate them into structured needs such as reduced maintenance effort, faster installation, increased throughput, or compliance with a required standard.",
+            "Gather high‑level needs from stakeholders (interviews, workshops, field observations, existing issue reports, competitor analysis). Translate these into structured needs such as “improve installation time”, “reduce maintenance effort”, “increase throughput”, “comply with standard XYZ”",
         "discipline": "Product Definition",
       },
       "Derive functional requirements": {
         "description":
-            "Convert stakeholder and business needs into functions the system must perform, such as lifting a target load, logging data at a defined interval, or detecting overload and stopping, and define measurable success criteria for each function.",
+            "Convert needs into functions: what the system must do (e.g., “lift 500 kg load vertically”, “log data every 1 s”, “detect overload and stop”). For each function, define clear success criteria (e.g., range, accuracy, response time) so it can be tested later.",
         "discipline": "Requirements",
       },
       "Define performance and quality targets": {
         "description":
-            "Specify targets for capacity, speed, efficiency, noise, energy use, lifetime, reliability, MTBF, and define robustness expectations such as temperature, vibration, IP rating, safety integrity, and allowed failure rates.",
+            "Specify performance requirements: capacities, speeds, efficiencies, noise levels, energy consumption, lifetime, reliability targets, MTBF, etc. Define quality and robustness expectations: environmental conditions (temperature, vibration, IP rating), safety integrity levels, allowed failure rates.",
         "discipline": "Requirements",
       },
       "Establish constraints and boundaries": {
         "description":
-            "Document regulatory norms, company standards, safety rules, preferred technologies, material choices, platform reuse rules, and capture business constraints such as target cost, selling price, development budget, milestones, and target markets.",
+            "Document constraints: regulatory norms, company standards, safety rules, available technologies, preferred materials, and platform reuse. Capture business constraints: target cost, selling price, development budget, schedule milestones, target markets.",
         "discipline": "Program Management",
       },
       "Non-functional requirements": {
         "description":
-            "Define usability and service expectations including ergonomics, accessibility, installation time, maintenance intervals, service access, required tools, and operational expectations such as maintainability, diagnostics, data logging, cybersecurity, documentation, and labeling.",
+            "Usability and service: ergonomics, accessibility, installation time, maintenance intervals, service access, required tools. Operational aspects: reliability, maintainability, diagnostics, data logging, cybersecurity (for connected products), documentation and labeling.",
         "discipline": "Lifecycle Engineering",
       },
       "Validation and testability definition": {
         "description":
-            "For each requirement, define how it will be verified through analysis, simulation, inspection, lab testing, field testing, or certification, and ensure each one is specific, measurable, achievable, relevant, time-bound, and traceable to a validation method.",
+            "For each requirement, define how it will be verified: analysis, simulation, inspection, or test (lab test, field test, certification). Ensure every requirement is SMART: specific, measurable, achievable, relevant, time‑bound, and traceable to a validation method.",
         "discipline": "Verification",
       },
       "Requirements document and structure": {
         "description":
-            "Compile the requirements into a structured Requirements Specification or PRD with sections for scope, stakeholders, functional requirements, non-functional requirements, constraints, and verification, and use requirement IDs and hierarchy such as REQ-001 and REQ-001-a for traceability.",
+            "Compile everything into a structured Requirements Specification or PRD: introduction, scope, stakeholders, functional, non‑functional, constraints, and verification section. Use IDs and a hierarchy (e.g., REQ‑001, REQ‑001‑a) so you can trace each requirement through design, tests, and changes later.",
         "discipline": "Documentation",
       },
       "Review, negotiate, and freeze baseline": {
         "description":
-            "Hold a requirements review with key stakeholders to check completeness, consistency, conflicts, and feasibility, then resolve unrealistic requests, approve the final set, and baseline it so future changes are handled through change control.",
+            "Hold a Requirements Review with key stakeholders to check completeness, consistency, conflicts, and feasibility. Resolve conflicts, adjust unrealistic requests, then approve and “baseline” the requirements; after this point, changes go through a change‑control process.",
         "discipline": "Review Board",
-      },
-      "Sealing interface verified": {
-        "description":
-            "Explain what sealing conditions, materials, and tolerances must be verified for this interface.",
-        "discipline": "Mechanical Design",
       },
     };
     return data[name] ??
@@ -145,10 +134,8 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
       setState(() {
         _currentData = data;
         _notesController.text = data!.notes;
-        _engCommentsController.text = data.engineeringComments;
         _actionDescController.text = data.actionDescription;
         _assigneeController.text = data.assignee;
-        _priorityController.text = data.priority;
         _disciplineController.text = data.discipline;
         _isLoading = false;
       });
@@ -159,10 +146,8 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
     final repo = ref.read(workspaceRepositoryProvider);
     final updated = _currentData!.copyWith(
       notes: _notesController.text,
-      engineeringComments: _engCommentsController.text,
       actionDescription: _actionDescController.text,
       assignee: _assigneeController.text,
-      priority: _priorityController.text,
       discipline: _disciplineController.text,
     );
     await repo.saveWorkspace(updated);
@@ -394,14 +379,6 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
             style: TextStyle(color: isDark ? Colors.white : Colors.black87),
             decoration: _boxDecoration('Enter notes...', isDark),
           ),
-          const SizedBox(height: 16),
-          _LabelText('Engineering Comments', isDark: isDark),
-          TextField(
-            controller: _engCommentsController,
-            maxLines: 4,
-            style: TextStyle(color: isDark ? Colors.white : Colors.black87),
-            decoration: _boxDecoration('Enter engineering comments...', isDark),
-          ),
         ],
       ),
     );
@@ -509,22 +486,6 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
             controller: _actionDescController,
             style: TextStyle(color: isDark ? Colors.white : Colors.black87),
             decoration: _boxDecoration('Describe action...', isDark),
-          ),
-          const SizedBox(height: 16),
-          _LabelText('Priority', isDark: isDark),
-          DropdownButtonFormField<String>(
-            initialValue: _priorityController.text,
-            dropdownColor: isDark ? const Color(0xFF1F2937) : Colors.white,
-            style: TextStyle(color: isDark ? Colors.white : Colors.black87),
-            decoration: _boxDecoration('', isDark),
-            items: [
-              'High',
-              'Medium',
-              'Low',
-            ].map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
-            onChanged: (v) {
-              if (v != null) setState(() => _priorityController.text = v);
-            },
           ),
         ],
       ),

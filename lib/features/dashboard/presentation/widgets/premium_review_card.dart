@@ -309,10 +309,6 @@ class _StatusMenu extends StatelessWidget {
       onSelected: onChanged,
       itemBuilder: (context) => const [
         PopupMenuItem(value: ProjectStatus.active, child: Text('In Progress')),
-        PopupMenuItem(
-          value: ProjectStatus.reviewPending,
-          child: Text('Review Pending'),
-        ),
         PopupMenuItem(value: ProjectStatus.completed, child: Text('Completed')),
       ],
       child: Align(

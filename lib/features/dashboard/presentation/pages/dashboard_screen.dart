@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
@@ -62,7 +61,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       body: SafeArea(
         bottom: false,
         child: CustomScrollView(
-          scrollCacheExtent: const ScrollCacheExtent.pixels(900),
+          cacheExtent: 900,
           slivers: [
             SliverPersistentHeader(
               pinned: true,
@@ -146,12 +145,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                           (sum, review) => sum + review.progress,
                         ) /
                         active.length;
-              final pendingCount = active
-                  .where(
-                    (review) => review.status == ProjectStatus.reviewPending,
-                  )
-                  .length;
-
               return SliverMainAxisGroup(
                 slivers: [
                   SliverToBoxAdapter(
@@ -166,7 +159,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                         child: PortfolioSummary(
                           averageProgress: averageProgress,
                           activeCount: active.length,
-                          pendingCount: pendingCount,
                           completedCount: completed.length,
                         ),
                       ),
