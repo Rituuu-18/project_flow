@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:go_router/go_router.dart';
+import 'package:engineering_werk/features/dashboard/presentation/theme/dashboard_design.dart';
+import 'package:engineering_werk/features/reviews/domain/utils/default_stages.dart';
 import 'package:engineering_werk/features/workspace/domain/entities/workspace_data.dart';
 import 'package:engineering_werk/features/workspace/presentation/providers/workspace_provider.dart';
 import 'package:engineering_werk/features/settings/presentation/providers/theme_provider.dart';
@@ -32,7 +34,9 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
   bool _isLoading = true;
 
   late TextEditingController _notesController;
+  late TextEditingController _engineeringCommentsController;
   late TextEditingController _actionDescController;
+  late TextEditingController _priorityController;
   late TextEditingController _assigneeController;
   late TextEditingController _disciplineController;
 
@@ -40,7 +44,9 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
   void initState() {
     super.initState();
     _notesController = TextEditingController();
+    _engineeringCommentsController = TextEditingController();
     _actionDescController = TextEditingController();
+    _priorityController = TextEditingController();
     _assigneeController = TextEditingController();
     _disciplineController = TextEditingController();
     _initData();
@@ -49,92 +55,68 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
   @override
   void dispose() {
     _notesController.dispose();
+    _engineeringCommentsController.dispose();
     _actionDescController.dispose();
+    _priorityController.dispose();
     _assigneeController.dispose();
     _disciplineController.dispose();
     super.dispose();
   }
 
-  Map<String, String> _getDefaultInfo(String name) {
-    const data = {
-      "Define the problem and scope": {
-        "description":
-            "Clarify the core problem the product must solve and for whom (use cases, user personas, operating context). Define the scope: what is included in this project and what is explicitly out of scope to prevent feature creep.",
-        "discipline": "Systems Engineering",
-      },
-      "Identify stakeholders and interfaces": {
-        "description":
-            "List all stakeholders: customers, internal departments (design, testing, manufacturing, service), regulatory bodies, suppliers. Identify system interfaces: other products, standards, infrastructure, or software that this product must connect to or be compatible with.",
-        "discipline": "Systems Engineering",
-      },
-      "Capture user and business needs": {
-        "description":
-            "Gather high‑level needs from stakeholders (interviews, workshops, field observations, existing issue reports, competitor analysis). Translate these into structured needs such as “improve installation time”, “reduce maintenance effort”, “increase throughput”, “comply with standard XYZ”",
-        "discipline": "Product Definition",
-      },
-      "Derive functional requirements": {
-        "description":
-            "Convert needs into functions: what the system must do (e.g., “lift 500 kg load vertically”, “log data every 1 s”, “detect overload and stop”). For each function, define clear success criteria (e.g., range, accuracy, response time) so it can be tested later.",
-        "discipline": "Requirements",
-      },
-      "Define performance and quality targets": {
-        "description":
-            "Specify performance requirements: capacities, speeds, efficiencies, noise levels, energy consumption, lifetime, reliability targets, MTBF, etc. Define quality and robustness expectations: environmental conditions (temperature, vibration, IP rating), safety integrity levels, allowed failure rates.",
-        "discipline": "Requirements",
-      },
-      "Establish constraints and boundaries": {
-        "description":
-            "Document constraints: regulatory norms, company standards, safety rules, available technologies, preferred materials, and platform reuse. Capture business constraints: target cost, selling price, development budget, schedule milestones, target markets.",
-        "discipline": "Program Management",
-      },
-      "Non-functional requirements": {
-        "description":
-            "Usability and service: ergonomics, accessibility, installation time, maintenance intervals, service access, required tools. Operational aspects: reliability, maintainability, diagnostics, data logging, cybersecurity (for connected products), documentation and labeling.",
-        "discipline": "Lifecycle Engineering",
-      },
-      "Validation and testability definition": {
-        "description":
-            "For each requirement, define how it will be verified: analysis, simulation, inspection, or test (lab test, field test, certification). Ensure every requirement is SMART: specific, measurable, achievable, relevant, time‑bound, and traceable to a validation method.",
-        "discipline": "Verification",
-      },
-      "Requirements document and structure": {
-        "description":
-            "Compile everything into a structured Requirements Specification or PRD: introduction, scope, stakeholders, functional, non‑functional, constraints, and verification section. Use IDs and a hierarchy (e.g., REQ‑001, REQ‑001‑a) so you can trace each requirement through design, tests, and changes later.",
-        "discipline": "Documentation",
-      },
-      "Review, negotiate, and freeze baseline": {
-        "description":
-            "Hold a Requirements Review with key stakeholders to check completeness, consistency, conflicts, and feasibility. Resolve conflicts, adjust unrealistic requests, then approve and “baseline” the requirements; after this point, changes go through a change‑control process.",
-        "discipline": "Review Board",
-      },
-    };
-    return data[name] ??
-        {
-          "description":
-              "Record observations, design decisions, tolerance notes, simulation comments, or review outcomes here.",
-          "discipline": "General Engineering",
-        };
-  }
-
   Future<void> _initData() async {
     final repo = ref.read(workspaceRepositoryProvider);
     var data = await repo.getWorkspaceById(widget.workspaceId);
+    final defaultInfo = getDefaultSubStepInfo(
+      stageName: widget.stageName,
+      subStepName: widget.subStepName,
+    );
+    final hasCanonicalInfo =
+        defaultStageContent[widget.stageName]?.subSteps.containsKey(
+              widget.subStepName,
+            ) ??
+            false;
     if (data == null) {
-      final defaultInfo = _getDefaultInfo(widget.subStepName);
       data = WorkspaceData(
         id: widget.workspaceId,
         checklistItem: widget.subStepName,
-        itemDescription: defaultInfo['description'] ?? '',
-        discipline: defaultInfo['discipline'] ?? '',
+        itemDescription: defaultInfo.description,
+        discipline: defaultInfo.discipline,
       );
       await repo.saveWorkspace(data);
+    } else {
+      final shouldRefreshAdminFields = hasCanonicalInfo &&
+          (data.checklistItem != widget.subStepName ||
+              data.itemDescription != defaultInfo.description);
+      final shouldFillChecklistItem =
+          !hasCanonicalInfo && data.checklistItem.trim().isEmpty;
+      final shouldFillDiscipline =
+          data.discipline.trim().isEmpty && defaultInfo.discipline.isNotEmpty;
+
+      if (shouldRefreshAdminFields ||
+          shouldFillChecklistItem ||
+          shouldFillDiscipline) {
+        data = data.copyWith(
+          checklistItem: shouldRefreshAdminFields || shouldFillChecklistItem
+              ? widget.subStepName
+              : data.checklistItem,
+          itemDescription: shouldRefreshAdminFields
+              ? defaultInfo.description
+              : data.itemDescription,
+          discipline: shouldFillDiscipline
+              ? defaultInfo.discipline
+              : data.discipline,
+        );
+        await repo.saveWorkspace(data);
+      }
     }
 
     if (mounted) {
       setState(() {
         _currentData = data;
         _notesController.text = data!.notes;
+        _engineeringCommentsController.text = data.engineeringComments;
         _actionDescController.text = data.actionDescription;
+        _priorityController.text = data.priority;
         _assigneeController.text = data.assignee;
         _disciplineController.text = data.discipline;
         _isLoading = false;
@@ -146,7 +128,9 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
     final repo = ref.read(workspaceRepositoryProvider);
     final updated = _currentData!.copyWith(
       notes: _notesController.text,
+      engineeringComments: _engineeringCommentsController.text,
       actionDescription: _actionDescController.text,
+      priority: _priorityController.text,
       assignee: _assigneeController.text,
       discipline: _disciplineController.text,
     );
@@ -198,125 +182,129 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
             MediaQuery.of(context).platformBrightness == Brightness.dark);
 
     return Scaffold(
-      backgroundColor: isDark
-          ? const Color(0xFF111827)
-          : const Color(0xFFF9F8F5),
-      appBar: AppBar(
-        title: Text(
-          '${widget.projectName} / ${widget.stageName}',
-          style: const TextStyle(fontSize: 16),
-          overflow: TextOverflow.ellipsis,
-        ),
-        backgroundColor: isDark ? const Color(0xFF1F2937) : Colors.white,
-        foregroundColor: isDark ? Colors.white : Colors.black87,
-        elevation: 0,
-        actions: [
-          TextButton.icon(
-            onPressed: () async {
-              await _saveData();
-              if (!context.mounted) return;
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Progress Saved'),
-                  backgroundColor: Color(0xFF006D6A),
-                ),
-              );
-            },
-            icon: const Icon(Icons.save, color: Color(0xFF006D6A), size: 20),
-            label: const Text(
-              'Save Progress',
-              style: TextStyle(color: Color(0xFF006D6A)),
-            ),
-          ),
-          const SizedBox(width: 16),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(
-          MediaQuery.sizeOf(context).width < 600 ? 18 : 28,
-        ),
+      backgroundColor: DashboardDesign.canvas(context),
+      body: SafeArea(
+        bottom: false,
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            OutlinedButton.icon(
-              onPressed: () => context.go('/project/${widget.reviewId}'),
-              icon: const Icon(Icons.arrow_back_rounded, size: 18),
-              label: const Text('Back to review page'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: isDark
-                    ? Colors.grey[200]
-                    : const Color(0xFF374151),
-                side: BorderSide(
-                  color: isDark ? Colors.grey[700]! : Colors.grey[300]!,
-                ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 12,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
+            _WorkspaceHeader(
+              projectName: widget.projectName,
+              stageName: widget.stageName,
+              onSave: _saveWithMessage,
+              onToggleTheme: _toggleTheme,
             ),
-            const SizedBox(height: 24),
-            Text(
-              'Substep workspace',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: isDark ? Colors.white : const Color(0xFF1F2937),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Context, notes, status, evidence, and actions in one focused screen.',
-              style: TextStyle(
-                fontSize: 16,
-                color: isDark ? Colors.grey[400] : Colors.grey[600],
-              ),
-            ),
-            const SizedBox(height: 24),
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final primary = Column(
-                  children: [
-                    _buildItemDetailsCard(isDark),
-                    const SizedBox(height: 16),
-                    _buildAddDetailsCard(isDark),
-                    const SizedBox(height: 16),
-                    _buildEvidenceCard(isDark),
-                    const SizedBox(height: 16),
-                    _buildActionRequiredCard(isDark),
-                  ],
-                );
-                final secondary = Column(
-                  children: [
-                    _buildAssignmentCard(isDark),
-                    const SizedBox(height: 16),
-                    _buildActivityCard(isDark),
-                  ],
-                );
-
-                if (constraints.maxWidth < 900) {
-                  return Column(
-                    children: [primary, const SizedBox(height: 16), secondary],
-                  );
-                }
-
-                return Row(
+            Expanded(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.all(
+                  MediaQuery.sizeOf(context).width < 600 ? 18 : 28,
+                ),
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(flex: 3, child: primary),
-                    const SizedBox(width: 20),
-                    Expanded(flex: 2, child: secondary),
+                    OutlinedButton.icon(
+                      onPressed: () => context.go('/project/${widget.reviewId}'),
+                      icon: const Icon(Icons.arrow_back_rounded, size: 18),
+                      label: const Text('Back to review page'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: isDark
+                            ? Colors.grey[200]
+                            : const Color(0xFF374151),
+                        side: BorderSide(
+                          color: isDark ? Colors.grey[700]! : Colors.grey[300]!,
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 12,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      'Substep workspace',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? Colors.white : const Color(0xFF1F2937),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Context, notes, status, evidence, and actions in one focused screen.',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: isDark ? Colors.grey[400] : Colors.grey[600],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final primary = Column(
+                          children: [
+                            _buildItemDetailsCard(isDark),
+                            const SizedBox(height: 16),
+                            _buildAddDetailsCard(isDark),
+                            const SizedBox(height: 16),
+                            _buildEvidenceCard(isDark),
+                            const SizedBox(height: 16),
+                            _buildActionRequiredCard(isDark),
+                          ],
+                        );
+                        final secondary = Column(
+                          children: [
+                            _buildAssignmentCard(isDark),
+                            const SizedBox(height: 16),
+                            _buildActivityCard(isDark),
+                          ],
+                        );
+
+                        if (constraints.maxWidth < 900) {
+                          return Column(
+                            children: [
+                              primary,
+                              const SizedBox(height: 16),
+                              secondary,
+                            ],
+                          );
+                        }
+
+                        return Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(flex: 3, child: primary),
+                            const SizedBox(width: 20),
+                            Expanded(flex: 2, child: secondary),
+                          ],
+                        );
+                      },
+                    ),
                   ],
-                );
-              },
+                ),
+              ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _saveWithMessage() async {
+    await _saveData();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        const SnackBar(
+          content: Text('Progress saved'),
+          backgroundColor: Color(0xFF006D6A),
+        ),
+      );
+  }
+
+  void _toggleTheme() {
+    ref.read(themeProvider.notifier).toggleTheme();
   }
 
   Widget _buildItemDetailsCard(bool isDark) {
@@ -376,6 +364,17 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
             maxLines: 4,
             style: TextStyle(color: isDark ? Colors.white : Colors.black87),
             decoration: _boxDecoration('Enter notes...', isDark),
+          ),
+          const SizedBox(height: 16),
+          _LabelText('Engineering Comments', isDark: isDark),
+          TextField(
+            controller: _engineeringCommentsController,
+            maxLines: 4,
+            style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+            decoration: _boxDecoration(
+              'Enter engineering comments...',
+              isDark,
+            ),
           ),
         ],
       ),
@@ -485,8 +484,6 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
             style: TextStyle(color: isDark ? Colors.white : Colors.black87),
             decoration: _boxDecoration('Describe action...', isDark),
           ),
-<<<<<<< HEAD
-=======
           const SizedBox(height: 16),
           _LabelText('Priority', isDark: isDark),
           DropdownButtonFormField<String>(
@@ -503,7 +500,6 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
               if (v != null) _priorityController.text = v;
             },
           ),
->>>>>>> bb6a2e5fc141e64fa627daa22e7e33a9f765ecfd
         ],
       ),
     );
@@ -614,6 +610,172 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
               style: TextStyle(color: isDark ? Colors.grey[500] : Colors.grey),
             ),
         ],
+      ),
+    );
+  }
+}
+
+class _WorkspaceHeader extends StatelessWidget {
+  final String projectName;
+  final String stageName;
+  final VoidCallback onSave;
+  final VoidCallback onToggleTheme;
+
+  const _WorkspaceHeader({
+    required this.projectName,
+    required this.stageName,
+    required this.onSave,
+    required this.onToggleTheme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    final isCompact = width < DashboardDesign.mobileBreakpoint;
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: DashboardDesign.canvas(context),
+        border: Border(
+          bottom: BorderSide(color: DashboardDesign.border(context)),
+        ),
+      ),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            maxWidth: DashboardDesign.maxContentWidth,
+          ),
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: width < 700 ? 18 : 28,
+              vertical: 10,
+            ),
+            child: Row(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(11),
+                  child: Image.asset(
+                    'assets/logo.jpeg',
+                    width: 40,
+                    height: 40,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      width: 40,
+                      height: 40,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: DashboardDesign.subtleSurface(context),
+                        borderRadius: BorderRadius.circular(11),
+                        border: Border.all(
+                          color: DashboardDesign.border(context),
+                        ),
+                      ),
+                      child: const Icon(
+                        Icons.description_outlined,
+                        size: 20,
+                        color: DashboardDesign.primary,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        projectName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: DashboardDesign.text(context),
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      Text(
+                        stageName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: DashboardDesign.mutedText(context),
+                          fontSize: 12,
+                          height: 1.25,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 10),
+                _HeaderIconButton(
+                  tooltip: 'Toggle theme',
+                  icon: DashboardDesign.isDark(context)
+                      ? Icons.light_mode_outlined
+                      : Icons.dark_mode_outlined,
+                  onPressed: onToggleTheme,
+                ),
+                const SizedBox(width: 8),
+                if (isCompact)
+                  _HeaderIconButton(
+                    tooltip: 'Save Progress',
+                    icon: Icons.save_outlined,
+                    onPressed: onSave,
+                  )
+                else
+                  FilledButton.icon(
+                    onPressed: onSave,
+                    icon: const Icon(Icons.save_outlined, size: 18),
+                    label: const Text('Save Progress'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: DashboardDesign.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(
+                          DashboardDesign.controlRadius,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HeaderIconButton extends StatelessWidget {
+  final String tooltip;
+  final IconData icon;
+  final VoidCallback onPressed;
+
+  const _HeaderIconButton({
+    required this.tooltip,
+    required this.icon,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      tooltip: tooltip,
+      onPressed: onPressed,
+      icon: Icon(icon, size: 20),
+      style: IconButton.styleFrom(
+        foregroundColor: DashboardDesign.text(context),
+        backgroundColor: DashboardDesign.surface(context),
+        side: BorderSide(color: DashboardDesign.border(context)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(DashboardDesign.controlRadius),
+        ),
+        fixedSize: const Size(44, 44),
       ),
     );
   }

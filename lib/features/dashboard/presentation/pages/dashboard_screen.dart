@@ -62,10 +62,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       body: SafeArea(
         bottom: false,
         child: CustomScrollView(
-<<<<<<< HEAD
           cacheExtent: 900,
-=======
->>>>>>> bb6a2e5fc141e64fa627daa22e7e33a9f765ecfd
           slivers: [
             SliverPersistentHeader(
               pinned: true,

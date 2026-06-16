@@ -4,10 +4,12 @@ import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
 
 import 'package:engineering_werk/core/utils/enums.dart';
+import 'package:engineering_werk/features/dashboard/presentation/theme/dashboard_design.dart';
 import 'package:engineering_werk/features/reviews/domain/entities/design_review.dart';
 import 'package:engineering_werk/features/reviews/domain/entities/stage.dart';
 import 'package:engineering_werk/features/reviews/domain/entities/sub_step.dart';
 import 'package:engineering_werk/features/reviews/domain/entities/stakeholder.dart';
+import 'package:engineering_werk/features/reviews/domain/utils/default_stages.dart';
 import 'package:engineering_werk/features/reviews/presentation/providers/design_review_provider.dart';
 import 'package:engineering_werk/features/settings/presentation/providers/theme_provider.dart';
 
@@ -27,6 +29,7 @@ class _DesignReviewDetailScreenState
       TextEditingController();
   final TextEditingController _stakeholderRoleController =
       TextEditingController();
+  int? _expandedStageIndex;
 
   @override
   void dispose() {
@@ -45,8 +48,9 @@ class _DesignReviewDetailScreenState
             MediaQuery.of(context).platformBrightness == Brightness.dark);
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF111827) : Colors.white,
+      backgroundColor: DashboardDesign.canvas(context),
       body: SafeArea(
+        bottom: false,
         child: reviewsAsync.when(
           data: (reviews) {
             final review = reviews
@@ -68,41 +72,14 @@ class _DesignReviewDetailScreenState
               );
             }
 
-<<<<<<< HEAD
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    MediaQuery.sizeOf(context).width < 600 ? 16 : 24,
-                    24,
-                    MediaQuery.sizeOf(context).width < 600 ? 16 : 24,
-                    0,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildHeader(isDark),
-                      const SizedBox(height: 32),
-                      _buildIntroSection(isDark),
-                      const SizedBox(height: 24),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: MediaQuery.sizeOf(context).width < 600 ? 16 : 24,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-=======
             final horizontalPadding = MediaQuery.sizeOf(context).width < 600
                 ? 16.0
                 : 24.0;
+            final expandedStageIndex =
+                _expandedStageIndex ?? _firstIncompleteStageIndex(review);
 
             return CustomScrollView(
+              cacheExtent: 900,
               slivers: [
                 SliverPadding(
                   padding: EdgeInsets.fromLTRB(
@@ -115,28 +92,18 @@ class _DesignReviewDetailScreenState
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildHeader(isDark),
+                        _buildHeader(review),
                         const SizedBox(height: 32),
-                        _buildIntroSection(isDark),
+                        _buildIntroSection(),
                         const SizedBox(height: 24),
->>>>>>> bb6a2e5fc141e64fa627daa22e7e33a9f765ecfd
                         _buildBackButton(isDark),
                         const SizedBox(height: 32),
                         _buildStakeholdersSection(review, isDark),
                         const SizedBox(height: 48),
-<<<<<<< HEAD
-                        ...review.stages.asMap().entries.map((e) {
-                          return _buildStageCard(review, e.value, e.key, isDark);
-                        }),
-                        const SizedBox(height: 100),
-=======
->>>>>>> bb6a2e5fc141e64fa627daa22e7e33a9f765ecfd
                       ],
                     ),
                   ),
                 ),
-<<<<<<< HEAD
-=======
                 SliverPadding(
                   padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
                   sliver: SliverList.builder(
@@ -147,12 +114,12 @@ class _DesignReviewDetailScreenState
                         review.stages[index],
                         index,
                         isDark,
+                        isExpanded: index == expandedStageIndex,
                       ),
                     ),
                   ),
                 ),
                 const SliverToBoxAdapter(child: SizedBox(height: 100)),
->>>>>>> bb6a2e5fc141e64fa627daa22e7e33a9f765ecfd
               ],
             );
           },
@@ -163,40 +130,101 @@ class _DesignReviewDetailScreenState
     );
   }
 
-  Widget _buildHeader(bool isDark) {
+  Widget _buildHeader(DesignReview review) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Image.asset(
-              'assets/logo.jpeg',
-              height: 32,
-              errorBuilder: (context, error, stackTrace) => const Icon(
-                Icons.broken_image_outlined,
-                color: Color(0xFF006D6A),
-                size: 32,
-              ),
+        Container(
+          padding: const EdgeInsets.only(bottom: 18),
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(color: DashboardDesign.border(context)),
             ),
-            const SizedBox(width: 12),
-            Flexible(
-              child: Text(
-                'Design reviews',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: isDark ? Colors.white : const Color(0xFF1F2937),
+          ),
+          child: Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(11),
+                child: Image.asset(
+                  'assets/logo.jpeg',
+                  width: 40,
+                  height: 40,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    width: 40,
+                    height: 40,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: DashboardDesign.subtleSurface(context),
+                      borderRadius: BorderRadius.circular(11),
+                      border: Border.all(
+                        color: DashboardDesign.border(context),
+                      ),
+                    ),
+                    child: const Icon(
+                      Icons.fact_check_outlined,
+                      color: DashboardDesign.primary,
+                      size: 20,
+                    ),
+                  ),
                 ),
-                overflow: TextOverflow.ellipsis,
               ),
-            ),
-          ],
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      review.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: DashboardDesign.text(context),
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    Text(
+                      'Design review workflow',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: DashboardDesign.mutedText(context),
+                        fontSize: 12,
+                        height: 1.25,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: DashboardDesign.subtleSurface(context),
+                  borderRadius: BorderRadius.circular(99),
+                  border: Border.all(color: DashboardDesign.border(context)),
+                ),
+                child: Text(
+                  '${review.stages.length} steps',
+                  style: TextStyle(
+                    color: DashboardDesign.text(context),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildIntroSection(bool isDark) {
+  Widget _buildIntroSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -207,7 +235,7 @@ class _DesignReviewDetailScreenState
           style: TextStyle(
             fontSize: 32,
             fontWeight: FontWeight.bold,
-            color: isDark ? Colors.white : const Color(0xFF1F2937),
+            color: DashboardDesign.text(context),
           ),
         ),
       ],
@@ -382,11 +410,12 @@ class _DesignReviewDetailScreenState
     DesignReview review,
     Stage stage,
     int index,
-    bool isDark,
-  ) {
+    bool isDark, {
+    required bool isExpanded,
+  }) {
     final isMobile = MediaQuery.sizeOf(context).width < 700;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 32),
+      padding: const EdgeInsets.only(bottom: 18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -407,23 +436,54 @@ class _DesignReviewDetailScreenState
               ),
               SizedBox(width: isMobile ? 10 : 20),
               Expanded(
-                child: Container(
-                  padding: EdgeInsets.all(isMobile ? 16 : 28),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  curve: Curves.easeOutCubic,
                   decoration: BoxDecoration(
-                    color: isDark
-                        ? const Color(0xFF1F2937).withValues(alpha: 0.5)
-                        : const Color(0xFFF9FAFB),
-                    borderRadius: BorderRadius.circular(24),
+                    color: DashboardDesign.surface(context),
+                    borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: isDark ? Colors.grey[800]! : Colors.grey[200]!,
+                      color: isExpanded
+                          ? DashboardDesign.primary
+                          : DashboardDesign.border(context),
+                      width: isExpanded ? 1.4 : 1,
                     ),
+                    boxShadow: isExpanded
+                        ? DashboardDesign.softShadow(context)
+                        : const [],
                   ),
+                  clipBehavior: Clip.antiAlias,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildStageHeading(stage, index, isDark, isMobile),
-                      SizedBox(height: isMobile ? 24 : 32),
-                      _buildSubStepsTable(review, stage, isDark),
+                      Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () {
+                            setState(() => _expandedStageIndex = index);
+                          },
+                          child: Padding(
+                            padding: EdgeInsets.all(isMobile ? 16 : 22),
+                            child: _buildStageHeading(
+                              stage,
+                              index,
+                              isDark,
+                              isMobile,
+                              isExpanded,
+                            ),
+                          ),
+                        ),
+                      ),
+                      if (isExpanded) ...[
+                        Divider(
+                          height: 1,
+                          color: DashboardDesign.border(context),
+                        ),
+                        Padding(
+                          padding: EdgeInsets.all(isMobile ? 14 : 18),
+                          child: _buildSubStepsTable(review, stage, isDark),
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -440,7 +500,9 @@ class _DesignReviewDetailScreenState
     int index,
     bool isDark,
     bool isMobile,
+    bool isExpanded,
   ) {
+    final progressLabel = _stageProgressLabel(stage);
     final title = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -456,28 +518,46 @@ class _DesignReviewDetailScreenState
         const SizedBox(height: 8),
         Text(
           stage.name,
+          maxLines: isMobile ? 2 : 1,
+          overflow: TextOverflow.ellipsis,
           style: TextStyle(
-            fontSize: isMobile ? 24 : 28,
+            fontSize: isMobile ? 21 : 24,
             fontWeight: FontWeight.bold,
-            color: isDark ? Colors.white : const Color(0xFF111827),
+            color: DashboardDesign.text(context),
             height: 1.15,
           ),
         ),
+        const SizedBox(height: 10),
+        _StageProgressPill(label: progressLabel),
       ],
     );
     final description = Text(
-      _getStageDescription(stage.name),
+      getDefaultStageDescription(stage.name),
       style: TextStyle(
         fontSize: 14,
-        color: isDark ? Colors.grey[400] : Colors.grey[600],
+        color: DashboardDesign.mutedText(context),
         height: 1.5,
       ),
+    );
+    final chevron = Icon(
+      isExpanded ? Icons.keyboard_arrow_up_rounded : Icons.chevron_right,
+      color: isExpanded
+          ? DashboardDesign.primary
+          : DashboardDesign.mutedText(context),
+      size: 26,
     );
 
     if (isMobile) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [title, const SizedBox(height: 12), description],
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [Expanded(child: title), chevron],
+          ),
+          const SizedBox(height: 12),
+          description,
+        ],
       );
     }
 
@@ -487,6 +567,8 @@ class _DesignReviewDetailScreenState
         Expanded(child: title),
         const SizedBox(width: 16),
         Expanded(flex: 2, child: description),
+        const SizedBox(width: 16),
+        chevron,
       ],
     );
   }
@@ -768,31 +850,20 @@ class _DesignReviewDetailScreenState
     );
   }
 
-  String _getStageDescription(String stageName) {
-    switch (stageName) {
-      case 'Requirements':
-        return 'Define the problem, project scope, stakeholders, requirements, constraints, and verification basis.';
-      case 'Concept Review':
-        return 'Compare solution concepts, feasibility, risks, and the preferred approach before deeper design work.';
-      case 'Preliminary Design Review':
-        return 'Confirm architecture, interfaces, requirement allocation, and early engineering evidence.';
-      case 'Detailed Design Review':
-        return 'Verify CAD, drawings, interfaces, materials, analyses, and manufacturability details.';
-      case 'Simulation Review':
-        return 'Review assumptions, load cases, model quality, and correlation plans.';
-      case 'Prototype Review':
-        return 'Check the first physical build, fit, function, and assembly or usability issues.';
-      case 'Testing Validation':
-        return 'Ensure test plans, execution, results, and corrective actions support compliance.';
-      case 'Manufacturing Readiness':
-        return 'Confirm tooling, suppliers, instructions, and process capability for production.';
-      case 'Final Release':
-        return 'Freeze the released configuration and complete cross-functional sign-off.';
-      case 'Continuous Improvement':
-        return 'Focus post-release work on weight, cost, and assembly improvements.';
-      default:
-        return 'Engineering review and validation for this development phase.';
-    }
+  int _firstIncompleteStageIndex(DesignReview review) {
+    if (review.stages.isEmpty) return -1;
+    final firstOpenIndex = review.stages.indexWhere(
+      (stage) => stage.status != StageStatus.completed,
+    );
+    return firstOpenIndex == -1 ? 0 : firstOpenIndex;
+  }
+
+  String _stageProgressLabel(Stage stage) {
+    if (stage.subSteps.isEmpty) return 'No checklist';
+    final completed = stage.subSteps
+        .where((subStep) => subStep.status == StageStatus.completed)
+        .length;
+    return '$completed/${stage.subSteps.length} complete';
   }
 
   void _addStakeholder(DesignReview review) {
@@ -857,5 +928,31 @@ class _DesignReviewDetailScreenState
     );
 
     ref.read(designReviewNotifierProvider.notifier).updateReview(updatedReview);
+  }
+}
+
+class _StageProgressPill extends StatelessWidget {
+  final String label;
+
+  const _StageProgressPill({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: DashboardDesign.subtleSurface(context),
+        borderRadius: BorderRadius.circular(99),
+        border: Border.all(color: DashboardDesign.border(context)),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: DashboardDesign.text(context),
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
   }
 }

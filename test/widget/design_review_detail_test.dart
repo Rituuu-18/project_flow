@@ -110,6 +110,69 @@ void main() {
     expect(find.text('Define scope'), findsOneWidget);
   });
 
+  testWidgets('only the selected main step shows substeps', (
+    WidgetTester tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 1200);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() => tester.view.resetPhysicalSize());
+    addTearDown(() => tester.view.resetDevicePixelRatio());
+
+    final review = DesignReview(
+      id: 'rev-1',
+      name: 'Test Review',
+      owner: 'Admin',
+      discipline: 'Mechanical',
+      createdAt: DateTime.now(),
+      lastUpdated: DateTime.now(),
+      stages: [
+        Stage(
+          id: 'stage-1',
+          name: 'Requirements',
+          lastUpdated: DateTime.now(),
+          subSteps: [
+            SubStep(
+              id: 'ss-1',
+              name: 'Requirements child item',
+              workspaceId: 'ws-1',
+            ),
+          ],
+        ),
+        Stage(
+          id: 'stage-2',
+          name: 'Concept Review',
+          lastUpdated: DateTime.now(),
+          subSteps: [
+            SubStep(
+              id: 'ss-2',
+              name: 'Concept child item',
+              workspaceId: 'ws-2',
+            ),
+          ],
+        ),
+      ],
+    );
+
+    when(
+      () => mockRepository.watchReviews(),
+    ).thenAnswer((_) => Stream.value([review]));
+    when(
+      () => mockRepository.getAllReviews(),
+    ).thenAnswer((_) => Future.value([review]));
+
+    await tester.pumpWidget(createTestWidget('rev-1'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Requirements child item'), findsOneWidget);
+    expect(find.text('Concept child item'), findsNothing);
+
+    await tester.tap(find.text('Concept Review'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Requirements child item'), findsNothing);
+    expect(find.text('Concept child item'), findsOneWidget);
+  });
+
   testWidgets('Back to Dashboard works from a directly loaded project route', (
     WidgetTester tester,
   ) async {

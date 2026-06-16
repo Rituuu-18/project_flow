@@ -74,24 +74,39 @@ void main() {
   });
 
   group('Default review lifecycle', () {
-    test('contains the complete canonical Step 4-10 checklist', () {
+    test('contains the complete PDF-backed canonical checklist', () {
       final stages = getDefaultStages();
 
       expect(stages, hasLength(10));
+      expect(stages[1].name, 'Concept Review');
+      expect(stages[1].subSteps, hasLength(10));
+      expect(
+        stages[1].subSteps.map((item) => item.name),
+        isNot(contains('Assess feasibility (technical & schedule)')),
+      );
+      expect(stages[2].name, 'Preliminary Design Review');
+      expect(stages[2].subSteps, hasLength(12));
       expect(stages[3].name, 'Detailed Design Review');
-      expect(stages[3].subSteps, hasLength(10));
+      expect(stages[3].subSteps, hasLength(13));
       expect(stages[4].name, 'Simulation Review');
-      expect(stages[4].subSteps, hasLength(10));
+      expect(stages[4].subSteps, hasLength(11));
       expect(stages[5].name, 'Prototype Review');
-      expect(stages[5].subSteps, hasLength(10));
+      expect(stages[5].subSteps, hasLength(11));
       expect(stages[6].name, 'Testing Validation');
       expect(stages[6].subSteps, hasLength(10));
       expect(stages[7].name, 'Manufacturing Readiness');
-      expect(stages[7].subSteps, hasLength(10));
+      expect(stages[7].subSteps, hasLength(11));
       expect(stages[8].name, 'Final Release');
       expect(stages[8].subSteps, hasLength(10));
       expect(stages[9].name, 'Continuous Improvement');
-      expect(stages[9].subSteps, hasLength(3));
+      expect(stages[9].subSteps, hasLength(10));
+      expect(
+        getDefaultSubStepInfo(
+          stageName: 'Concept Review',
+          subStepName: 'Clarify goals and success criteria',
+        ).description,
+        contains('go/no-go criteria'),
+      );
     });
 
     test('upgrades the incomplete saved lifecycle', () {
@@ -113,9 +128,9 @@ void main() {
       final upgraded = upgradeLegacyDefaultStages(legacy);
 
       expect(upgraded[4].name, 'Simulation Review');
-      expect(upgraded[4].subSteps, hasLength(10));
+      expect(upgraded[4].subSteps, hasLength(11));
       expect(upgraded[9].name, 'Continuous Improvement');
-      expect(upgraded[9].subSteps, hasLength(3));
+      expect(upgraded[9].subSteps, hasLength(10));
     });
   });
 }
