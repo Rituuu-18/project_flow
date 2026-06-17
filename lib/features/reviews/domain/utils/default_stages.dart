@@ -588,7 +588,7 @@ const Map<String, StageDefaultContent> defaultStageContent = {
       ),
       'Collect feedback and performance data': SubStepDefaultInfo(
         description:
-            'Create regular feedback loops from customers, service, production, and sales through tickets, surveys, interviews, analytics, and warranty returns. Combine qualitative feedback with quantitative data so the product's real behavior is visible.',
+            'Create regular feedback loops from customers, service, production, and sales through tickets, surveys, interviews, analytics, and warranty returns. Combine qualitative feedback with quantitative data so the product\'s real behavior is visible.',
         discipline: 'Customer Insights',
       ),
       'Analyze problems and opportunities': SubStepDefaultInfo(

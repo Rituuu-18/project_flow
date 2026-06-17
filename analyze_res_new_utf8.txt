@@ -1,0 +1,17 @@
+﻿Analyzing EngineeringWerk...
+
+  error - lib\features\reviews\domain\utils\default_stages.dart:591:229 - Arguments of a constant creation must be constant expressions. Try making the argument a valid constant, or use 'new' to call the constructor. - const_with_non_constant_argument
+  error - lib\features\reviews\domain\utils\default_stages.dart:591:229 - Expected to find ','. - expected_token
+  error - lib\features\reviews\domain\utils\default_stages.dart:591:229 - Too many positional arguments: 0 expected, but 3 found. Try removing the extra arguments. - extra_positional_arguments
+  error - lib\features\reviews\domain\utils\default_stages.dart:591:229 - Undefined name 's'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - lib\features\reviews\domain\utils\default_stages.dart:591:231 - Arguments of a constant creation must be constant expressions. Try making the argument a valid constant, or use 'new' to call the constructor. - const_with_non_constant_argument
+  error - lib\features\reviews\domain\utils\default_stages.dart:591:231 - Expected to find ','. - expected_token
+  error - lib\features\reviews\domain\utils\default_stages.dart:591:231 - Undefined name 'real'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - lib\features\reviews\domain\utils\default_stages.dart:591:236 - Expected to find ','. - expected_token
+  error - lib\features\reviews\domain\utils\default_stages.dart:591:236 - Invalid constant value. - invalid_constant
+  error - lib\features\reviews\domain\utils\default_stages.dart:591:236 - Undefined name 'behavior'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - lib\features\reviews\domain\utils\default_stages.dart:591:256 - Expected a type name. - expected_type_name
+  error - lib\features\reviews\domain\utils\default_stages.dart:591:257 - Unterminated string literal. - unterminated_string_literal
+  error - lib\features\reviews\domain\utils\default_stages.dart:592:9 - Expected to find ','. - expected_token
+
+13 issues found.
