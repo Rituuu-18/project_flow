@@ -28,10 +28,19 @@ class ThemeNotifier extends StateNotifier<ThemeMode> {
   }
 
   void toggleTheme() {
-    if (state == ThemeMode.light) {
+    final currentMode = state;
+    if (currentMode == ThemeMode.light) {
       setThemeMode(ThemeMode.dark);
-    } else {
+    } else if (currentMode == ThemeMode.dark) {
       setThemeMode(ThemeMode.light);
+    } else {
+      final systemBrightness =
+          WidgetsBinding.instance.platformDispatcher.platformBrightness;
+      if (systemBrightness == Brightness.dark) {
+        setThemeMode(ThemeMode.light);
+      } else {
+        setThemeMode(ThemeMode.dark);
+      }
     }
   }
 }

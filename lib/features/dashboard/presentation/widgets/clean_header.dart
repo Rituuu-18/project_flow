@@ -42,6 +42,23 @@ class CleanHeader extends StatelessWidget {
                     width: 40,
                     height: 40,
                     fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      width: 40,
+                      height: 40,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: DashboardDesign.subtleSurface(context),
+                        borderRadius: BorderRadius.circular(11),
+                        border: Border.all(
+                          color: DashboardDesign.border(context),
+                        ),
+                      ),
+                      child: const Icon(
+                        Icons.insights_rounded,
+                        size: 20,
+                        color: DashboardDesign.primary,
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
