@@ -643,10 +643,6 @@ class _DesignReviewDetailScreenState
     SubStep subStep,
     bool isDark,
   ) {
-    final info = getDefaultSubStepInfo(
-      stageName: stage.name,
-      subStepName: subStep.name,
-    );
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 12),
@@ -668,15 +664,6 @@ class _DesignReviewDetailScreenState
               fontWeight: FontWeight.w600,
               color: isDark ? Colors.grey[200] : Colors.grey[800],
               height: 1.35,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            info.description,
-            style: TextStyle(
-              fontSize: 12,
-              color: isDark ? Colors.grey[400] : Colors.grey[500],
-              height: 1.4,
             ),
           ),
           const SizedBox(height: 14),
@@ -777,10 +764,6 @@ class _DesignReviewDetailScreenState
     SubStep ss,
     bool isDark,
   ) {
-    final info = getDefaultSubStepInfo(
-      stageName: stage.name,
-      subStepName: ss.name,
-    );
     return TableRow(
       decoration: BoxDecoration(
         border: Border(
@@ -792,28 +775,14 @@ class _DesignReviewDetailScreenState
       children: [
         Padding(
           padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                ss.name,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.grey[300] : Colors.grey[800],
-                  height: 1.3,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                info.description,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: isDark ? Colors.grey[400] : Colors.grey[500],
-                  height: 1.4,
-                ),
-              ),
-            ],
+          child: Text(
+            ss.name,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: isDark ? Colors.grey[300] : Colors.grey[800],
+              height: 1.3,
+            ),
           ),
         ),
         Padding(
