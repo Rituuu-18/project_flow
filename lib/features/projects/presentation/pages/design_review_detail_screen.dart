@@ -78,48 +78,61 @@ class _DesignReviewDetailScreenState
             final expandedStageIndex =
                 _expandedStageIndex ?? _firstIncompleteStageIndex(review);
 
-            return CustomScrollView(
-              cacheExtent: 900,
-              slivers: [
-                SliverPadding(
+            return Column(
+              children: [
+                Padding(
                   padding: EdgeInsets.fromLTRB(
                     horizontalPadding,
                     24,
                     horizontalPadding,
                     0,
                   ),
-                  sliver: SliverToBoxAdapter(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildHeader(review),
-                        const SizedBox(height: 32),
-                        _buildIntroSection(),
-                        const SizedBox(height: 24),
-                        _buildBackButton(isDark),
-                        const SizedBox(height: 32),
-                        _buildStakeholdersSection(review, isDark),
-                        const SizedBox(height: 48),
-                      ],
-                    ),
-                  ),
+                  child: _buildHeader(review),
                 ),
-                SliverPadding(
-                  padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                  sliver: SliverList.builder(
-                    itemCount: review.stages.length,
-                    itemBuilder: (context, index) => RepaintBoundary(
-                      child: _buildStageCard(
-                        review,
-                        review.stages[index],
-                        index,
-                        isDark,
-                        isExpanded: index == expandedStageIndex,
+                Expanded(
+                  child: CustomScrollView(
+                    cacheExtent: 900,
+                    slivers: [
+                      SliverPadding(
+                        padding: EdgeInsets.fromLTRB(
+                          horizontalPadding,
+                          24,
+                          horizontalPadding,
+                          0,
+                        ),
+                        sliver: SliverToBoxAdapter(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildIntroSection(),
+                              const SizedBox(height: 24),
+                              _buildBackButton(isDark),
+                              const SizedBox(height: 32),
+                              _buildStakeholdersSection(review, isDark),
+                              const SizedBox(height: 48),
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
+                      SliverPadding(
+                        padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                        sliver: SliverList.builder(
+                          itemCount: review.stages.length,
+                          itemBuilder: (context, index) => RepaintBoundary(
+                            child: _buildStageCard(
+                              review,
+                              review.stages[index],
+                              index,
+                              isDark,
+                              isExpanded: index == expandedStageIndex,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SliverToBoxAdapter(child: SizedBox(height: 100)),
+                    ],
                   ),
                 ),
-                const SliverToBoxAdapter(child: SizedBox(height: 100)),
               ],
             );
           },
@@ -228,8 +241,6 @@ class _DesignReviewDetailScreenState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Divider(),
-        const SizedBox(height: 32),
         Text(
           'Design review steps',
           style: TextStyle(
@@ -632,6 +643,10 @@ class _DesignReviewDetailScreenState
     SubStep subStep,
     bool isDark,
   ) {
+    final info = getDefaultSubStepInfo(
+      stageName: stage.name,
+      subStepName: subStep.name,
+    );
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 12),
@@ -653,6 +668,15 @@ class _DesignReviewDetailScreenState
               fontWeight: FontWeight.w600,
               color: isDark ? Colors.grey[200] : Colors.grey[800],
               height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            info.description,
+            style: TextStyle(
+              fontSize: 12,
+              color: isDark ? Colors.grey[400] : Colors.grey[500],
+              height: 1.4,
             ),
           ),
           const SizedBox(height: 14),
@@ -753,6 +777,10 @@ class _DesignReviewDetailScreenState
     SubStep ss,
     bool isDark,
   ) {
+    final info = getDefaultSubStepInfo(
+      stageName: stage.name,
+      subStepName: ss.name,
+    );
     return TableRow(
       decoration: BoxDecoration(
         border: Border(
@@ -764,13 +792,28 @@ class _DesignReviewDetailScreenState
       children: [
         Padding(
           padding: const EdgeInsets.all(12),
-          child: Text(
-            ss.name,
-            style: TextStyle(
-              fontSize: 14,
-              color: isDark ? Colors.grey[300] : Colors.grey[800],
-              height: 1.3,
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                ss.name,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.grey[300] : Colors.grey[800],
+                  height: 1.3,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                info.description,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isDark ? Colors.grey[400] : Colors.grey[500],
+                  height: 1.4,
+                ),
+              ),
+            ],
           ),
         ),
         Padding(

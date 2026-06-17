@@ -365,17 +365,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
             style: TextStyle(color: isDark ? Colors.white : Colors.black87),
             decoration: _boxDecoration('Enter notes...', isDark),
           ),
-          const SizedBox(height: 16),
-          _LabelText('Engineering Comments', isDark: isDark),
-          TextField(
-            controller: _engineeringCommentsController,
-            maxLines: 4,
-            style: TextStyle(color: isDark ? Colors.white : Colors.black87),
-            decoration: _boxDecoration(
-              'Enter engineering comments...',
-              isDark,
-            ),
-          ),
+
         ],
       ),
     );
@@ -484,22 +474,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
             style: TextStyle(color: isDark ? Colors.white : Colors.black87),
             decoration: _boxDecoration('Describe action...', isDark),
           ),
-          const SizedBox(height: 16),
-          _LabelText('Priority', isDark: isDark),
-          DropdownButtonFormField<String>(
-            initialValue: _priorityController.text,
-            dropdownColor: isDark ? const Color(0xFF1F2937) : Colors.white,
-            style: TextStyle(color: isDark ? Colors.white : Colors.black87),
-            decoration: _boxDecoration('', isDark),
-            items: [
-              'High',
-              'Medium',
-              'Low',
-            ].map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
-            onChanged: (v) {
-              if (v != null) _priorityController.text = v;
-            },
-          ),
+
         ],
       ),
     );
