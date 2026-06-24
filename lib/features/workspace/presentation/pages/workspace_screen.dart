@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:go_router/go_router.dart';
-import 'package:engineering_werk/features/dashboard/presentation/widgets/evalio_logo_svg.dart';
 import 'package:engineering_werk/features/dashboard/presentation/theme/dashboard_design.dart';
 import 'package:engineering_werk/features/reviews/domain/utils/default_stages.dart';
 import 'package:engineering_werk/features/workspace/domain/entities/workspace_data.dart';
@@ -292,7 +290,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
       ..showSnackBar(
         const SnackBar(
           content: Text('Progress saved'),
-          backgroundColor: Color(0xFF006D6A),
+          backgroundColor: DashboardDesign.primary,
         ),
       );
   }
@@ -308,7 +306,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
               const Icon(
                 Icons.lock_outline_rounded,
                 size: 16,
-                color: Color(0xFF006D6A),
+                color: DashboardDesign.primary,
               ),
               const SizedBox(width: 7),
               Text(
@@ -393,7 +391,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                 ElevatedButton(
                   onPressed: _pickEvidence,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF006D6A),
+                    backgroundColor: DashboardDesign.primary,
                     foregroundColor: Colors.white,
                   ),
                   child: const Text('Browse Files'),
@@ -410,7 +408,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                           const Icon(
                             Icons.attach_file_rounded,
                             size: 17,
-                            color: Color(0xFF006D6A),
+                            color: DashboardDesign.primary,
                           ),
                           const SizedBox(width: 8),
                           Expanded(
@@ -544,7 +542,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                   return Theme(
                     data: Theme.of(context).copyWith(
                       colorScheme: Theme.of(context).colorScheme.copyWith(
-                            primary: const Color(0xFF006D6A),
+                            primary: DashboardDesign.primary,
                           ),
                     ),
                     child: child!,
@@ -634,93 +632,98 @@ class _WorkspaceHeader extends StatelessWidget {
           bottom: BorderSide(color: DashboardDesign.border(context)),
         ),
       ),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(
-            maxWidth: DashboardDesign.maxContentWidth,
-          ),
-          child: Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: width < 700 ? 18 : 28,
-              vertical: 10,
+      child: SizedBox(
+        height: 72,
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxWidth: DashboardDesign.maxContentWidth,
             ),
-            child: Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(11),
-                    border: Border.all(
-                      color: DashboardDesign.border(context),
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: width < 700 ? 18 : 28),
+              child: Stack(
+                children: [
+                  // Left side: Project and stage info
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          projectName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: DashboardDesign.text(context),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -0.3,
+                          ),
+                        ),
+                        Text(
+                          stageName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: DashboardDesign.mutedText(context),
+                            fontSize: 11,
+                            height: 1.25,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  clipBehavior: Clip.antiAlias,
-                  child: SvgPicture.string(
-                    EvalioLogoSvg.getMonogram(isDark: false),
-                    width: 40,
-                    height: 40,
-                    fit: BoxFit.contain,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        projectName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: DashboardDesign.text(context),
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      Text(
-                        stageName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: DashboardDesign.mutedText(context),
-                          fontSize: 12,
-                          height: 1.25,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 10),
-                if (isCompact)
-                  _HeaderIconButton(
-                    tooltip: 'Save Progress',
-                    icon: Icons.save_outlined,
-                    onPressed: onSave,
-                  )
-                else
-                  FilledButton.icon(
-                    onPressed: onSave,
-                    icon: const Icon(Icons.save_outlined, size: 18),
-                    label: const Text('Save Progress'),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: DashboardDesign.primary,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 14,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(
-                          DashboardDesign.controlRadius,
+                  // Center-aligned logo with natural aspect ratio and proper fit
+                  Align(
+                    alignment: Alignment.center,
+                    child: Transform.translate(
+                      offset: const Offset(-50, 0),
+                      child: Image.asset(
+                        'assets/evalio_logo.png',
+                        height: 60,
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) => Center(
+                          child: Icon(
+                            Icons.description_outlined,
+                            size: 24,
+                            color: DashboardDesign.primary,
+                          ),
                         ),
                       ),
                     ),
                   ),
-              ],
+                  // Right side: Save button action
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: isCompact
+                        ? _HeaderIconButton(
+                            tooltip: 'Save Progress',
+                            icon: Icons.save_outlined,
+                            onPressed: onSave,
+                          )
+                        : FilledButton.icon(
+                            onPressed: onSave,
+                            icon: const Icon(Icons.save_outlined, size: 18),
+                            label: const Text('Save Progress'),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: DashboardDesign.primary,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 14,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                  DashboardDesign.controlRadius,
+                                ),
+                              ),
+                            ),
+                          ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -791,12 +794,12 @@ class _WorkspaceLoadingState extends StatelessWidget {
         curve: Curves.easeOutCubic,
         builder: (context, opacity, child) =>
             Opacity(opacity: opacity, child: child),
-        child: const Column(
+        child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.description_outlined, color: Color(0xFF006D6A)),
-            SizedBox(height: 12),
-            Text('Loading workspace...'),
+            Icon(Icons.description_outlined, color: DashboardDesign.primary),
+            const SizedBox(height: 12),
+            const Text('Loading workspace...'),
           ],
         ),
       ),
@@ -898,7 +901,7 @@ InputDecoration _boxDecoration(BuildContext context, String hint) {
     ),
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: Color(0xFF006D6A), width: 1.5),
+      borderSide: const BorderSide(color: DashboardDesign.primary, width: 1.5),
     ),
   );
 }

@@ -106,11 +106,11 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
 
     expect(find.text('Design review steps'), findsOneWidget);
-    expect(find.text('REQUIREMENTS'), findsOneWidget);
+    expect(find.text('Requirements'), findsOneWidget);
     expect(find.text('Define scope'), findsOneWidget);
   });
 
-  testWidgets('all stages show their substeps by default', (
+  testWidgets('only the selected main step shows substeps', (
     WidgetTester tester,
   ) async {
     tester.view.physicalSize = const Size(1200, 1200);
@@ -140,7 +140,7 @@ void main() {
         ),
         Stage(
           id: 'stage-2',
-          name: 'Concept',
+          name: 'Concept Review',
           lastUpdated: DateTime.now(),
           subSteps: [
             SubStep(
@@ -164,6 +164,12 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Requirements child item'), findsOneWidget);
+    expect(find.text('Concept child item'), findsNothing);
+
+    await tester.tap(find.text('Concept Review'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Requirements child item'), findsNothing);
     expect(find.text('Concept child item'), findsOneWidget);
   });
 
@@ -245,7 +251,7 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('DETAILED DESIGN REVIEW'), findsOneWidget);
+    expect(find.text('Detailed Design Review'), findsOneWidget);
     expect(subStepFinder, findsOneWidget);
     expect(tester.takeException(), isNull);
   });
@@ -338,14 +344,14 @@ void main() {
     await tester.pumpWidget(createTestWidget('rev-1'));
     await tester.pump();
 
-    final statusButton = find.byType(PopupMenuButton<StageStatus>);
-    expect(statusButton, findsOneWidget);
-    await tester.ensureVisible(statusButton);
+    final statusDropdown = find.byType(DropdownButton<StageStatus>);
+    expect(statusDropdown, findsOneWidget);
+    await tester.ensureVisible(statusDropdown);
     await tester.pump();
-    await tester.tap(statusButton);
+    await tester.tap(statusDropdown);
     await tester.pumpAndSettle();
 
-    // Select 'Completed' from popup menu
+    // Select 'Completed' from dropdown
     await tester.tap(find.text('Completed').last);
     await tester.pumpAndSettle();
 
@@ -393,15 +399,15 @@ void main() {
     await tester.pumpWidget(createTestWidget('rev-1'));
     await tester.pumpAndSettle();
 
-    expect(find.text('LIFECYCLE STAGE 29'), findsNothing);
+    expect(find.text('Lifecycle stage 29'), findsNothing);
 
     await tester.scrollUntilVisible(
-      find.text('LIFECYCLE STAGE 29'),
+      find.text('Lifecycle stage 29'),
       700,
       scrollable: find.byType(Scrollable).first,
     );
     await tester.pump();
 
-    expect(find.text('LIFECYCLE STAGE 29'), findsOneWidget);
+    expect(find.text('Lifecycle stage 29'), findsOneWidget);
   });
 }

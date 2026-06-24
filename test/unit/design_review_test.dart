@@ -78,19 +78,19 @@ void main() {
       final stages = getDefaultStages();
 
       expect(stages, hasLength(10));
-      expect(stages[1].name, 'Concept');
+      expect(stages[1].name, 'Concept Review');
       expect(stages[1].subSteps, hasLength(10));
       expect(
         stages[1].subSteps.map((item) => item.name),
         isNot(contains('Assess feasibility (technical & schedule)')),
       );
-      expect(stages[2].name, 'Preliminary Design');
+      expect(stages[2].name, 'Preliminary Design Review');
       expect(stages[2].subSteps, hasLength(12));
-      expect(stages[3].name, 'Detailed Design');
+      expect(stages[3].name, 'Detailed Design Review');
       expect(stages[3].subSteps, hasLength(13));
-      expect(stages[4].name, 'Simulation (FEA,CFD...)');
+      expect(stages[4].name, 'Simulation Review');
       expect(stages[4].subSteps, hasLength(11));
-      expect(stages[5].name, 'Prototype');
+      expect(stages[5].name, 'Prototype Review');
       expect(stages[5].subSteps, hasLength(11));
       expect(stages[6].name, 'Testing Validation');
       expect(stages[6].subSteps, hasLength(10));
@@ -102,7 +102,7 @@ void main() {
       expect(stages[9].subSteps, hasLength(10));
       expect(
         getDefaultSubStepInfo(
-          stageName: 'Concept',
+          stageName: 'Concept Review',
           subStepName: 'Clarify goals and success criteria',
         ).description,
         contains('go/no-go criteria'),
@@ -127,7 +127,7 @@ void main() {
 
       final upgraded = upgradeLegacyDefaultStages(legacy);
 
-      expect(upgraded[4].name, 'Simulation (FEA,CFD...)');
+      expect(upgraded[4].name, 'Simulation Review');
       expect(upgraded[4].subSteps, hasLength(11));
       expect(upgraded[9].name, 'Continuous Improvement');
       expect(upgraded[9].subSteps, hasLength(10));

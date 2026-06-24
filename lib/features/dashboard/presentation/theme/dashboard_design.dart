@@ -25,7 +25,7 @@ abstract final class DashboardDesign {
   static const Color darkText = Color(0xFFF4F7F8);
   static const Color darkMutedText = Color(0xFFA3B0B8);
 
-  static const Color primary = Color(0xFF01696F);
+  static const Color primary = Color(0xFF005CFF);
   static const Color reviewPending = Color(0xFF9B5B1D);
   static const Color completed = Color(0xFF447A2A);
   static const Color destructive = Color(0xFFB42318);

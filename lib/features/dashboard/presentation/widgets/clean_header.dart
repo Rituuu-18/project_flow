@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 import '../theme/dashboard_design.dart';
-import 'evalio_logo_svg.dart';
 
 class CleanHeader extends StatelessWidget {
   const CleanHeader({
@@ -20,58 +18,6 @@ class CleanHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
     final showSearch = width >= DashboardDesign.mobileBreakpoint;
-    final isDark = DashboardDesign.isDark(context);
-
-    final logoWidget = SvgPicture.string(
-      EvalioLogoSvg.getLogo(isDark: isDark),
-      height: 35,
-      fit: BoxFit.contain,
-    );
-
-    if (width < 700) {
-      return DecoratedBox(
-        decoration: BoxDecoration(
-          color: DashboardDesign.canvas(context),
-          border: Border(
-            bottom: BorderSide(color: DashboardDesign.border(context)),
-          ),
-        ),
-        child: SizedBox(
-          height: 72,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 18),
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                Align(
-                  alignment: Alignment.center,
-                  child: logoWidget,
-                ),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: _HeaderIconButton(
-                    tooltip: 'Toggle theme',
-                    icon: isDark
-                        ? Icons.light_mode_outlined
-                        : Icons.dark_mode_outlined,
-                    onPressed: onToggleTheme,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-
-    final double searchWidth;
-    if (width >= DashboardDesign.desktopBreakpoint) {
-      searchWidth = 310;
-    } else if (width >= 850) {
-      searchWidth = 250;
-    } else {
-      searchWidth = 160;
-    }
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -88,86 +34,57 @@ class CleanHeader extends StatelessWidget {
               maxWidth: DashboardDesign.maxContentWidth,
             ),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 28),
+              padding: EdgeInsets.symmetric(horizontal: width < 700 ? 18 : 28),
               child: Stack(
-              children: [
-                Align(
-                  alignment: Alignment.center,
-                  child: logoWidget,
-                ),
-                Positioned.fill(
-                  child: Row(
-                    children: [
-                      if (width >= 980) ...[
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(11),
-                            border: Border.all(
-                              color: DashboardDesign.border(context),
-                            ),
-                          ),
-                          clipBehavior: Clip.antiAlias,
-                          child: SvgPicture.string(
-                            EvalioLogoSvg.getMonogram(isDark: false),
-                            width: 40,
-                            height: 40,
-                            fit: BoxFit.contain,
+                children: [
+                  // Center-aligned logo with natural aspect ratio and proper fit
+                  Align(
+                    alignment: Alignment.center,
+                    child: Transform.translate(
+                      offset: const Offset(-50, 0),
+                      child: Image.asset(
+                        'assets/evalio_logo.png',
+                        height: 60,
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) => Center(
+                          child: Icon(
+                            Icons.insights_rounded,
+                            size: 24,
+                            color: DashboardDesign.primary,
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Design reviews',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: DashboardDesign.text(context),
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: -0.3,
-                              ),
+                      ),
+                    ),
+                  ),
+                  // Right-aligned actions (Search & Theme Toggle)
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (showSearch) ...[
+                          SizedBox(
+                            width: width >= DashboardDesign.desktopBreakpoint
+                                ? 240
+                                : 180,
+                            child: DashboardSearchField(
+                              controller: searchController,
+                              onChanged: onSearchChanged,
                             ),
-                            if (width >= DashboardDesign.desktopBreakpoint)
-                              Text(
-                                'A clear record of decisions, evidence, and approvals.',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  color: DashboardDesign.mutedText(context),
-                                  fontSize: 12,
-                                  height: 1.25,
-                                ),
-                              ),
-                          ],
+                          ),
+                          const SizedBox(width: 10),
+                        ],
+                        _HeaderIconButton(
+                          tooltip: 'Toggle theme',
+                          icon: DashboardDesign.isDark(context)
+                              ? Icons.light_mode_outlined
+                              : Icons.dark_mode_outlined,
+                          onPressed: onToggleTheme,
                         ),
                       ],
-                      const Spacer(),
-                      if (showSearch)
-                        SizedBox(
-                          width: searchWidth,
-                          child: DashboardSearchField(
-                            controller: searchController,
-                            onChanged: onSearchChanged,
-                          ),
-                        ),
-                      const SizedBox(width: 10),
-                      _HeaderIconButton(
-                        tooltip: 'Toggle theme',
-                        icon: isDark
-                            ? Icons.light_mode_outlined
-                            : Icons.dark_mode_outlined,
-                        onPressed: onToggleTheme,
-                      ),
-                    ],
+                    ),
                   ),
-                ),
-              ],
+                ],
               ),
             ),
           ),

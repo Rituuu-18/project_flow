@@ -5,8 +5,8 @@ class DesignReviewAppTheme {
     return ThemeData(
       useMaterial3: true,
       colorScheme: ColorScheme.fromSeed(
-        seedColor: const Color(0xFF006D77),
-        primary: const Color(0xFF006D77),
+        seedColor: const Color(0xFF005CFF),
+        primary: const Color(0xFF005CFF),
         surface: const Color(0xFFF8F9FA),
       ),
       cardTheme: CardThemeData(
