@@ -34,6 +34,7 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
+  flutter_svg: ^2.0.10+1
   flutter_riverpod: ^2.6.1
   path_provider: ^2.1.5
   animations: ^2.2.0
@@ -81,6 +82,8 @@ flutter:
 
   assets:
     - assets/evalio_logo.jpeg
+    - assets/evalio_logo.svg
+    - assets/evalio_monogram.svg
     - assets/pump-housing.png
 
   # An image asset can refer to one or more resolution-specific "variants", see

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:go_router/go_router.dart';
+import 'package:engineering_werk/features/dashboard/presentation/widgets/evalio_logo_svg.dart';
 import 'package:engineering_werk/features/dashboard/presentation/theme/dashboard_design.dart';
 import 'package:engineering_werk/features/reviews/domain/utils/default_stages.dart';
 import 'package:engineering_werk/features/workspace/domain/entities/workspace_data.dart';
@@ -655,18 +657,11 @@ class _WorkspaceHeader extends StatelessWidget {
                     ),
                   ),
                   clipBehavior: Clip.antiAlias,
-                  child: Image.asset(
-                    'assets/evalio_logo.jpeg',
+                  child: SvgPicture.string(
+                    EvalioLogoSvg.getMonogram(isDark: false),
                     width: 40,
                     height: 40,
                     fit: BoxFit.contain,
-                    errorBuilder: (context, error, stackTrace) => Center(
-                      child: Icon(
-                        Icons.description_outlined,
-                        size: 20,
-                        color: DashboardDesign.primary,
-                      ),
-                    ),
                   ),
                 ),
                 const SizedBox(width: 12),

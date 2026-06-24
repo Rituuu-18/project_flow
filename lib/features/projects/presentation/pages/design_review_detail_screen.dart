@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:engineering_werk/features/dashboard/presentation/widgets/evalio_logo_svg.dart';
 import 'package:uuid/uuid.dart';
 
 import 'package:engineering_werk/core/utils/enums.dart';
@@ -9,7 +11,6 @@ import 'package:engineering_werk/features/reviews/domain/entities/design_review.
 import 'package:engineering_werk/features/reviews/domain/entities/stage.dart';
 import 'package:engineering_werk/features/reviews/domain/entities/sub_step.dart';
 import 'package:engineering_werk/features/reviews/domain/entities/stakeholder.dart';
-import 'package:engineering_werk/features/reviews/domain/utils/default_stages.dart';
 import 'package:engineering_werk/features/reviews/presentation/providers/design_review_provider.dart';
 import 'package:engineering_werk/features/settings/presentation/providers/theme_provider.dart';
 
@@ -29,7 +30,6 @@ class _DesignReviewDetailScreenState
       TextEditingController();
   final TextEditingController _stakeholderRoleController =
       TextEditingController();
-  int? _expandedStageIndex;
 
   @override
   void dispose() {
@@ -75,7 +75,6 @@ class _DesignReviewDetailScreenState
             final horizontalPadding = MediaQuery.sizeOf(context).width < 600
                 ? 16.0
                 : 24.0;
-            final expandedStageIndex = _expandedStageIndex;
 
             return Column(
               children: [
@@ -132,7 +131,6 @@ class _DesignReviewDetailScreenState
                               review.stages[index],
                               index,
                               isDark,
-                              isExpanded: index == expandedStageIndex,
                             ),
                           ),
                         ),
@@ -175,18 +173,11 @@ class _DesignReviewDetailScreenState
                   ),
                 ),
                 clipBehavior: Clip.antiAlias,
-                child: Image.asset(
-                  'assets/evalio_logo.jpeg',
+                child: SvgPicture.string(
+                  EvalioLogoSvg.getMonogram(isDark: false),
                   width: 40,
                   height: 40,
                   fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) => Center(
-                    child: Icon(
-                      Icons.fact_check_outlined,
-                      color: DashboardDesign.primary,
-                      size: 20,
-                    ),
-                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -424,328 +415,473 @@ class _DesignReviewDetailScreenState
     );
   }
 
+  String getStageDisplayTitle(String stageName) {
+    switch (stageName) {
+      case 'Requirements':
+        return 'REQUIREMENTS';
+      case 'Concept':
+        return 'CONCEPT';
+      case 'Preliminary Design':
+        return 'PRELIMINARY DESIGN';
+      case 'Detailed Design':
+        return 'DETAILED DESIGN';
+      case 'Simulation (FEA,CFD...)':
+        return 'SIMULATION REVIEW';
+      case 'Prototype':
+        return 'PROTOTYPE';
+      case 'Testing Validation':
+        return 'TESTING';
+      case 'Manufacturing Readiness':
+        return 'MANUFACTURING';
+      case 'Final Release':
+        return 'FINAL RELEASE';
+      case 'Continuous Improvement':
+        return 'CONTINUOUS IMPROVEMENT';
+      default:
+        return stageName.toUpperCase();
+    }
+  }
+
   Widget _buildStageCard(
     DesignReview review,
     Stage stage,
     int index,
-    bool isDark, {
-    required bool isExpanded,
-  }) {
+    bool isDark,
+  ) {
     final isMobile = MediaQuery.sizeOf(context).width < 700;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 18),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                margin: EdgeInsets.only(top: isMobile ? 7 : 10),
-                width: isMobile ? 16 : 24,
-                height: isMobile ? 16 : 24,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: const Color(0xFF006D6A),
-                    width: isMobile ? 3 : 4,
-                  ),
-                ),
-              ),
-              SizedBox(width: isMobile ? 10 : 20),
-              Expanded(
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 180),
-                  curve: Curves.easeOutCubic,
-                  decoration: BoxDecoration(
-                    color: DashboardDesign.surface(context),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: isExpanded
-                          ? DashboardDesign.primary
-                          : DashboardDesign.border(context),
-                      width: isExpanded ? 1.4 : 1,
-                    ),
-                    boxShadow: isExpanded
-                        ? DashboardDesign.softShadow(context)
-                        : const [],
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap: () {
-                            setState(() {
-                              if (_expandedStageIndex == index) {
-                                _expandedStageIndex = null;
-                              } else {
-                                _expandedStageIndex = index;
-                              }
-                            });
-                          },
-                          child: Padding(
-                            padding: EdgeInsets.all(isMobile ? 16 : 22),
-                            child: _buildStageHeading(
-                              stage,
-                              index,
-                              isDark,
-                              isMobile,
-                              isExpanded,
-                            ),
-                          ),
-                        ),
-                      ),
-                      if (isExpanded) ...[
-                        Divider(
-                          height: 1,
-                          color: DashboardDesign.border(context),
-                        ),
-                        Padding(
-                          padding: EdgeInsets.all(isMobile ? 14 : 18),
-                          child: _buildSubStepsTable(review, stage, isDark),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
+
+    if (isMobile) {
+      return _buildMobileStageCard(review, stage, index, isDark);
+    } else {
+      return _buildDesktopStageCard(review, stage, index, isDark);
+    }
   }
 
-  Widget _buildStageHeading(
+  Widget _buildDesktopStageCard(
+    DesignReview review,
     Stage stage,
     int index,
     bool isDark,
-    bool isMobile,
-    bool isExpanded,
   ) {
-    final progressLabel = _stageProgressLabel(stage);
-
-    // Map each stage name to a representative icon
     const stageIcons = <String, IconData>{
-      'Requirements': Icons.checklist_rounded,
+      'Requirements': Icons.assignment_ind_outlined,
       'Concept': Icons.lightbulb_outline_rounded,
-      'Preliminary Design': Icons.architecture,
+      'Preliminary Design': Icons.architecture_rounded,
       'Detailed Design': Icons.view_in_ar_outlined,
-      'Simulation (FEA,CFD...)': Icons.science_outlined,
+      'Simulation (FEA,CFD...)': Icons.query_stats_rounded,
       'Prototype': Icons.precision_manufacturing_outlined,
-      'Testing Validation': Icons.biotech_outlined,
+      'Testing Validation': Icons.biotech_rounded,
       'Manufacturing Readiness': Icons.factory_outlined,
       'Final Release': Icons.verified_outlined,
       'Continuous Improvement': Icons.trending_up_rounded,
     };
     final iconData = stageIcons[stage.name] ?? Icons.assignment_outlined;
-    final iconSize = isMobile ? 40.0 : 48.0;
+    final displayTitle = getStageDisplayTitle(stage.name);
 
-    final stageIcon = Container(
-      width: iconSize,
-      height: iconSize,
+    return Container(
+      margin: const EdgeInsets.only(bottom: 24),
       decoration: BoxDecoration(
-        color: const Color(0xFF006D6A),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Center(
-        child: Icon(iconData, color: Colors.white, size: isMobile ? 22 : 26),
-      ),
-    );
-
-    final title = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'STEP ${index + 1}',
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.bold,
-            color: isDark ? Colors.grey[500] : Colors.grey[400],
-            letterSpacing: 1.2,
-          ),
+        color: DashboardDesign.surface(context),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: DashboardDesign.border(context),
         ),
-        const SizedBox(height: 8),
-        Text(
-          stage.name,
-          maxLines: isMobile ? 2 : 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            fontSize: isMobile ? 19 : 22,
-            fontWeight: FontWeight.bold,
-            color: DashboardDesign.text(context),
-            height: 1.15,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
           ),
-        ),
-        const SizedBox(height: 10),
-        _StageProgressPill(label: progressLabel),
-      ],
-    );
-    final chevron = Icon(
-      isExpanded ? Icons.keyboard_arrow_up_rounded : Icons.chevron_right,
-      color: isExpanded
-          ? DashboardDesign.primary
-          : DashboardDesign.mutedText(context),
-      size: 26,
-    );
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        stageIcon,
-        const SizedBox(width: 14),
-        Expanded(child: title),
-        const SizedBox(width: 16),
-        chevron,
-      ],
-    );
-  }
-
-  Widget _buildSubStepsTable(DesignReview review, Stage stage, bool isDark) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        if (constraints.maxWidth < 620) {
-          return Column(
-            children: stage.subSteps
-                .map(
-                  (subStep) =>
-                      _buildMobileSubStepCard(review, stage, subStep, isDark),
-                )
-                .toList(),
-          );
-        }
-
-        return Container(
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF111827) : Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: isDark ? Colors.grey[800]! : Colors.grey[200]!,
-            ),
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: Table(
-            columnWidths: const {
-              0: FlexColumnWidth(2.5),
-              1: FlexColumnWidth(1.5),
-              2: FixedColumnWidth(148),
-            },
-            defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-            children: [
-              TableRow(
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? Colors.grey[800]!.withValues(alpha: 0.3)
-                      : const Color(0xFFF3F4F6),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Left Blue Gradient Card
+            Container(
+              width: 150,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Color(0xFF1E60D5),
+                    Color(0xFF0C3CA6),
+                  ],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
                 ),
+              ),
+              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _buildTableHeader('SUBSTEP', isDark),
-                  _buildTableHeader('STATUS', isDark),
-                  _buildTableHeader('ACTION', isDark),
+                  // Step Number
+                  Text(
+                    '${index + 1}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 48,
+                      fontWeight: FontWeight.w900,
+                      height: 1.0,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  // Title
+                  Expanded(
+                    child: Center(
+                      child: Text(
+                        displayTitle,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.8,
+                          height: 1.25,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  // Icon
+                  Icon(
+                    iconData,
+                    color: Colors.white,
+                    size: 36,
+                  ),
                 ],
               ),
-              ...stage.subSteps.map(
-                (ss) => _buildSubStepRow(review, stage, ss, isDark),
+            ),
+            // Vertical divider line
+            Container(
+              width: 1,
+              color: DashboardDesign.border(context),
+            ),
+            // Right Sub-steps Panel
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ...stage.subSteps.asMap().entries.map((entry) {
+                      final subStepIndex = entry.key;
+                      final subStep = entry.value;
+                      return Column(
+                        children: [
+                          _buildSubStepRowItem(review, stage, subStep, subStepIndex, isDark),
+                          if (subStepIndex < stage.subSteps.length - 1)
+                            Divider(
+                              height: 8,
+                              thickness: 0.5,
+                              color: isDark ? Colors.grey[800] : Colors.grey[200],
+                              indent: 12,
+                              endIndent: 12,
+                            ),
+                        ],
+                      );
+                    }),
+                  ],
+                ),
               ),
-            ],
-          ),
-        );
-      },
+            ),
+          ],
+        ),
+      ),
     );
   }
 
-  Widget _buildMobileSubStepCard(
+  Widget _buildMobileStageCard(
     DesignReview review,
     Stage stage,
-    SubStep subStep,
+    int index,
     bool isDark,
   ) {
+    const stageIcons = <String, IconData>{
+      'Requirements': Icons.assignment_ind_outlined,
+      'Concept': Icons.lightbulb_outline_rounded,
+      'Preliminary Design': Icons.architecture_rounded,
+      'Detailed Design': Icons.view_in_ar_outlined,
+      'Simulation (FEA,CFD...)': Icons.query_stats_rounded,
+      'Prototype': Icons.precision_manufacturing_outlined,
+      'Testing Validation': Icons.biotech_rounded,
+      'Manufacturing Readiness': Icons.factory_outlined,
+      'Final Release': Icons.verified_outlined,
+      'Continuous Improvement': Icons.trending_up_rounded,
+    };
+    final iconData = stageIcons[stage.name] ?? Icons.assignment_outlined;
+    final displayTitle = getStageDisplayTitle(stage.name);
+
     return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
+      margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF111827) : Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        color: DashboardDesign.surface(context),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark ? Colors.grey[800]! : Colors.grey[200]!,
+          color: DashboardDesign.border(context),
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
+            blurRadius: 6,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
+      clipBehavior: Clip.antiAlias,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            subStep.name,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: isDark ? Colors.grey[200] : Colors.grey[800],
-              height: 1.35,
-            ),
-          ),
-          const SizedBox(height: 14),
-          DropdownButtonFormField<StageStatus>(
-            initialValue: subStep.status,
-            isExpanded: true,
-            dropdownColor: isDark ? const Color(0xFF1F2937) : Colors.white,
-            decoration: InputDecoration(
-              labelText: 'Status',
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 10,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
+          // Top Blue Gradient Banner
+          Container(
+            height: 64,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Color(0xFF1E60D5),
+                  Color(0xFF0C3CA6),
+                ],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
               ),
             ),
-            items: const [
-              DropdownMenuItem(
-                value: StageStatus.notStarted,
-                child: Text('Open'),
-              ),
-              DropdownMenuItem(
-                value: StageStatus.inProgress,
-                child: Text('In Progress'),
-              ),
-              DropdownMenuItem(
-                value: StageStatus.completed,
-                child: Text('Completed'),
-              ),
-            ],
-            onChanged: (value) {
-              if (value != null) {
-                _updateSubStepStatus(review, stage, subStep, value);
-              }
-            },
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                // Step Number
+                Text(
+                  '${index + 1}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 28,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                // Title
+                Expanded(
+                  child: Text(
+                    displayTitle,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                // Icon
+                Icon(
+                  iconData,
+                  color: Colors.white,
+                  size: 28,
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 10),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton(
-              onPressed: () => _openWorkspace(review, stage, subStep),
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 12,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                side: BorderSide(
-                  color: isDark ? Colors.grey[700]! : Colors.grey[400]!,
-                ),
-              ),
-              child: const Text(
-                'Open workspace',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-              ),
+          // Sub-steps Panel
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ...stage.subSteps.asMap().entries.map((entry) {
+                  final subStepIndex = entry.key;
+                  final subStep = entry.value;
+                  return Column(
+                    children: [
+                      _buildSubStepRowItem(review, stage, subStep, subStepIndex, isDark),
+                      if (subStepIndex < stage.subSteps.length - 1)
+                        Divider(
+                          height: 8,
+                          thickness: 0.5,
+                          color: isDark ? Colors.grey[800] : Colors.grey[200],
+                          indent: 8,
+                          endIndent: 8,
+                        ),
+                    ],
+                  );
+                }),
+              ],
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildSubStepRowItem(
+    DesignReview review,
+    Stage stage,
+    SubStep subStep,
+    int subStepIndex,
+    bool isDark,
+  ) {
+    final isNarrow = MediaQuery.sizeOf(context).width < 500;
+    return InkWell(
+      onTap: () => _openWorkspace(review, stage, subStep),
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        child: Row(
+          children: [
+            // Sub-step index box
+            Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                color: Colors.transparent,
+                border: Border.all(
+                  color: const Color(0xFF1E60D5),
+                  width: 1.5,
+                ),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Center(
+                child: Text(
+                  '${subStepIndex + 1}',
+                  style: const TextStyle(
+                    color: Color(0xFF1E60D5),
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            // Sub-step name
+            Expanded(
+              child: Text(
+                subStep.name,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: isDark ? Colors.grey[200] : Colors.grey[800],
+                  height: 1.3,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            // Status badge
+            _buildStatusBadge(review, stage, subStep, isDark, isNarrow),
+            const SizedBox(width: 8),
+            // Open workspace chevron
+            Icon(
+              Icons.chevron_right_rounded,
+              size: 18,
+              color: isDark ? Colors.grey[600] : Colors.grey[400],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusBadge(
+    DesignReview review,
+    Stage stage,
+    SubStep subStep,
+    bool isDark,
+    bool isNarrow,
+  ) {
+    Color bgColor;
+    Color textColor;
+    String label;
+    IconData icon;
+
+    switch (subStep.status) {
+      case StageStatus.completed:
+        bgColor = isDark ? const Color(0x204CAF50) : const Color(0xFFE8F5E9);
+        textColor = isDark ? const Color(0xFF81C784) : const Color(0xFF2E7D32);
+        label = 'Completed';
+        icon = Icons.check_circle_rounded;
+        break;
+      case StageStatus.inProgress:
+        bgColor = isDark ? const Color(0x202196F3) : const Color(0xFFE3F2FD);
+        textColor = isDark ? const Color(0xFF64B5F6) : const Color(0xFF1565C0);
+        label = 'In Progress';
+        icon = Icons.pending_rounded;
+        break;
+      case StageStatus.notStarted:
+        bgColor = isDark ? const Color(0x209E9E9E) : const Color(0xFFF5F5F5);
+        textColor = isDark ? const Color(0xFFB0BEC5) : const Color(0xFF757575);
+        label = 'Open';
+        icon = Icons.radio_button_unchecked_rounded;
+        break;
+    }
+
+    return PopupMenuButton<StageStatus>(
+      initialValue: subStep.status,
+      tooltip: 'Change Status',
+      onSelected: (status) {
+        _updateSubStepStatus(review, stage, subStep, status);
+      },
+      offset: const Offset(0, 30),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: DashboardDesign.border(context)),
+      ),
+      color: isDark ? const Color(0xFF1E2937) : Colors.white,
+      child: Container(
+        padding: isNarrow
+            ? const EdgeInsets.all(8)
+            : const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14, color: textColor),
+            if (!isNarrow) ...[
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: textColor,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+      itemBuilder: (context) => [
+        PopupMenuItem(
+          value: StageStatus.notStarted,
+          child: Row(
+            children: [
+              Icon(Icons.radio_button_unchecked_rounded, size: 16, color: isDark ? const Color(0xFFB0BEC5) : const Color(0xFF757575)),
+              const SizedBox(width: 8),
+              Text('Open', style: TextStyle(color: isDark ? Colors.white : Colors.black87)),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          value: StageStatus.inProgress,
+          child: Row(
+            children: [
+              Icon(Icons.pending_rounded, size: 16, color: isDark ? const Color(0xFF64B5F6) : const Color(0xFF1565C0)),
+              const SizedBox(width: 8),
+              Text('In Progress', style: TextStyle(color: isDark ? Colors.white : Colors.black87)),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          value: StageStatus.completed,
+          child: Row(
+            children: [
+              Icon(Icons.check_circle_rounded, size: 16, color: isDark ? const Color(0xFF81C784) : const Color(0xFF2E7D32)),
+              const SizedBox(width: 8),
+              Text('Completed', style: TextStyle(color: isDark ? Colors.white : Colors.black87)),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -761,141 +897,6 @@ class _DesignReviewDetailScreenState
         },
       ).toString(),
     );
-  }
-
-  Widget _buildTableHeader(String label, bool isDark) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.bold,
-          color: isDark ? Colors.grey[400] : Colors.grey[500],
-          letterSpacing: 1.0,
-        ),
-      ),
-    );
-  }
-
-  TableRow _buildSubStepRow(
-    DesignReview review,
-    Stage stage,
-    SubStep ss,
-    bool isDark,
-  ) {
-    return TableRow(
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: isDark ? Colors.grey[800]! : Colors.grey[100]!,
-          ),
-        ),
-      ),
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(12),
-          child: Text(
-            ss.name,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: isDark ? Colors.grey[300] : Colors.grey[800],
-              height: 1.3,
-            ),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-            decoration: BoxDecoration(
-              color: isDark ? Colors.grey[900] : Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: isDark ? Colors.grey[800]! : Colors.grey[200]!,
-              ),
-            ),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<StageStatus>(
-                value: ss.status,
-                isDense: true,
-                isExpanded: true, // Allow it to fill the column
-                dropdownColor: isDark ? const Color(0xFF1F2937) : Colors.white,
-                icon: Icon(
-                  Icons.arrow_drop_down,
-                  color: isDark ? Colors.grey[500] : Colors.grey[400],
-                  size: 20,
-                ),
-                style: TextStyle(
-                  fontSize: 13,
-                  color: isDark ? Colors.white : Colors.black87,
-                ),
-                items: const [
-                  DropdownMenuItem(
-                    value: StageStatus.notStarted,
-                    child: Text('Open', overflow: TextOverflow.ellipsis),
-                  ),
-                  DropdownMenuItem(
-                    value: StageStatus.inProgress,
-                    child: Text('In Progress', overflow: TextOverflow.ellipsis),
-                  ),
-                  DropdownMenuItem(
-                    value: StageStatus.completed,
-                    child: Text('Completed', overflow: TextOverflow.ellipsis),
-                  ),
-                ],
-                onChanged: (val) {
-                  if (val != null) {
-                    _updateSubStepStatus(review, stage, ss, val);
-                  }
-                },
-              ),
-            ),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.all(8),
-          child: OutlinedButton(
-            onPressed: () => _openWorkspace(review, stage, ss),
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              side: BorderSide(
-                color: isDark ? Colors.grey[700]! : Colors.grey[400]!,
-              ),
-              backgroundColor: isDark ? Colors.transparent : Colors.white,
-            ),
-            child: Text(
-              'Open workspace',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: isDark ? Colors.grey[200] : const Color(0xFF374151),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  int _firstIncompleteStageIndex(DesignReview review) {
-    if (review.stages.isEmpty) return -1;
-    final firstOpenIndex = review.stages.indexWhere(
-      (stage) => stage.status != StageStatus.completed,
-    );
-    return firstOpenIndex == -1 ? 0 : firstOpenIndex;
-  }
-
-  String _stageProgressLabel(Stage stage) {
-    if (stage.subSteps.isEmpty) return 'No checklist';
-    final completed = stage.subSteps
-        .where((subStep) => subStep.status == StageStatus.completed)
-        .length;
-    return '$completed/${stage.subSteps.length} complete';
   }
 
   void _addStakeholder(DesignReview review) {
@@ -960,31 +961,5 @@ class _DesignReviewDetailScreenState
     );
 
     ref.read(designReviewNotifierProvider.notifier).updateReview(updatedReview);
-  }
-}
-
-class _StageProgressPill extends StatelessWidget {
-  final String label;
-
-  const _StageProgressPill({required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: DashboardDesign.subtleSurface(context),
-        borderRadius: BorderRadius.circular(99),
-        border: Border.all(color: DashboardDesign.border(context)),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: DashboardDesign.text(context),
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
   }
 }
