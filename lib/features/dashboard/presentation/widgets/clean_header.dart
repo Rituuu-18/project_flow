@@ -35,25 +35,24 @@ class CleanHeader extends StatelessWidget {
             padding: EdgeInsets.symmetric(horizontal: width < 700 ? 18 : 28),
             child: Row(
               children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(11),
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(11),
+                    border: Border.all(
+                      color: DashboardDesign.border(context),
+                    ),
+                  ),
+                  clipBehavior: Clip.antiAlias,
                   child: Image.asset(
-                    'assets/logo.jpeg',
+                    'assets/evalio_logo.jpeg',
                     width: 40,
                     height: 40,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      width: 40,
-                      height: 40,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: DashboardDesign.subtleSurface(context),
-                        borderRadius: BorderRadius.circular(11),
-                        border: Border.all(
-                          color: DashboardDesign.border(context),
-                        ),
-                      ),
-                      child: const Icon(
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) => Center(
+                      child: Icon(
                         Icons.insights_rounded,
                         size: 20,
                         color: DashboardDesign.primary,

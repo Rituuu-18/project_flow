@@ -80,7 +80,7 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/logo.jpeg
+    - assets/evalio_logo.jpeg
     - assets/pump-housing.png
 
   # An image asset can refer to one or more resolution-specific "variants", see

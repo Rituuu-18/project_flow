@@ -75,8 +75,7 @@ class _DesignReviewDetailScreenState
             final horizontalPadding = MediaQuery.sizeOf(context).width < 600
                 ? 16.0
                 : 24.0;
-            final expandedStageIndex =
-                _expandedStageIndex ?? _firstIncompleteStageIndex(review);
+            final expandedStageIndex = _expandedStageIndex;
 
             return Column(
               children: [
@@ -104,14 +103,23 @@ class _DesignReviewDetailScreenState
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _buildIntroSection(),
-                              const SizedBox(height: 24),
                               _buildBackButton(isDark),
                               const SizedBox(height: 32),
                               _buildStakeholdersSection(review, isDark),
                               const SizedBox(height: 48),
                             ],
                           ),
+                        ),
+                      ),
+                      SliverPadding(
+                        padding: EdgeInsets.fromLTRB(
+                          horizontalPadding,
+                          0,
+                          horizontalPadding,
+                          16,
+                        ),
+                        sliver: SliverToBoxAdapter(
+                          child: _buildIntroSection(),
                         ),
                       ),
                       SliverPadding(
@@ -156,25 +164,24 @@ class _DesignReviewDetailScreenState
           ),
           child: Row(
             children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(11),
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(11),
+                  border: Border.all(
+                    color: DashboardDesign.border(context),
+                  ),
+                ),
+                clipBehavior: Clip.antiAlias,
                 child: Image.asset(
-                  'assets/logo.jpeg',
+                  'assets/evalio_logo.jpeg',
                   width: 40,
                   height: 40,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    width: 40,
-                    height: 40,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: DashboardDesign.subtleSurface(context),
-                      borderRadius: BorderRadius.circular(11),
-                      border: Border.all(
-                        color: DashboardDesign.border(context),
-                      ),
-                    ),
-                    child: const Icon(
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) => Center(
+                    child: Icon(
                       Icons.fact_check_outlined,
                       color: DashboardDesign.primary,
                       size: 20,
@@ -471,7 +478,13 @@ class _DesignReviewDetailScreenState
                         color: Colors.transparent,
                         child: InkWell(
                           onTap: () {
-                            setState(() => _expandedStageIndex = index);
+                            setState(() {
+                              if (_expandedStageIndex == index) {
+                                _expandedStageIndex = null;
+                              } else {
+                                _expandedStageIndex = index;
+                              }
+                            });
                           },
                           child: Padding(
                             padding: EdgeInsets.all(isMobile ? 16 : 22),
@@ -514,6 +527,35 @@ class _DesignReviewDetailScreenState
     bool isExpanded,
   ) {
     final progressLabel = _stageProgressLabel(stage);
+
+    // Map each stage name to a representative icon
+    const stageIcons = <String, IconData>{
+      'Requirements': Icons.checklist_rounded,
+      'Concept': Icons.lightbulb_outline_rounded,
+      'Preliminary Design': Icons.architecture,
+      'Detailed Design': Icons.view_in_ar_outlined,
+      'Simulation (FEA,CFD...)': Icons.science_outlined,
+      'Prototype': Icons.precision_manufacturing_outlined,
+      'Testing Validation': Icons.biotech_outlined,
+      'Manufacturing Readiness': Icons.factory_outlined,
+      'Final Release': Icons.verified_outlined,
+      'Continuous Improvement': Icons.trending_up_rounded,
+    };
+    final iconData = stageIcons[stage.name] ?? Icons.assignment_outlined;
+    final iconSize = isMobile ? 40.0 : 48.0;
+
+    final stageIcon = Container(
+      width: iconSize,
+      height: iconSize,
+      decoration: BoxDecoration(
+        color: const Color(0xFF006D6A),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Center(
+        child: Icon(iconData, color: Colors.white, size: isMobile ? 22 : 26),
+      ),
+    );
+
     final title = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -532,7 +574,7 @@ class _DesignReviewDetailScreenState
           maxLines: isMobile ? 2 : 1,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
-            fontSize: isMobile ? 21 : 24,
+            fontSize: isMobile ? 19 : 22,
             fontWeight: FontWeight.bold,
             color: DashboardDesign.text(context),
             height: 1.15,
@@ -542,14 +584,6 @@ class _DesignReviewDetailScreenState
         _StageProgressPill(label: progressLabel),
       ],
     );
-    final description = Text(
-      getDefaultStageDescription(stage.name),
-      style: TextStyle(
-        fontSize: 14,
-        color: DashboardDesign.mutedText(context),
-        height: 1.5,
-      ),
-    );
     final chevron = Icon(
       isExpanded ? Icons.keyboard_arrow_up_rounded : Icons.chevron_right,
       color: isExpanded
@@ -558,26 +592,12 @@ class _DesignReviewDetailScreenState
       size: 26,
     );
 
-    if (isMobile) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [Expanded(child: title), chevron],
-          ),
-          const SizedBox(height: 12),
-          description,
-        ],
-      );
-    }
-
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
+        stageIcon,
+        const SizedBox(width: 14),
         Expanded(child: title),
-        const SizedBox(width: 16),
-        Expanded(flex: 2, child: description),
         const SizedBox(width: 16),
         chevron,
       ],

@@ -89,7 +89,7 @@ const Map<String, StageDefaultContent> defaultStageContent = {
       ),
     },
   ),
-  'Concept Review': StageDefaultContent(
+  'Concept': StageDefaultContent(
     description:
         'Compare solution concepts against requirements, feasibility, risk, business fit, and the preferred path before deeper design investment.',
     subSteps: {
@@ -145,7 +145,7 @@ const Map<String, StageDefaultContent> defaultStageContent = {
       ),
     },
   ),
-  'Preliminary Design Review': StageDefaultContent(
+  'Preliminary Design': StageDefaultContent(
     description:
         'Confirm that the selected concept has a sound architecture, allocated requirements, clear interfaces, early evidence, and understood risks before detailed design.',
     subSteps: {
@@ -211,7 +211,7 @@ const Map<String, StageDefaultContent> defaultStageContent = {
       ),
     },
   ),
-  'Detailed Design Review': StageDefaultContent(
+  'Detailed Design': StageDefaultContent(
     description:
         'Verify that the detailed design is engineered, documented, producible, safe, reliable, and ready for simulation, prototype, or production release.',
     subSteps: {
@@ -282,7 +282,7 @@ const Map<String, StageDefaultContent> defaultStageContent = {
       ),
     },
   ),
-  'Simulation Review': StageDefaultContent(
+  'Simulation (FEA,CFD...)': StageDefaultContent(
     description:
         'Validate the design with virtual models, load cases, assumptions, numerical quality, and correlation evidence before or alongside prototypes.',
     subSteps: {
@@ -343,7 +343,7 @@ const Map<String, StageDefaultContent> defaultStageContent = {
       ),
     },
   ),
-  'Prototype Review': StageDefaultContent(
+  'Prototype': StageDefaultContent(
     description:
         'Evaluate the first physical builds for design conformity, function, manufacturability, usability, issues, and build-iteration decisions.',
     subSteps: {
@@ -504,11 +504,12 @@ const Map<String, StageDefaultContent> defaultStageContent = {
             'Create work instructions, standard operating procedures, checklists, machine maintenance plans, and quality instructions. Train production, quality, and maintenance teams, then verify they can follow the process reliably during trial builds.',
         discipline: 'Operations Training',
       ),
-      'Run pilot builds and manufacturing readiness assessments': SubStepDefaultInfo(
-        description:
-            'Conduct pilot or pre-series builds using the intended line, equipment, materials, and workforce to mimic real production. Perform a structured readiness assessment to identify remaining manufacturing risks, gaps, and actions.',
-        discipline: 'Manufacturing Engineering',
-      ),
+      'Run pilot builds and manufacturing readiness assessments':
+          SubStepDefaultInfo(
+            description:
+                'Conduct pilot or pre-series builds using the intended line, equipment, materials, and workforce to mimic real production. Perform a structured readiness assessment to identify remaining manufacturing risks, gaps, and actions.',
+            discipline: 'Manufacturing Engineering',
+          ),
       'Manage risks and continuous improvement before launch': SubStepDefaultInfo(
         description:
             'Maintain a manufacturing risk register covering technology, suppliers, processes, workforce, facilities, and deadlines. Apply lean, Six Sigma, Kaizen, or similar improvement methods to reduce cycle time, scrap, and variability before launch approval.',
@@ -637,10 +638,8 @@ const Map<String, StageDefaultContent> defaultStageContent = {
 
 final Map<String, List<String>> defaultStageChecklist = Map.unmodifiable(
   defaultStageContent.map(
-    (stageName, content) => MapEntry(
-      stageName,
-      content.subSteps.keys.toList(growable: false),
-    ),
+    (stageName, content) =>
+        MapEntry(stageName, content.subSteps.keys.toList(growable: false)),
   ),
 );
 
@@ -671,6 +670,17 @@ List<Stage> getDefaultStages() {
       .toList();
 }
 
+/// Maps old stage names (before rename) to their new canonical names.
+/// Add any future renames here so existing Hive reviews are migrated
+/// transparently on the next load.
+const Map<String, String> _stageNameMigrations = {
+  'Concept Review': 'Concept',
+  'Preliminary Design Review': 'Preliminary Design',
+  'Detailed Design Review': 'Detailed Design',
+  'Simulation Review': 'Simulation (FEA,CFD...)',
+  'Prototype Review': 'Prototype',
+};
+
 /// Upgrades reviews created from older default lifecycle definitions.
 ///
 /// Existing stage progress and matching substep workspaces are retained where
@@ -679,19 +689,42 @@ List<Stage> getDefaultStages() {
 List<Stage> upgradeLegacyDefaultStages(List<Stage> stages) {
   if (stages.length != defaultStageChecklist.length) return stages;
 
+  // ── Step 1: apply any pending name renames ────────────────────────────────
+  // If a saved stage has an old name that has since been renamed, update it
+  // before the canonical-name comparison below so that the upgrade path is
+  // entered correctly even for reviews persisted before the rename.
+  var renamedStages = stages;
+  final hasOldName = stages.any(
+    (s) => _stageNameMigrations.containsKey(s.name),
+  );
+  if (hasOldName) {
+    renamedStages = stages
+        .map(
+          (s) => _stageNameMigrations.containsKey(s.name)
+              ? s.copyWith(name: _stageNameMigrations[s.name]!)
+              : s,
+        )
+        .toList();
+  }
+
+  // ── Step 2: canonical upgrade (substeps, progress, status) ────────────────
   final canonicalNames = defaultStageChecklist.keys.toList(growable: false);
-  final isCanonicalLifecycle = stages.asMap().entries.every(
-        (entry) => entry.value.name == canonicalNames[entry.key],
-      );
+  final isCanonicalLifecycle = renamedStages.asMap().entries.every(
+    (entry) => entry.value.name == canonicalNames[entry.key],
+  );
   final isIncompleteLegacyLifecycle =
-      stages.take(4).map((stage) => stage.name).toList().join('|') ==
+      renamedStages.take(4).map((stage) => stage.name).toList().join('|') ==
           canonicalNames.take(4).join('|') &&
-      stages.skip(4).every((stage) => stage.subSteps.isEmpty);
+      renamedStages.skip(4).every((stage) => stage.subSteps.isEmpty);
 
-  if (!isCanonicalLifecycle && !isIncompleteLegacyLifecycle) return stages;
+  if (!isCanonicalLifecycle && !isIncompleteLegacyLifecycle) {
+    // Return the name-migrated list even if substep upgrade isn't needed,
+    // so renamed stages are persisted on the next save.
+    return hasOldName ? renamedStages : stages;
+  }
 
-  var changed = false;
-  final upgradedStages = stages.asMap().entries.map((entry) {
+  var changed = hasOldName; // already dirty if we renamed anything
+  final upgradedStages = renamedStages.asMap().entries.map((entry) {
     final existingStage = entry.value;
     final canonicalName = canonicalNames[entry.key];
     final existingItems = {
@@ -705,12 +738,13 @@ List<Stage> upgradeLegacyDefaultStages(List<Stage> stages) {
 
     final subStepsChanged =
         existingStage.subSteps.length != upgradedItems.length ||
-            existingStage.subSteps.asMap().entries.any((subStepEntry) {
-              final index = subStepEntry.key;
-              return index >= upgradedItems.length ||
-                  subStepEntry.value.name != upgradedItems[index].name;
-            });
-    final stageChanged = existingStage.name != canonicalName ||
+        existingStage.subSteps.asMap().entries.any((subStepEntry) {
+          final index = subStepEntry.key;
+          return index >= upgradedItems.length ||
+              subStepEntry.value.name != upgradedItems[index].name;
+        });
+    final stageChanged =
+        existingStage.name != canonicalName ||
         subStepsChanged ||
         existingStage.progress != progress ||
         existingStage.status != status;

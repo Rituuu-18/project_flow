@@ -9,7 +9,7 @@ import '../../../reviews/domain/entities/design_review.dart';
 import '../theme/dashboard_design.dart';
 import 'dashboard_motion.dart';
 
-enum ReviewCardAction { uploadImage, prepareSlide, copy, delete }
+enum ReviewCardAction { uploadImage, prepareSlide, copy, createPdf, delete }
 
 class PremiumReviewCard extends StatelessWidget {
   const PremiumReviewCard({
@@ -387,6 +387,13 @@ class _ActionMenu extends StatelessWidget {
         PopupMenuItem(
           value: ReviewCardAction.copy,
           child: _MenuLabel(icon: Icons.copy_outlined, label: 'Make a copy'),
+        ),
+        PopupMenuItem(
+          value: ReviewCardAction.createPdf,
+          child: _MenuLabel(
+            icon: Icons.picture_as_pdf_outlined,
+            label: 'Create PDF',
+          ),
         ),
         PopupMenuDivider(),
         PopupMenuItem(

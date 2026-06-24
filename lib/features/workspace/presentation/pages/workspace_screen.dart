@@ -7,7 +7,7 @@ import 'package:engineering_werk/features/dashboard/presentation/theme/dashboard
 import 'package:engineering_werk/features/reviews/domain/utils/default_stages.dart';
 import 'package:engineering_werk/features/workspace/domain/entities/workspace_data.dart';
 import 'package:engineering_werk/features/workspace/presentation/providers/workspace_provider.dart';
-import 'package:engineering_werk/features/settings/presentation/providers/theme_provider.dart';
+import 'package:engineering_werk/features/reviews/presentation/providers/design_review_provider.dart';
 
 class WorkspaceScreen extends ConsumerStatefulWidget {
   final String workspaceId;
@@ -175,12 +175,6 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
   Widget build(BuildContext context) {
     if (_isLoading) return const Scaffold(body: _WorkspaceLoadingState());
 
-    final themeMode = ref.watch(themeProvider);
-    final isDark =
-        themeMode == ThemeMode.dark ||
-        (themeMode == ThemeMode.system &&
-            MediaQuery.of(context).platformBrightness == Brightness.dark);
-
     return Scaffold(
       backgroundColor: DashboardDesign.canvas(context),
       body: SafeArea(
@@ -191,7 +185,6 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
               projectName: widget.projectName,
               stageName: widget.stageName,
               onSave: _saveWithMessage,
-              onToggleTheme: _toggleTheme,
             ),
             Expanded(
               child: SingleChildScrollView(
@@ -206,11 +199,9 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                       icon: const Icon(Icons.arrow_back_rounded, size: 18),
                       label: const Text('Back to review page'),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: isDark
-                            ? Colors.grey[200]
-                            : const Color(0xFF374151),
+                        foregroundColor: DashboardDesign.text(context),
                         side: BorderSide(
-                          color: isDark ? Colors.grey[700]! : Colors.grey[300]!,
+                          color: DashboardDesign.border(context),
                         ),
                         padding: const EdgeInsets.symmetric(
                           horizontal: 14,
@@ -223,19 +214,20 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                     ),
                     const SizedBox(height: 24),
                     Text(
-                      'Substep workspace',
+                      widget.stageName,
                       style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
-                        color: isDark ? Colors.white : const Color(0xFF1F2937),
+                        color: DashboardDesign.text(context),
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Context, notes, status, evidence, and actions in one focused screen.',
+                      defaultStageContent[widget.stageName]?.description ??
+                          'Context, notes, status, evidence, and actions in one focused screen.',
                       style: TextStyle(
                         fontSize: 16,
-                        color: isDark ? Colors.grey[400] : Colors.grey[600],
+                        color: DashboardDesign.mutedText(context),
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -243,20 +235,20 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                       builder: (context, constraints) {
                         final primary = Column(
                           children: [
-                            _buildItemDetailsCard(isDark),
+                            _buildItemDetailsCard(context),
                             const SizedBox(height: 16),
-                            _buildAddDetailsCard(isDark),
+                            _buildAddDetailsCard(context),
                             const SizedBox(height: 16),
-                            _buildEvidenceCard(isDark),
+                            _buildEvidenceCard(context),
                             const SizedBox(height: 16),
-                            _buildActionRequiredCard(isDark),
+                            _buildActionRequiredCard(context),
                           ],
                         );
                         final secondary = Column(
                           children: [
-                            _buildAssignmentCard(isDark),
+                            _buildAssignmentCard(context),
                             const SizedBox(height: 16),
-                            _buildActivityCard(isDark),
+                            _buildActivityCard(context),
                           ],
                         );
 
@@ -303,14 +295,9 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
       );
   }
 
-  void _toggleTheme() {
-    ref.read(themeProvider.notifier).toggleTheme();
-  }
-
-  Widget _buildItemDetailsCard(bool isDark) {
+  Widget _buildItemDetailsCard(BuildContext context) {
     return _SectionCard(
       title: 'Item Details',
-      isDark: isDark,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -325,7 +312,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
               Text(
                 'Managed by admin',
                 style: TextStyle(
-                  color: isDark ? Colors.grey[400] : Colors.grey[600],
+                  color: DashboardDesign.mutedText(context),
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                 ),
@@ -333,77 +320,70 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
             ],
           ),
           const SizedBox(height: 18),
-          _LabelText('Checklist item', isDark: isDark),
+          _LabelText('Checklist item'),
           _ReadOnlyAdminField(
             text: _currentData!.checklistItem.isEmpty
                 ? widget.subStepName
                 : _currentData!.checklistItem,
-            isDark: isDark,
           ),
           const SizedBox(height: 16),
-          _LabelText('Description', isDark: isDark),
+          _LabelText('Description'),
           _ReadOnlyAdminField(
             text: _currentData!.itemDescription,
-            isDark: isDark,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildAddDetailsCard(bool isDark) {
+  Widget _buildAddDetailsCard(BuildContext context) {
     return _SectionCard(
       title: 'Add Details',
-      isDark: isDark,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _LabelText('Notes', isDark: isDark),
+          const _LabelText('Notes'),
           TextField(
             controller: _notesController,
             maxLines: 4,
-            style: TextStyle(color: isDark ? Colors.white : Colors.black87),
-            decoration: _boxDecoration('Enter notes...', isDark),
+            style: TextStyle(color: DashboardDesign.text(context)),
+            decoration: _boxDecoration(context, 'Enter notes...'),
           ),
-
         ],
       ),
     );
   }
 
-  Widget _buildEvidenceCard(bool isDark) {
+  Widget _buildEvidenceCard(BuildContext context) {
     return _SectionCard(
       title: 'Evidence & Actions',
-      isDark: isDark,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _LabelText('File Upload', isDark: isDark),
+          const _LabelText('File Upload'),
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
               border: Border.all(
-                color: isDark
-                    ? Colors.grey[800]!
-                    : Colors.grey.withValues(alpha: 0.4),
+                color: DashboardDesign.border(context),
                 style: BorderStyle.solid,
               ),
               borderRadius: BorderRadius.circular(12),
-              color: isDark ? const Color(0xFF111827) : const Color(0xFFF3F0EC),
+              color: DashboardDesign.subtleSurface(context),
             ),
             child: Column(
               children: [
                 Icon(
                   Icons.cloud_upload_outlined,
                   size: 32,
-                  color: isDark ? Colors.grey[500] : Colors.grey,
+                  color: DashboardDesign.mutedText(context),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'Drop Images, PDFs, CAD Files, Drawings here',
                   style: TextStyle(
-                    color: isDark ? Colors.grey[400] : Colors.grey,
+                    color: DashboardDesign.mutedText(context),
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -437,9 +417,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                color: isDark
-                                    ? Colors.grey[300]
-                                    : Colors.black87,
+                                color: DashboardDesign.text(context),
                                 fontSize: 13,
                               ),
                             ),
@@ -461,47 +439,98 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
     return value.split(RegExp(r'[/\\]')).last;
   }
 
-  Widget _buildActionRequiredCard(bool isDark) {
+  Widget _buildActionRequiredCard(BuildContext context) {
     return _SectionCard(
       title: 'Action Required',
-      isDark: isDark,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _LabelText('Action Description', isDark: isDark),
+          const _LabelText('Action Description'),
           TextField(
             controller: _actionDescController,
-            style: TextStyle(color: isDark ? Colors.white : Colors.black87),
-            decoration: _boxDecoration('Describe action...', isDark),
+            style: TextStyle(color: DashboardDesign.text(context)),
+            decoration: _boxDecoration(context, 'Describe action...'),
           ),
-
         ],
       ),
     );
   }
 
-  Widget _buildAssignmentCard(bool isDark) {
+  Widget _buildAssignmentCard(BuildContext context) {
+    final reviewsAsync = ref.watch(designReviewsStreamProvider);
+    final stakeholders = reviewsAsync.valueOrNull
+            ?.where((r) => r.id == widget.reviewId)
+            .firstOrNull
+            ?.stakeholders ??
+        [];
+
+    final dropdownItems = stakeholders
+        .map((s) => DropdownMenuItem(
+              value: s.name,
+              child: Text(s.name, style: TextStyle(color: DashboardDesign.text(context))),
+            ))
+        .toList();
+
+    final currentValue = _assigneeController.text.trim();
+    if (currentValue.isNotEmpty && !stakeholders.any((s) => s.name == currentValue)) {
+      dropdownItems.insert(0, DropdownMenuItem(
+        value: currentValue,
+        child: Text(currentValue, style: TextStyle(color: DashboardDesign.text(context))),
+      ));
+    }
+
     return _SectionCard(
       title: 'Assignment',
-      isDark: isDark,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _LabelText('Responsible Person', isDark: isDark),
-          TextField(
-            controller: _assigneeController,
-            style: TextStyle(color: isDark ? Colors.white : Colors.black87),
-            decoration: _boxDecoration('Assignee name...', isDark),
+          const _LabelText('Responsible Person'),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+            decoration: BoxDecoration(
+              color: DashboardDesign.surface(context),
+              border: Border.all(color: DashboardDesign.border(context)),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: currentValue.isEmpty ? null : currentValue,
+                isExpanded: true,
+                hint: Text('Select assignee...', style: TextStyle(color: DashboardDesign.mutedText(context))),
+                dropdownColor: DashboardDesign.surface(context),
+                icon: Icon(Icons.arrow_drop_down, color: DashboardDesign.mutedText(context)),
+                style: TextStyle(color: DashboardDesign.text(context), fontSize: 14),
+                items: dropdownItems,
+                onChanged: (value) {
+                  if (value != null) {
+                    final matched = stakeholders.where((s) => s.name == value).firstOrNull;
+                    final role = matched?.role ?? '';
+                    setState(() {
+                      _assigneeController.text = value;
+                      if (role.isNotEmpty) {
+                        _disciplineController.text = role;
+                      }
+                      _currentData = _currentData!.copyWith(
+                        assignee: value,
+                        discipline: role.isNotEmpty ? role : _currentData!.discipline,
+                      );
+                    });
+                    _addActivityLog('Assigned to $value');
+                  }
+                },
+              ),
+            ),
           ),
           const SizedBox(height: 12),
-          _LabelText('Discipline', isDark: isDark),
+          const _LabelText('Discipline'),
           TextField(
             controller: _disciplineController,
-            style: TextStyle(color: isDark ? Colors.white : Colors.black87),
-            decoration: _boxDecoration('Discipline...', isDark),
+            style: TextStyle(color: DashboardDesign.text(context)),
+            decoration: _boxDecoration(context, 'Discipline...'),
           ),
           const SizedBox(height: 12),
-          _LabelText('Due Date', isDark: isDark),
+          const _LabelText('Due Date'),
           InkWell(
             onTap: () async {
               final d = await showDatePicker(
@@ -511,17 +540,11 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                 lastDate: DateTime(2030),
                 builder: (context, child) {
                   return Theme(
-                    data: isDark
-                        ? ThemeData.dark().copyWith(
-                            colorScheme: const ColorScheme.dark(
-                              primary: Color(0xFF006D6A),
-                            ),
-                          )
-                        : ThemeData.light().copyWith(
-                            colorScheme: const ColorScheme.light(
-                              primary: Color(0xFF006D6A),
-                            ),
+                    data: Theme.of(context).copyWith(
+                      colorScheme: Theme.of(context).colorScheme.copyWith(
+                            primary: const Color(0xFF006D6A),
                           ),
+                    ),
                     child: child!,
                   );
                 },
@@ -539,7 +562,6 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
               _currentData!.dueDate == null
                   ? 'Select date'
                   : DateFormat('dd MMM yyyy').format(_currentData!.dueDate!),
-              isDark: isDark,
             ),
           ),
         ],
@@ -547,10 +569,9 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
     );
   }
 
-  Widget _buildActivityCard(bool isDark) {
+  Widget _buildActivityCard(BuildContext context) {
     return _SectionCard(
       title: 'Activity',
-      isDark: isDark,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -561,19 +582,17 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF111827) : Colors.white,
+                  color: DashboardDesign.surface(context),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: isDark
-                        ? Colors.grey[800]!
-                        : Colors.grey.withValues(alpha: 0.3),
+                    color: DashboardDesign.border(context),
                   ),
                 ),
                 child: Text(
                   log,
                   style: TextStyle(
                     fontSize: 13,
-                    color: isDark ? Colors.grey[300] : Colors.black87,
+                    color: DashboardDesign.text(context),
                   ),
                 ),
               ),
@@ -582,7 +601,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
           if (_currentData!.activityLogs.isEmpty)
             Text(
               'No recent activity.',
-              style: TextStyle(color: isDark ? Colors.grey[500] : Colors.grey),
+              style: TextStyle(color: DashboardDesign.mutedText(context)),
             ),
         ],
       ),
@@ -594,13 +613,11 @@ class _WorkspaceHeader extends StatelessWidget {
   final String projectName;
   final String stageName;
   final VoidCallback onSave;
-  final VoidCallback onToggleTheme;
 
   const _WorkspaceHeader({
     required this.projectName,
     required this.stageName,
     required this.onSave,
-    required this.onToggleTheme,
   });
 
   @override
@@ -627,25 +644,24 @@ class _WorkspaceHeader extends StatelessWidget {
             ),
             child: Row(
               children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(11),
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(11),
+                    border: Border.all(
+                      color: DashboardDesign.border(context),
+                    ),
+                  ),
+                  clipBehavior: Clip.antiAlias,
                   child: Image.asset(
-                    'assets/logo.jpeg',
+                    'assets/evalio_logo.jpeg',
                     width: 40,
                     height: 40,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      width: 40,
-                      height: 40,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: DashboardDesign.subtleSurface(context),
-                        borderRadius: BorderRadius.circular(11),
-                        border: Border.all(
-                          color: DashboardDesign.border(context),
-                        ),
-                      ),
-                      child: const Icon(
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) => Center(
+                      child: Icon(
                         Icons.description_outlined,
                         size: 20,
                         color: DashboardDesign.primary,
@@ -684,14 +700,6 @@ class _WorkspaceHeader extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 10),
-                _HeaderIconButton(
-                  tooltip: 'Toggle theme',
-                  icon: DashboardDesign.isDark(context)
-                      ? Icons.light_mode_outlined
-                      : Icons.dark_mode_outlined,
-                  onPressed: onToggleTheme,
-                ),
-                const SizedBox(width: 8),
                 if (isCompact)
                   _HeaderIconButton(
                     tooltip: 'Save Progress',
@@ -758,8 +766,7 @@ class _HeaderIconButton extends StatelessWidget {
 
 class _LabelText extends StatelessWidget {
   final String text;
-  final bool isDark;
-  const _LabelText(this.text, {this.isDark = false});
+  const _LabelText(this.text);
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -769,7 +776,7 @@ class _LabelText extends StatelessWidget {
         style: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.bold,
-          color: isDark ? Colors.grey[400] : Colors.grey,
+          color: DashboardDesign.mutedText(context),
           letterSpacing: 1.1,
         ),
       ),
@@ -804,19 +811,16 @@ class _WorkspaceLoadingState extends StatelessWidget {
 
 class _BoxContext extends StatelessWidget {
   final String text;
-  final bool isDark;
-  const _BoxContext(this.text, {this.isDark = false});
+  const _BoxContext(this.text);
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF111827) : Colors.white,
+        color: DashboardDesign.surface(context),
         border: Border.all(
-          color: isDark
-              ? Colors.grey[800]!
-              : Colors.grey.withValues(alpha: 0.3),
+          color: DashboardDesign.border(context),
         ),
         borderRadius: BorderRadius.circular(12),
       ),
@@ -824,7 +828,7 @@ class _BoxContext extends StatelessWidget {
         text,
         style: TextStyle(
           fontSize: 14,
-          color: isDark ? Colors.white : Colors.black87,
+          color: DashboardDesign.text(context),
         ),
       ),
     );
@@ -835,9 +839,8 @@ class _BoxContext extends StatelessWidget {
 /// editable input. Workspace saves never write these fields back.
 class _ReadOnlyAdminField extends StatelessWidget {
   final String text;
-  final bool isDark;
 
-  const _ReadOnlyAdminField({required this.text, required this.isDark});
+  const _ReadOnlyAdminField({required this.text});
 
   @override
   Widget build(BuildContext context) {
@@ -845,11 +848,9 @@ class _ReadOnlyAdminField extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF111827) : const Color(0xFFF7F9FC),
+        color: DashboardDesign.subtleSurface(context),
         border: Border.all(
-          color: isDark
-              ? Colors.grey[800]!
-              : Colors.grey.withValues(alpha: 0.3),
+          color: DashboardDesign.border(context),
         ),
         borderRadius: BorderRadius.circular(12),
       ),
@@ -862,7 +863,7 @@ class _ReadOnlyAdminField extends StatelessWidget {
               style: TextStyle(
                 fontSize: 14,
                 height: 1.5,
-                color: isDark ? Colors.grey[200] : Colors.black87,
+                color: DashboardDesign.text(context),
               ),
             ),
           ),
@@ -872,7 +873,7 @@ class _ReadOnlyAdminField extends StatelessWidget {
             child: Icon(
               Icons.lock_outline_rounded,
               size: 17,
-              color: isDark ? Colors.grey[500] : Colors.grey[500],
+              color: DashboardDesign.mutedText(context),
             ),
           ),
         ],
@@ -881,23 +882,23 @@ class _ReadOnlyAdminField extends StatelessWidget {
   }
 }
 
-InputDecoration _boxDecoration(String hint, bool isDark) {
+InputDecoration _boxDecoration(BuildContext context, String hint) {
   return InputDecoration(
     hintText: hint,
-    hintStyle: TextStyle(color: isDark ? Colors.grey[600] : Colors.grey[400]),
+    hintStyle: TextStyle(color: DashboardDesign.mutedText(context)),
     filled: true,
-    fillColor: isDark ? const Color(0xFF111827) : Colors.white,
+    fillColor: DashboardDesign.surface(context),
     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
       borderSide: BorderSide(
-        color: isDark ? Colors.grey[800]! : Colors.grey.withValues(alpha: 0.3),
+        color: DashboardDesign.border(context),
       ),
     ),
     enabledBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
       borderSide: BorderSide(
-        color: isDark ? Colors.grey[800]! : Colors.grey.withValues(alpha: 0.3),
+        color: DashboardDesign.border(context),
       ),
     ),
     focusedBorder: OutlineInputBorder(
@@ -910,11 +911,9 @@ InputDecoration _boxDecoration(String hint, bool isDark) {
 class _SectionCard extends StatelessWidget {
   final String title;
   final Widget child;
-  final bool isDark;
   const _SectionCard({
     required this.title,
     required this.child,
-    required this.isDark,
   });
 
   @override
@@ -922,12 +921,10 @@ class _SectionCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1F2937) : Colors.white,
+        color: DashboardDesign.surface(context),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isDark
-              ? Colors.grey[800]!
-              : Colors.grey.withValues(alpha: 0.3),
+          color: DashboardDesign.border(context),
         ),
       ),
       child: Column(
@@ -939,7 +936,7 @@ class _SectionCard extends StatelessWidget {
               fontSize: 11,
               letterSpacing: 1.1,
               fontWeight: FontWeight.bold,
-              color: isDark ? Colors.grey[400] : Colors.grey,
+              color: DashboardDesign.mutedText(context),
             ),
           ),
           const SizedBox(height: 16),

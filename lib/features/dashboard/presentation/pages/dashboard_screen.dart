@@ -31,6 +31,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     with SingleTickerProviderStateMixin {
   final _searchController = TextEditingController();
   final _searchQuery = ValueNotifier<String>('');
+  bool _showCompleted = false;
 
   late final AnimationController _entranceController;
   bool _entranceScheduled = false;
@@ -139,13 +140,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               final completed = filtered
                   .where((review) => review.status == ProjectStatus.completed)
                   .toList();
-              final averageProgress = active.isEmpty
-                  ? 0.0
-                  : active.fold<double>(
-                          0,
-                          (sum, review) => sum + review.progress,
-                        ) /
-                        active.length;
+              final displayList = _showCompleted ? completed : active;
               return SliverMainAxisGroup(
                 slivers: [
                   SliverToBoxAdapter(
@@ -158,31 +153,38 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                           curve: DashboardMotion.entranceCurve,
                         ),
                         child: PortfolioSummary(
-                          averageProgress: averageProgress,
                           activeCount: active.length,
                           completedCount: completed.length,
+                          showCompleted: _showCompleted,
+                          onToggleCompleted: () {
+                            setState(() {
+                              _showCompleted = !_showCompleted;
+                            });
+                          },
                         ),
                       ),
                     ),
                   ),
-                  if (active.isNotEmpty) ...[
+                  if (displayList.isNotEmpty) ...[
                     _sectionHeader(
                       width: width,
-                      title: 'Active Design Reviews',
-                      description: 'In progress and awaiting review',
-                      count: active.length,
+                      title: _showCompleted
+                          ? 'Completed Design Reviews'
+                          : 'Active Design Reviews',
+                      description: _showCompleted
+                          ? 'Approved records and decision history'
+                          : 'In progress and awaiting review',
+                      count: displayList.length,
                     ),
-                    _reviewGrid(active, width, startIndex: 0),
-                  ],
-                  if (completed.isNotEmpty) ...[
-                    _sectionHeader(
-                      width: width,
-                      title: 'Completed Design Reviews',
-                      description: 'Approved records and decision history',
-                      count: completed.length,
+                    _reviewGrid(displayList, width, startIndex: 0),
+                  ] else
+                    SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: DashboardEmptyState(
+                        isSearchResult: false,
+                        onCreateReview: _showCreateReviewDialog,
+                      ),
                     ),
-                    _reviewGrid(completed, width, startIndex: active.length),
-                  ],
                 ],
               );
             },
@@ -406,6 +408,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       case ReviewCardAction.copy:
         await _copyReview(review);
         return;
+      case ReviewCardAction.createPdf:
+        await _createPdf(review);
+        return;
       case ReviewCardAction.delete:
         await _confirmDelete(review);
         return;
@@ -449,6 +454,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           ),
         );
     _showMessage('Review copied');
+  }
+
+  Future<void> _createPdf(DesignReview review) async {
+    _showMessage('Generating PDF for "${review.name}"…');
   }
 
   Future<void> _confirmDelete(DesignReview review) async {
