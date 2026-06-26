@@ -769,13 +769,20 @@ SubStep _newSubStep(String name) {
 
 double _calculateProgress(List<SubStep> subSteps) {
   if (subSteps.isEmpty) return 0;
-  final completed = subSteps
+  final applicable = subSteps
+      .where((s) => s.status != StageStatus.notRequired)
+      .toList();
+  if (applicable.isEmpty) return 1.0; // All marked notRequired → complete
+  final completed = applicable
       .where((subStep) => subStep.status == StageStatus.completed)
       .length;
-  return completed / subSteps.length;
+  return completed / applicable.length;
 }
 
 StageStatus _statusForProgress(double progress, List<SubStep> subSteps) {
   if (subSteps.isEmpty || progress == 0) return StageStatus.notStarted;
-  return progress == 1 ? StageStatus.completed : StageStatus.inProgress;
+  if (progress == 1) return StageStatus.completed;
+  // Check if any substep is actually completed (not just notRequired)
+  final hasCompleted = subSteps.any((s) => s.status == StageStatus.completed);
+  return hasCompleted ? StageStatus.inProgress : StageStatus.notStarted;
 }

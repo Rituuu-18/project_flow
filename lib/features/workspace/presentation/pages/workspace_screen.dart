@@ -641,87 +641,105 @@ class _WorkspaceHeader extends StatelessWidget {
             ),
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: width < 700 ? 18 : 28),
-              child: Stack(
+              child: Row(
                 children: [
-                  // Left side: Project and stage info
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                  // Left side: Small logo + Project and stage info
+                  Expanded(
+                    child: Row(
                       children: [
-                        Text(
-                          projectName,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: DashboardDesign.text(context),
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: -0.3,
-                          ),
-                        ),
-                        Text(
-                          stageName,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: DashboardDesign.mutedText(context),
-                            fontSize: 11,
-                            height: 1.25,
-                            fontWeight: FontWeight.w500,
+                        Theme.of(context).brightness == Brightness.dark
+                            ? ShaderMask(
+                                blendMode: BlendMode.srcIn,
+                                shaderCallback: (bounds) =>
+                                    const LinearGradient(
+                                      colors: [
+                                        Color(0xFF4D8FFF), // brand-blue
+                                        Color(0xFFF4F7F8), // near-white
+                                      ],
+                                      stops: [0.0, 0.6],
+                                    ).createShader(bounds),
+                                child: Image.asset(
+                                  'assets/ed_logo.png',
+                                  height: 48,
+                                  fit: BoxFit.contain,
+                                  errorBuilder:
+                                      (context, error, stackTrace) => Icon(
+                                    Icons.description_outlined,
+                                    size: 28,
+                                    color: DashboardDesign.primary,
+                                  ),
+                                ),
+                              )
+                            : Image.asset(
+                                'assets/ed_logo.png',
+                                height: 48,
+                                fit: BoxFit.contain,
+                                errorBuilder:
+                                    (context, error, stackTrace) => Icon(
+                                  Icons.description_outlined,
+                                  size: 28,
+                                  color: DashboardDesign.primary,
+                                ),
+                              ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                projectName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: DashboardDesign.text(context),
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: -0.3,
+                                ),
+                              ),
+                              Text(
+                                stageName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: DashboardDesign.mutedText(context),
+                                  fontSize: 11,
+                                  height: 1.25,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
                     ),
                   ),
-                  // Center-aligned logo with natural aspect ratio and proper fit
-                  Align(
-                    alignment: Alignment.center,
-                    child: Transform.translate(
-                      offset: const Offset(-50, 0),
-                      child: Image.asset(
-                        'assets/evalio_logo.png',
-                        height: 60,
-                        fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) => Center(
-                          child: Icon(
-                            Icons.description_outlined,
-                            size: 24,
-                            color: DashboardDesign.primary,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
                   // Right side: Save button action
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: isCompact
-                        ? _HeaderIconButton(
-                            tooltip: 'Save Progress',
-                            icon: Icons.save_outlined,
-                            onPressed: onSave,
-                          )
-                        : FilledButton.icon(
-                            onPressed: onSave,
-                            icon: const Icon(Icons.save_outlined, size: 18),
-                            label: const Text('Save Progress'),
-                            style: FilledButton.styleFrom(
-                              backgroundColor: DashboardDesign.primary,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 14,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(
-                                  DashboardDesign.controlRadius,
-                                ),
+                  isCompact
+                      ? _HeaderIconButton(
+                          tooltip: 'Save Progress',
+                          icon: Icons.save_outlined,
+                          onPressed: onSave,
+                        )
+                      : FilledButton.icon(
+                          onPressed: onSave,
+                          icon: const Icon(Icons.save_outlined, size: 18),
+                          label: const Text('Save Progress'),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: DashboardDesign.primary,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 14,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                DashboardDesign.controlRadius,
                               ),
                             ),
                           ),
-                  ),
+                        ),
                 ],
               ),
             ),

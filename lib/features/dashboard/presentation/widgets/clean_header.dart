@@ -42,18 +42,44 @@ class CleanHeader extends StatelessWidget {
                     alignment: Alignment.center,
                     child: Transform.translate(
                       offset: const Offset(-50, 0),
-                      child: Image.asset(
-                        'assets/evalio_logo.png',
-                        height: 60,
-                        fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) => Center(
-                          child: Icon(
-                            Icons.insights_rounded,
-                            size: 24,
-                            color: DashboardDesign.primary,
-                          ),
-                        ),
-                      ),
+                      child: DashboardDesign.isDark(context)
+                          ? ShaderMask(
+                              blendMode: BlendMode.srcIn,
+                              shaderCallback: (bounds) =>
+                                  const LinearGradient(
+                                    colors: [
+                                      Color(0xFF4D8FFF), // brand-blue highlight
+                                      Color(0xFFF4F7F8), // darkText near-white
+                                    ],
+                                    stops: [0.0, 0.55],
+                                  ).createShader(bounds),
+                              child: Image.asset(
+                                'assets/evalio_logo.png',
+                                height: 60,
+                                fit: BoxFit.contain,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    Center(
+                                  child: Icon(
+                                    Icons.insights_rounded,
+                                    size: 24,
+                                    color: DashboardDesign.primary,
+                                  ),
+                                ),
+                              ),
+                            )
+                          : Image.asset(
+                              'assets/evalio_logo.png',
+                              height: 60,
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  Center(
+                                child: Icon(
+                                  Icons.insights_rounded,
+                                  size: 24,
+                                  color: DashboardDesign.primary,
+                                ),
+                              ),
+                            ),
                     ),
                   ),
                   // Right-aligned actions (Search & Theme Toggle)

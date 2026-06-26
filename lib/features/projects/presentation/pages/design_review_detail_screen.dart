@@ -152,6 +152,7 @@ class _DesignReviewDetailScreenState
   }
 
   Widget _buildHeader(DesignReview review) {
+    final isDark = DashboardDesign.isDark(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -164,16 +165,38 @@ class _DesignReviewDetailScreenState
           ),
           child: Row(
             children: [
-              Image.asset(
-                'assets/evalio_logo.png',
-                height: 60,
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) => Icon(
-                  Icons.fact_check_outlined,
-                  color: DashboardDesign.primary,
-                  size: 24,
-                ),
-              ),
+              isDark
+                  ? ShaderMask(
+                      blendMode: BlendMode.srcIn,
+                      shaderCallback: (bounds) =>
+                          const LinearGradient(
+                            colors: [
+                              Color(0xFF4D8FFF), // brand-blue
+                              Color(0xFFF4F7F8), // near-white
+                            ],
+                            stops: [0.0, 0.6],
+                          ).createShader(bounds),
+                      child: Image.asset(
+                        'assets/ed_logo.png',
+                        height: 48,
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) => Icon(
+                          Icons.fact_check_outlined,
+                          color: DashboardDesign.primary,
+                          size: 28,
+                        ),
+                      ),
+                    )
+                  : Image.asset(
+                      'assets/ed_logo.png',
+                      height: 48,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) => Icon(
+                        Icons.fact_check_outlined,
+                        color: DashboardDesign.primary,
+                        size: 28,
+                      ),
+                    ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -693,12 +716,12 @@ class _DesignReviewDetailScreenState
                 child: Text('Open'),
               ),
               DropdownMenuItem(
-                value: StageStatus.inProgress,
-                child: Text('In Progress'),
-              ),
-              DropdownMenuItem(
                 value: StageStatus.completed,
                 child: Text('Completed'),
+              ),
+              DropdownMenuItem(
+                value: StageStatus.notRequired,
+                child: Text('Not Required'),
               ),
             ],
             onChanged: (value) {
@@ -823,12 +846,12 @@ class _DesignReviewDetailScreenState
                     child: Text('Open', overflow: TextOverflow.ellipsis),
                   ),
                   DropdownMenuItem(
-                    value: StageStatus.inProgress,
-                    child: Text('In Progress', overflow: TextOverflow.ellipsis),
-                  ),
-                  DropdownMenuItem(
                     value: StageStatus.completed,
                     child: Text('Completed', overflow: TextOverflow.ellipsis),
+                  ),
+                  DropdownMenuItem(
+                    value: StageStatus.notRequired,
+                    child: Text('Not Required', overflow: TextOverflow.ellipsis),
                   ),
                 ],
                 onChanged: (val) {
@@ -881,7 +904,12 @@ class _DesignReviewDetailScreenState
     final completed = stage.subSteps
         .where((subStep) => subStep.status == StageStatus.completed)
         .length;
-    return '$completed/${stage.subSteps.length} complete';
+    final notRequired = stage.subSteps
+        .where((subStep) => subStep.status == StageStatus.notRequired)
+        .length;
+    final applicable = stage.subSteps.length - notRequired;
+    if (applicable == 0) return 'All not required';
+    return '$completed/$applicable complete';
   }
 
   void _addStakeholder(DesignReview review) {
@@ -913,19 +941,23 @@ class _DesignReviewDetailScreenState
         .toList();
 
     // Calculate progress
-    int completedCount = updatedSubSteps
+    // 'notRequired' substeps are excluded from the denominator
+    final applicableSubSteps = updatedSubSteps
+        .where((s) => s.status != StageStatus.notRequired)
+        .toList();
+    int completedCount = applicableSubSteps
         .where((s) => s.status == StageStatus.completed)
         .length;
-    double progress = updatedSubSteps.isEmpty
-        ? 0.0
-        : completedCount / updatedSubSteps.length;
+    double progress = applicableSubSteps.isEmpty
+        ? 1.0 // All substeps are notRequired → treat stage as complete
+        : completedCount / applicableSubSteps.length;
 
     final updatedStage = stage.copyWith(
       subSteps: updatedSubSteps,
       progress: progress,
       status: progress == 1.0
           ? StageStatus.completed
-          : (progress > 0 ? StageStatus.inProgress : StageStatus.notStarted),
+          : (completedCount > 0 ? StageStatus.inProgress : StageStatus.notStarted),
     );
 
     final updatedStages = review.stages

@@ -28,10 +28,10 @@ class HeroSection extends StatelessWidget {
           'Design review workspace',
           style: TextStyle(
             color: DashboardDesign.text(context),
-            fontSize: isMobile ? 30 : 40,
+            fontSize: isMobile ? 21 : 24,
             height: 1.08,
             fontWeight: FontWeight.w700,
-            letterSpacing: isMobile ? -1.0 : -1.6,
+            letterSpacing: -0.7,
           ),
         ),
         const SizedBox(height: 12),
@@ -87,7 +87,7 @@ class HeroSection extends StatelessWidget {
     return Padding(
       padding: EdgeInsets.fromLTRB(
         isMobile ? 18 : 28,
-        isMobile ? 34 : 52,
+        isMobile ? 16 : 36,
         isMobile ? 18 : 28,
         28,
       ),
