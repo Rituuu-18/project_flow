@@ -170,11 +170,13 @@ class _DesignReviewDetailScreenState
                       blendMode: BlendMode.srcIn,
                       shaderCallback: (bounds) =>
                           const LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
                             colors: [
-                              Color(0xFF4D8FFF), // brand-blue
-                              Color(0xFFF4F7F8), // near-white
+                              Color(0xFF4D8FFF), // brand-blue (top-left)
+                              Color(0xFFF4F7F8), // near-white (bottom-right)
                             ],
-                            stops: [0.0, 0.6],
+                            stops: [0.0, 1.0],
                           ).createShader(bounds),
                       child: Image.asset(
                         'assets/ed_logo.png',
@@ -260,7 +262,7 @@ class _DesignReviewDetailScreenState
         Text(
           'Design review steps',
           style: TextStyle(
-            fontSize: 32,
+            fontSize: 21,
             fontWeight: FontWeight.bold,
             color: DashboardDesign.text(context),
           ),
