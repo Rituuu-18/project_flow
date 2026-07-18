@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../auth/presentation/providers/auth_provider.dart';
 import '../theme/dashboard_design.dart';
 
-class CleanHeader extends StatelessWidget {
+class CleanHeader extends ConsumerWidget {
   const CleanHeader({
     required this.searchController,
     required this.onSearchChanged,
@@ -15,7 +18,8 @@ class CleanHeader extends StatelessWidget {
   final VoidCallback onToggleTheme;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(currentUserProvider);
     final width = MediaQuery.sizeOf(context).width;
     final showSearch = width >= DashboardDesign.mobileBreakpoint;
 
@@ -106,6 +110,25 @@ class CleanHeader extends StatelessWidget {
                               ? Icons.light_mode_outlined
                               : Icons.dark_mode_outlined,
                           onPressed: onToggleTheme,
+                        ),
+                        const SizedBox(width: 8),
+                        GestureDetector(
+                          onTap: () {
+                            if (user == null) {
+                              context.push('/register');
+                            } else {
+                              // Optional: open profile menu if logged in
+                            }
+                          },
+                          child: CircleAvatar(
+                            radius: 16,
+                            backgroundColor: DashboardDesign.primary.withValues(alpha: 0.1),
+                            child: Icon(
+                              Icons.person_outline_rounded,
+                              size: 18,
+                              color: DashboardDesign.primary,
+                            ),
+                          ),
                         ),
                       ],
                     ),

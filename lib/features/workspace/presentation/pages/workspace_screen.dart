@@ -661,7 +661,7 @@ class _WorkspaceHeader extends StatelessWidget {
                                       stops: [0.0, 1.0],
                                     ).createShader(bounds),
                                 child: Image.asset(
-                                  'assets/ed_logo.png',
+                                  'assets/ed-logo.png',
                                   height: 48,
                                   fit: BoxFit.contain,
                                   errorBuilder:
@@ -673,7 +673,7 @@ class _WorkspaceHeader extends StatelessWidget {
                                 ),
                               )
                             : Image.asset(
-                                'assets/ed_logo.png',
+                                'assets/ed-logo.png',
                                 height: 48,
                                 fit: BoxFit.contain,
                                 errorBuilder:

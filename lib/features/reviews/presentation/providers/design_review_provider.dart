@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../data/repositories/hive_design_review_repository.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../data/repositories/supabase_design_review_repository.dart';
 import '../../domain/entities/design_review.dart';
 import '../../domain/entities/stakeholder.dart';
 import '../../domain/repositories/design_review_repository.dart';
@@ -11,7 +12,7 @@ import '../../domain/utils/default_stages.dart';
 
 /// Provides the concrete [DesignReviewRepository] backed by Hive.
 final designReviewRepositoryProvider = Provider<DesignReviewRepository>((ref) {
-  return HiveDesignReviewRepository();
+  return SupabaseDesignReviewRepository(Supabase.instance.client);
 });
 
 // ──────────────────────────────────────────────────────────────────────────

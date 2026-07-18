@@ -1,18 +1,62 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:engineering_werk/core/router/go_router_refresh_stream.dart';
+import 'package:engineering_werk/features/auth/presentation/providers/auth_provider.dart';
 import 'package:engineering_werk/features/dashboard/presentation/pages/dashboard_screen.dart';
 import 'package:engineering_werk/features/projects/presentation/pages/design_review_detail_screen.dart';
 import 'package:engineering_werk/features/workspace/presentation/pages/workspace_screen.dart';
+import 'package:engineering_werk/features/auth/presentation/pages/login_screen.dart';
+import 'package:engineering_werk/features/auth/presentation/pages/register_screen.dart';
+import 'package:engineering_werk/features/auth/presentation/pages/forgot_password_screen.dart';
 
 const _routeTransitionDuration = Duration(milliseconds: 260);
 const _routeReverseTransitionDuration = Duration(milliseconds: 200);
 const _routeCurve = Cubic(0.2, 0.8, 0.2, 1);
 
 final routerProvider = Provider<GoRouter>((ref) {
+  final authRepo = ref.watch(authRepositoryProvider);
   return GoRouter(
     initialLocation: '/',
+    refreshListenable: GoRouterRefreshStream(authRepo.authStateChanges),
+    redirect: (context, state) {
+      final session = authRepo.currentUser;
+      final isAuthRoute = state.matchedLocation == '/login' || 
+                          state.matchedLocation == '/register' || 
+                          state.matchedLocation == '/forgot-password';
+                          
+      final isPublicRoute = state.matchedLocation == '/' ||
+                            state.matchedLocation.startsWith('/project') ||
+                            state.matchedLocation.startsWith('/workspace');
+
+      // If user is not logged in, they must go to login EXCEPT if they are on a public route or an auth route
+      if (session == null && !isAuthRoute && !isPublicRoute) {
+        return '/login';
+      }
+
+      // If user is logged in but tries to access an auth route, send them to dashboard
+      if (session != null && isAuthRoute) {
+        return '/';
+      }
+
+      return null;
+    },
     routes: [
+      GoRoute(
+        path: '/login',
+        pageBuilder: (context, state) =>
+            _buildPage(state: state, child: const LoginScreen()),
+      ),
+      GoRoute(
+        path: '/register',
+        pageBuilder: (context, state) =>
+            _buildPage(state: state, child: const RegisterScreen()),
+      ),
+      GoRoute(
+        path: '/forgot-password',
+        pageBuilder: (context, state) =>
+            _buildPage(state: state, child: const ForgotPasswordScreen()),
+      ),
       GoRoute(
         path: '/',
         pageBuilder: (context, state) =>

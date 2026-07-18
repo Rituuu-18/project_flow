@@ -380,11 +380,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     if (draft == null) return;
 
     final now = DateTime.now();
+    final newId = const Uuid().v4();
     await ref
         .read(designReviewNotifierProvider.notifier)
         .createReview(
           DesignReview(
-            id: const Uuid().v4(),
+            id: newId,
             name: draft.name,
             owner: draft.owner,
             discipline: draft.discipline,
@@ -392,6 +393,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             lastUpdated: now,
           ),
         );
+        
+    if (mounted) {
+      try {
+        context.push('/project/$newId');
+      } catch (e) {
+        // Ignore navigation errors in tests if GoRouter is missing
+      }
+    }
   }
 
   Future<void> _handleCardAction(

@@ -1,11 +1,40 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:engineering_werk/features/dashboard/presentation/pages/dashboard_screen.dart';
 import 'package:engineering_werk/features/reviews/domain/entities/design_review.dart';
 import 'package:engineering_werk/features/reviews/domain/repositories/design_review_repository.dart';
 import 'package:engineering_werk/features/reviews/presentation/providers/design_review_provider.dart';
+import 'package:engineering_werk/features/auth/domain/repositories/auth_repository.dart';
+import 'package:engineering_werk/features/auth/presentation/providers/auth_provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+class MockUser extends Mock implements User {}
+
+class _FakeAuthRepository implements AuthRepository {
+  @override
+  Stream<AuthState> get authStateChanges => const Stream.empty();
+
+  @override
+  User? get currentUser => MockUser();
+
+  @override
+  Future<AuthResponse> signIn({required String email, required String password}) => throw UnimplementedError();
+
+  @override
+  Future<AuthResponse> signUp({required String email, required String password, String? firstName, String? lastName}) => throw UnimplementedError();
+
+  @override
+  Future<void> signOut() async {}
+
+  @override
+  Future<void> resetPasswordForEmail(String email) => throw UnimplementedError();
+
+  @override
+  Future<UserResponse> updatePassword(String newPassword) => throw UnimplementedError();
+}
 
 class MockDesignReviewRepository extends Mock
     implements DesignReviewRepository {}
@@ -33,9 +62,31 @@ void main() {
   });
 
   Widget createTestWidget() {
+    final router = GoRouter(
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (context, state) => const DashboardScreen(),
+        ),
+        GoRoute(
+          path: '/project/:id',
+          builder: (context, state) => const SizedBox(),
+        ),
+        GoRoute(
+          path: '/register',
+          builder: (context, state) => const SizedBox(),
+        ),
+      ],
+    );
+
     return ProviderScope(
-      overrides: [designReviewRepositoryProvider.overrideWithValue(mockRepo)],
-      child: const MaterialApp(home: DashboardScreen()),
+      overrides: [
+        designReviewRepositoryProvider.overrideWithValue(mockRepo),
+        authRepositoryProvider.overrideWithValue(_FakeAuthRepository()),
+      ],
+      child: MaterialApp.router(
+        routerConfig: router,
+      ),
     );
   }
 

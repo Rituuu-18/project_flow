@@ -9,7 +9,7 @@ import 'package:engineering_werk/features/reviews/domain/entities/design_review.
 import 'package:engineering_werk/features/reviews/domain/entities/stage.dart';
 import 'package:engineering_werk/features/reviews/domain/entities/sub_step.dart';
 import 'package:engineering_werk/features/reviews/domain/entities/stakeholder.dart';
-import 'package:engineering_werk/features/reviews/domain/utils/default_stages.dart';
+
 import 'package:engineering_werk/features/reviews/presentation/providers/design_review_provider.dart';
 import 'package:engineering_werk/features/settings/presentation/providers/theme_provider.dart';
 
@@ -75,7 +75,7 @@ class _DesignReviewDetailScreenState
             final horizontalPadding = MediaQuery.sizeOf(context).width < 600
                 ? 16.0
                 : 24.0;
-            final expandedStageIndex = _expandedStageIndex;
+            final expandedStageIndex = _expandedStageIndex ?? _firstIncompleteStageIndex(review);
 
             return Column(
               children: [
@@ -179,7 +179,7 @@ class _DesignReviewDetailScreenState
                             stops: [0.0, 1.0],
                           ).createShader(bounds),
                       child: Image.asset(
-                        'assets/ed_logo.png',
+                        'assets/ed-logo.png',
                         height: 48,
                         fit: BoxFit.contain,
                         errorBuilder: (context, error, stackTrace) => Icon(
@@ -190,7 +190,7 @@ class _DesignReviewDetailScreenState
                       ),
                     )
                   : Image.asset(
-                      'assets/ed_logo.png',
+                      'assets/ed-logo.png',
                       height: 48,
                       fit: BoxFit.contain,
                       errorBuilder: (context, error, stackTrace) => Icon(
