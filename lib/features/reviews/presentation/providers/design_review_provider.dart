@@ -10,7 +10,7 @@ import '../../domain/utils/default_stages.dart';
 // Repository provider
 // ──────────────────────────────────────────────────────────────────────────
 
-/// Provides the concrete [DesignReviewRepository] backed by Hive.
+/// Provides the concrete [DesignReviewRepository] backed by Supabase.
 final designReviewRepositoryProvider = Provider<DesignReviewRepository>((ref) {
   return SupabaseDesignReviewRepository(Supabase.instance.client);
 });

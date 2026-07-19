@@ -7,7 +7,9 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../../core/utils/app_messenger.dart';
 import '../../../../core/utils/enums.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../reviews/domain/entities/design_review.dart';
 import '../../../reviews/presentation/providers/design_review_provider.dart';
 import '../../../settings/presentation/providers/theme_provider.dart';
@@ -113,6 +115,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         SliverFillRemaining(
           hasScrollBody: false,
           child: DashboardErrorState(
+            message: AppMessenger.describeError(error),
             onRetry: () => ref.invalidate(designReviewsStreamProvider),
           ),
         ),
@@ -372,6 +375,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   }
 
   Future<void> _showCreateReviewDialog() async {
+    if (ref.read(currentUserProvider) == null) {
+      AppMessenger.authRequired(onSignIn: () {
+        if (mounted) context.go('/login');
+      });
+      return;
+    }
+
     final draft = await showDialog<NewReviewDraft>(
       context: context,
       barrierColor: Colors.black.withValues(alpha: 0.42),
@@ -381,24 +391,32 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
 
     final now = DateTime.now();
     final newId = const Uuid().v4();
-    await ref
-        .read(designReviewNotifierProvider.notifier)
-        .createReview(
-          DesignReview(
-            id: newId,
-            name: draft.name,
-            owner: draft.owner,
-            discipline: draft.discipline,
-            createdAt: now,
-            lastUpdated: now,
-          ),
-        );
-        
-    if (mounted) {
-      try {
-        context.push('/project/$newId');
-      } catch (e) {
-        // Ignore navigation errors in tests if GoRouter is missing
+    try {
+      await ref.read(designReviewNotifierProvider.notifier).createReview(
+            DesignReview(
+              id: newId,
+              name: draft.name,
+              owner: draft.owner,
+              discipline: draft.discipline,
+              createdAt: now,
+              lastUpdated: now,
+            ),
+          );
+      AppMessenger.success('Review "${draft.name}" created.');
+      if (mounted) {
+        try {
+          context.push('/project/$newId');
+        } catch (_) {
+          // Ignore navigation errors in tests if GoRouter is missing
+        }
+      }
+    } catch (e) {
+      if (AppMessenger.isAuthError(e)) {
+        AppMessenger.authRequired(onSignIn: () {
+          if (mounted) context.go('/login');
+        });
+      } else {
+        AppMessenger.fromError(e, prefix: 'Could not create review.');
       }
     }
   }
@@ -434,39 +452,45 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     );
     if (file == null) return;
 
-    final bytes = await file.readAsBytes();
-    final base64 = await compute(base64Encode, bytes);
-    final encoded = 'data:image/*;base64,$base64';
-    await ref
-        .read(designReviewNotifierProvider.notifier)
-        .updateReview(
-          review.copyWith(imageUrl: encoded, lastUpdated: DateTime.now()),
-        );
-    _showMessage('Preview image updated');
+    try {
+      final bytes = await file.readAsBytes();
+      final base64 = await compute(base64Encode, bytes);
+      final encoded = 'data:image/*;base64,$base64';
+      await ref.read(designReviewNotifierProvider.notifier).updateReview(
+            review.copyWith(imageUrl: encoded, lastUpdated: DateTime.now()),
+          );
+      AppMessenger.success('Preview image updated.');
+    } catch (e) {
+      AppMessenger.fromError(e, prefix: 'Could not update image.');
+    }
   }
 
   void _prepareSlide(DesignReview review) {
-    _showMessage('${review.name} is ready for the presentation export flow.');
+    AppMessenger.info(
+      '${review.name} is ready for the presentation export flow.',
+    );
   }
 
   Future<void> _copyReview(DesignReview review) async {
     final now = DateTime.now();
-    await ref
-        .read(designReviewNotifierProvider.notifier)
-        .createReview(
-          review.copyWith(
-            id: const Uuid().v4(),
-            name: 'Copy of ${review.name}',
-            status: ProjectStatus.active,
-            createdAt: now,
-            lastUpdated: now,
-          ),
-        );
-    _showMessage('Review copied');
+    try {
+      await ref.read(designReviewNotifierProvider.notifier).createReview(
+            review.copyWith(
+              id: const Uuid().v4(),
+              name: 'Copy of ${review.name}',
+              status: ProjectStatus.active,
+              createdAt: now,
+              lastUpdated: now,
+            ),
+          );
+      AppMessenger.success('Review copied.');
+    } catch (e) {
+      AppMessenger.fromError(e, prefix: 'Could not copy review.');
+    }
   }
 
   Future<void> _createPdf(DesignReview review) async {
-    _showMessage('Generating PDF for "${review.name}"…');
+    AppMessenger.info('PDF export for "${review.name}" is not available yet.');
   }
 
   Future<void> _confirmDelete(DesignReview review) async {
@@ -494,26 +518,26 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     );
     if (shouldDelete != true) return;
 
-    await ref
-        .read(designReviewNotifierProvider.notifier)
-        .deleteReview(review.id);
-    _showMessage('Review deleted');
+    try {
+      await ref
+          .read(designReviewNotifierProvider.notifier)
+          .deleteReview(review.id);
+      AppMessenger.success('Review deleted.');
+    } catch (e) {
+      AppMessenger.fromError(e, prefix: 'Could not delete review.');
+    }
   }
 
   Future<void> _updateStatus(DesignReview review, ProjectStatus status) async {
     if (review.status == status) return;
-    await ref
-        .read(designReviewNotifierProvider.notifier)
-        .updateReview(
-          review.copyWith(status: status, lastUpdated: DateTime.now()),
-        );
-  }
-
-  void _showMessage(String message) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
+    try {
+      await ref.read(designReviewNotifierProvider.notifier).updateReview(
+            review.copyWith(status: status, lastUpdated: DateTime.now()),
+          );
+      AppMessenger.success('Status updated.');
+    } catch (e) {
+      AppMessenger.fromError(e, prefix: 'Could not update status.');
+    }
   }
 }
 

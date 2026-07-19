@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:engineering_werk/core/utils/app_messenger.dart';
 import 'package:engineering_werk/features/dashboard/presentation/pages/dashboard_screen.dart';
 import 'package:engineering_werk/features/reviews/domain/entities/design_review.dart';
 import 'package:engineering_werk/features/reviews/domain/repositories/design_review_repository.dart';
@@ -85,6 +86,7 @@ void main() {
         authRepositoryProvider.overrideWithValue(_FakeAuthRepository()),
       ],
       child: MaterialApp.router(
+        scaffoldMessengerKey: rootScaffoldMessengerKey,
         routerConfig: router,
       ),
     );

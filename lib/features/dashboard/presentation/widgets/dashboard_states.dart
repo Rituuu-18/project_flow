@@ -99,9 +99,14 @@ class DashboardEmptyState extends StatelessWidget {
 }
 
 class DashboardErrorState extends StatelessWidget {
-  const DashboardErrorState({required this.onRetry, super.key});
+  const DashboardErrorState({
+    required this.onRetry,
+    this.message,
+    super.key,
+  });
 
   final VoidCallback onRetry;
+  final String? message;
 
   @override
   Widget build(BuildContext context) {
@@ -125,6 +130,18 @@ class DashboardErrorState extends StatelessWidget {
                 fontWeight: FontWeight.w700,
               ),
             ),
+            if (message != null && message!.trim().isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text(
+                message!,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: DashboardDesign.mutedText(context),
+                  fontSize: 14,
+                  height: 1.4,
+                ),
+              ),
+            ],
             const SizedBox(height: 8),
             TextButton(onPressed: onRetry, child: const Text('Try again')),
           ],

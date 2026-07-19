@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
 
+import 'package:engineering_werk/core/utils/app_messenger.dart';
 import 'package:engineering_werk/core/utils/enums.dart';
 import 'package:engineering_werk/features/dashboard/presentation/theme/dashboard_design.dart';
 import 'package:engineering_werk/features/reviews/domain/entities/design_review.dart';
@@ -914,8 +915,11 @@ class _DesignReviewDetailScreenState
     return '$completed/$applicable complete';
   }
 
-  void _addStakeholder(DesignReview review) {
-    if (_stakeholderNameController.text.isEmpty) return;
+  Future<void> _addStakeholder(DesignReview review) async {
+    if (_stakeholderNameController.text.isEmpty) {
+      AppMessenger.error('Enter a stakeholder name first.');
+      return;
+    }
 
     final stakeholder = Stakeholder(
       id: const Uuid().v4(),
@@ -923,13 +927,17 @@ class _DesignReviewDetailScreenState
       role: _stakeholderRoleController.text,
     );
 
-    ref
-        .read(designReviewNotifierProvider.notifier)
-        .addStakeholder(review.id, stakeholder);
-
-    _stakeholderNameController.clear();
-    _stakeholderRoleController.clear();
-    FocusScope.of(context).unfocus();
+    try {
+      await ref
+          .read(designReviewNotifierProvider.notifier)
+          .addStakeholder(review.id, stakeholder);
+      AppMessenger.success('Stakeholder added.');
+      _stakeholderNameController.clear();
+      _stakeholderRoleController.clear();
+      if (mounted) FocusScope.of(context).unfocus();
+    } catch (e) {
+      AppMessenger.fromError(e, prefix: 'Could not add stakeholder.');
+    }
   }
 
   void _updateSubStepStatus(
@@ -979,7 +987,11 @@ class _DesignReviewDetailScreenState
           : ProjectStatus.active,
     );
 
-    ref.read(designReviewNotifierProvider.notifier).updateReview(updatedReview);
+    ref.read(designReviewNotifierProvider.notifier).updateReview(updatedReview).then((_) {
+      // Quiet success for frequent checklist toggles — only announce failures.
+    }).catchError((Object e) {
+      AppMessenger.fromError(e, prefix: 'Could not save checklist change.');
+    });
   }
 }
 

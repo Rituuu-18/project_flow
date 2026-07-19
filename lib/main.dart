@@ -3,13 +3,14 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/database/supabase_service.dart';
 import 'core/theme/app_theme.dart';
+import 'core/utils/app_messenger.dart';
 import 'features/settings/presentation/providers/theme_provider.dart';
 import 'core/router/router.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Load environment variables from .env asset
+  // Load public client env (URL + anon key only — never service role / PAT)
   await dotenv.load(fileName: '.env');
 
   // Initialise Supabase (reads URL + key from dotenv)
@@ -31,8 +32,9 @@ class MyApp extends ConsumerWidget {
     final router = ref.watch(routerProvider);
 
     return MaterialApp.router(
-      title: 'Engineering Werk',
+      title: 'Evalio Design',
       debugShowCheckedModeBanner: false,
+      scaffoldMessengerKey: rootScaffoldMessengerKey,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: themeMode,

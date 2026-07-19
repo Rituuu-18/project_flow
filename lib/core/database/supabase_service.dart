@@ -12,8 +12,13 @@ class SupabaseService {
     final url = dotenv.env['NEXT_PUBLIC_SUPABASE_URL'] ?? '';
     final anonKey = dotenv.env['SUPABASE_ANON_KEY'] ?? '';
 
-    assert(url.isNotEmpty, 'NEXT_PUBLIC_SUPABASE_URL is missing from .env');
-    assert(anonKey.isNotEmpty, 'SUPABASE_ANON_KEY is missing from .env');
+    // Use throw (not assert) so release builds also fail clearly.
+    if (url.isEmpty) {
+      throw StateError('NEXT_PUBLIC_SUPABASE_URL is missing from .env');
+    }
+    if (anonKey.isEmpty) {
+      throw StateError('SUPABASE_ANON_KEY is missing from .env');
+    }
 
     await Supabase.initialize(
       url: url,

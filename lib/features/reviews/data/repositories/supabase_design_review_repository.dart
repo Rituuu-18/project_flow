@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import '../../domain/entities/design_review.dart';
 import '../../domain/repositories/design_review_repository.dart';
+import '../../../../core/database/supabase_errors.dart';
 import '../../../../core/utils/enums.dart';
 import '../../domain/entities/stage.dart';
 import '../../domain/entities/sub_step.dart';
@@ -23,52 +24,58 @@ class SupabaseDesignReviewRepository implements DesignReviewRepository {
     final currentUser = _supabaseClient.auth.currentUser;
     if (currentUser == null) throw Exception('User not authenticated');
 
-    final response = await _supabaseClient
-        .from('projects')
-        .select('id')
-        .eq('created_by', currentUser.id)
-        .limit(1)
-        .maybeSingle();
+    return supabaseCall(() async {
+      final response = await _supabaseClient
+          .from('projects')
+          .select('id')
+          .eq('created_by', currentUser.id)
+          .limit(1)
+          .maybeSingle();
 
-    if (response != null) {
-      return response['id'] as String;
-    }
+      if (response != null) {
+        return response['id'] as String;
+      }
 
-    final newProjectId = const Uuid().v4();
-    await _supabaseClient.from('projects').insert({
-      'id': newProjectId,
-      'name': 'Default Project',
-      'owner': currentUser.id, // TEXT owner
-      'discipline': 'General',
-      'created_by': currentUser.id,
-    });
-    return newProjectId;
+      final newProjectId = const Uuid().v4();
+      await _supabaseClient.from('projects').insert({
+        'id': newProjectId,
+        'name': 'Default Project',
+        'owner': currentUser.id, // TEXT owner
+        'discipline': 'General',
+        'created_by': currentUser.id,
+      });
+      return newProjectId;
+    }, operation: 'ensureDefaultProject');
   }
 
   // ── Read ────────────────────────────────────────────────────────────────
 
   @override
   Future<List<DesignReview>> getAllReviews() async {
-    final response = await _supabaseClient
-        .from('design_reviews')
-        .select('*, sub_steps(*), stakeholders(*)')
-        .order('created_at', ascending: false);
+    return supabaseCall(() async {
+      final response = await _supabaseClient
+          .from('design_reviews')
+          .select('*, sub_steps(*), stakeholders(*)')
+          .order('created_at', ascending: false);
 
-    _cache = (response as List).map((row) => _fromJson(row)).toList();
-    _controller.add(_cache);
-    return _cache;
+      _cache = (response as List).map((row) => _fromJson(row)).toList();
+      _controller.add(_cache);
+      return _cache;
+    }, operation: 'getAllReviews');
   }
 
   @override
   Future<DesignReview?> getReviewById(String id) async {
-    final response = await _supabaseClient
-        .from('design_reviews')
-        .select('*, sub_steps(*), stakeholders(*)')
-        .eq('id', id)
-        .maybeSingle();
+    return supabaseCall(() async {
+      final response = await _supabaseClient
+          .from('design_reviews')
+          .select('*, sub_steps(*), stakeholders(*)')
+          .eq('id', id)
+          .maybeSingle();
 
-    if (response == null) return null;
-    return _fromJson(response);
+      if (response == null) return null;
+      return _fromJson(response);
+    }, operation: 'getReviewById');
   }
 
   // ── Write ───────────────────────────────────────────────────────────────
@@ -78,81 +85,87 @@ class SupabaseDesignReviewRepository implements DesignReviewRepository {
     final currentUser = _supabaseClient.auth.currentUser;
     if (currentUser == null) throw Exception('User not authenticated');
 
-    final projectId = await _getDefaultProjectId();
+    await supabaseCall(() async {
+      final projectId = await _getDefaultProjectId();
 
-    // 1. Upsert Design Review
-    await _supabaseClient.from('design_reviews').upsert({
-      'id': review.id,
-      'project_id': projectId,
-      'name': review.name,
-      'owner': review.owner,
-      'discipline': review.discipline,
-      'image_url': review.imageUrl,
-      'progress': review.progress,
-      'status': review.status.name,
-      'created_by': currentUser.id,
-    });
+      // 1. Upsert Design Review
+      await _supabaseClient.from('design_reviews').upsert({
+        'id': review.id,
+        'project_id': projectId,
+        'name': review.name,
+        'owner': review.owner,
+        'discipline': review.discipline,
+        'image_url': review.imageUrl,
+        'progress': review.progress,
+        'status': review.status.name,
+        'created_by': currentUser.id,
+      });
 
-    // 2. Upsert Sub Steps & Workspaces
-    final workspacesPayload = <Map<String, dynamic>>[];
-    final subStepsPayload = <Map<String, dynamic>>[];
-    for (final stage in review.stages) {
-      for (final sub in stage.subSteps) {
-        workspacesPayload.add({
-          'id': sub.workspaceId,
-          'created_by': currentUser.id,
-        });
-        
-        subStepsPayload.add({
-          'id': sub.id,
-          'design_review_id': review.id,
-          'name': sub.name,
-          'status': sub.status.name,
-          'workspace_id': sub.workspaceId,
-        });
+      // 2. Upsert Sub Steps & Workspaces
+      final workspacesPayload = <Map<String, dynamic>>[];
+      final subStepsPayload = <Map<String, dynamic>>[];
+      for (final stage in review.stages) {
+        for (final sub in stage.subSteps) {
+          workspacesPayload.add({
+            'id': sub.workspaceId,
+            'created_by': currentUser.id,
+          });
+
+          subStepsPayload.add({
+            'id': sub.id,
+            'design_review_id': review.id,
+            'name': sub.name,
+            'status': sub.status.name,
+            'workspace_id': sub.workspaceId,
+          });
+        }
       }
-    }
 
-    if (workspacesPayload.isNotEmpty) {
-      await _supabaseClient.from('workspaces').upsert(
-        workspacesPayload,
-        onConflict: 'id',
-        ignoreDuplicates: true, // Only creates empty workspace if it doesn't exist
-      );
-    }
+      if (workspacesPayload.isNotEmpty) {
+        await _supabaseClient.from('workspaces').upsert(
+          workspacesPayload,
+          onConflict: 'id',
+          ignoreDuplicates: true, // Only creates empty workspace if it doesn't exist
+        );
+      }
 
-    if (subStepsPayload.isNotEmpty) {
-      await _supabaseClient.from('sub_steps').upsert(subStepsPayload);
-    }
+      if (subStepsPayload.isNotEmpty) {
+        await _supabaseClient.from('sub_steps').upsert(subStepsPayload);
+      }
 
-    // 3. Upsert Stakeholders
-    if (review.stakeholders.isNotEmpty) {
-      final shPayload = review.stakeholders.map((sh) => {
-        'id': sh.id,
-        'design_review_id': review.id,
-        'name': sh.name,
-        'role': sh.role,
-      }).toList();
-      await _supabaseClient.from('stakeholders').upsert(shPayload);
-    }
+      // 3. Upsert Stakeholders
+      if (review.stakeholders.isNotEmpty) {
+        final shPayload = review.stakeholders
+            .map((sh) => {
+                  'id': sh.id,
+                  'design_review_id': review.id,
+                  'name': sh.name,
+                  'role': sh.role,
+                })
+            .toList();
+        await _supabaseClient.from('stakeholders').upsert(shPayload);
+      }
 
-    // Update Cache
-    final index = _cache.indexWhere((r) => r.id == review.id);
-    if (index >= 0) {
-      _cache[index] = review;
-    } else {
-      _cache.insert(0, review);
-    }
-    _controller.add(_cache);
+      // Update Cache
+      final index = _cache.indexWhere((r) => r.id == review.id);
+      if (index >= 0) {
+        _cache[index] = review;
+      } else {
+        _cache.insert(0, review);
+      }
+      _controller.add(_cache);
+    }, operation: 'saveReview');
   }
 
   // ── Delete ──────────────────────────────────────────────────────────────
 
   @override
   Future<void> deleteReview(String id) async {
-    await _supabaseClient.from('design_reviews').delete().eq('id', id);
-    _cache.removeWhere((r) => r.id == id);
-    _controller.add(_cache);
+    await supabaseCall(() async {
+      await _supabaseClient.from('design_reviews').delete().eq('id', id);
+      _cache.removeWhere((r) => r.id == id);
+      _controller.add(_cache);
+    }, operation: 'deleteReview');
   }
 
   // ── Stream ──────────────────────────────────────────────────────────────

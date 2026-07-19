@@ -25,7 +25,7 @@ class HeroSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Design review workspace',
+          'Evalio Design',
           style: TextStyle(
             color: DashboardDesign.text(context),
             fontSize: isMobile ? 21 : 24,
@@ -36,7 +36,7 @@ class HeroSection extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         Text(
-          'Track active reviews, revisit completed records, and keep the next decision moving.',
+          'Track active design reviews, revisit completed records, and keep the next decision moving.',
           style: TextStyle(
             color: DashboardDesign.mutedText(context),
             fontSize: isMobile ? 15 : 16,
@@ -56,7 +56,7 @@ class HeroSection extends StatelessWidget {
           borderRadius: BorderRadius.circular(DashboardDesign.controlRadius),
           boxShadow: const [
             BoxShadow(
-              color: Color(0x2401696F),
+              color: Color(0x24005CFF),
               blurRadius: 18,
               offset: Offset(0, 8),
             ),

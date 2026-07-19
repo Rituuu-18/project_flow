@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:engineering_werk/core/utils/app_messenger.dart';
 import 'package:engineering_werk/features/auth/presentation/providers/auth_provider.dart';
 import 'package:engineering_werk/features/auth/presentation/widgets/auth_layout.dart';
 
@@ -18,6 +19,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _isLoading = false;
   bool _obscurePassword = true;
+  bool _shownAuthReason = false;
 
   @override
   void dispose() {
@@ -26,28 +28,47 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     super.dispose();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_shownAuthReason) return;
+    final reason = GoRouterState.of(context).uri.queryParameters['reason'];
+    if (reason == 'auth') {
+      _shownAuthReason = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        AppMessenger.info(
+          'Please sign in to open the dashboard and save reviews.',
+        );
+      });
+    }
+  }
+
   Future<void> _signIn() async {
-    if (!_formKey.currentState!.validate()) return;
-    
+    if (!_formKey.currentState!.validate()) {
+      AppMessenger.error('Enter a valid email and password to continue.');
+      return;
+    }
+
     setState(() => _isLoading = true);
     try {
-      await ref.read(authRepositoryProvider).signIn(
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
-      );
-      // On success, the GoRouterRefreshStream will automatically redirect to '/'
+      final response = await ref.read(authRepositoryProvider).signIn(
+            email: _emailController.text.trim(),
+            password: _passwordController.text,
+          );
+      if (response.session == null) {
+        throw const AuthException(
+          'Sign-in succeeded but no session was created. '
+          'Confirm your email or contact an admin.',
+        );
+      }
+      AppMessenger.success('Signed in successfully.');
+      if (mounted) {
+        context.go('/');
+      }
     } on AuthException catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message)),
-        );
-      }
+      AppMessenger.error(AppMessenger.describeError(e));
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('An unexpected error occurred: $e')),
-        );
-      }
+      AppMessenger.fromError(e, prefix: 'Sign-in failed.');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -69,7 +90,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Welcome back to ReviewFlow.',
+              'Welcome back to Evalio Design.',
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
@@ -101,7 +122,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 prefixIcon: const Icon(Icons.lock_outline),
                 suffixIcon: IconButton(
                   icon: Icon(
-                    _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                    _obscurePassword
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
                   ),
                   onPressed: () {
                     setState(() => _obscurePassword = !_obscurePassword);
@@ -122,7 +145,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             Align(
               alignment: Alignment.centerRight,
               child: TextButton(
-                onPressed: () => context.push('/forgot-password'),
+                onPressed: () => context.go('/forgot-password'),
                 child: const Text('Forgot Password?'),
               ),
             ),
@@ -152,7 +175,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
                 TextButton(
-                  onPressed: () => context.push('/register'),
+                  onPressed: () => context.go('/register'),
                   child: const Text('Register here'),
                 ),
               ],

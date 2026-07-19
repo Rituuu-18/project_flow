@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/utils/app_messenger.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../theme/dashboard_design.dart';
 
@@ -112,19 +113,50 @@ class CleanHeader extends ConsumerWidget {
                           onPressed: onToggleTheme,
                         ),
                         const SizedBox(width: 8),
-                        GestureDetector(
-                          onTap: () {
-                            if (user == null) {
-                              context.push('/register');
-                            } else {
-                              // Optional: open profile menu if logged in
+                        PopupMenuButton<String>(
+                          tooltip: user == null ? 'Account' : (user.email ?? 'Account'),
+                          onSelected: (value) async {
+                            if (value == 'login') {
+                              context.go('/login');
+                            } else if (value == 'register') {
+                              context.go('/register');
+                            } else if (value == 'signout') {
+                              await ref.read(authRepositoryProvider).signOut();
+                              AppMessenger.info('Signed out.');
+                              if (context.mounted) {
+                                context.go('/login?reason=auth');
+                              }
                             }
+                          },
+                          itemBuilder: (context) {
+                            if (user == null) {
+                              return const [
+                                PopupMenuItem(value: 'login', child: Text('Sign in')),
+                                PopupMenuItem(
+                                  value: 'register',
+                                  child: Text('Create account'),
+                                ),
+                              ];
+                            }
+                            return [
+                              PopupMenuItem(
+                                enabled: false,
+                                child: Text(user.email ?? 'Signed in'),
+                              ),
+                              const PopupMenuItem(
+                                value: 'signout',
+                                child: Text('Sign out'),
+                              ),
+                            ];
                           },
                           child: CircleAvatar(
                             radius: 16,
-                            backgroundColor: DashboardDesign.primary.withValues(alpha: 0.1),
+                            backgroundColor:
+                                DashboardDesign.primary.withValues(alpha: 0.1),
                             child: Icon(
-                              Icons.person_outline_rounded,
+                              user == null
+                                  ? Icons.person_outline_rounded
+                                  : Icons.person_rounded,
                               size: 18,
                               color: DashboardDesign.primary,
                             ),

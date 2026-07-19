@@ -30,12 +30,19 @@ BEGIN
   INSERT INTO public.profiles (id, first_name, last_name)
   VALUES (
     new.id,
-    new.raw_user_meta_data->>'firstName',
-    new.raw_user_meta_data->>'lastName'
+    COALESCE(
+      new.raw_user_meta_data->>'first_name',
+      new.raw_user_meta_data->>'firstName'
+    ),
+    COALESCE(
+      new.raw_user_meta_data->>'last_name',
+      new.raw_user_meta_data->>'lastName'
+    )
   );
   RETURN new;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = public;
 
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users

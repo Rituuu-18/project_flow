@@ -1,11 +1,11 @@
 {
-    "name": "engineering_werk",
-    "short_name": "engineering_werk",
+    "name": "Evalio Design",
+    "short_name": "Evalio Design",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#005CFF",
+    "theme_color": "#005CFF",
+    "description": "Evalio Design — engineering design reviews.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:engineering_werk/core/utils/app_messenger.dart';
 import 'package:engineering_werk/features/auth/presentation/providers/auth_provider.dart';
 import 'package:engineering_werk/features/auth/presentation/widgets/auth_layout.dart';
 
@@ -34,37 +35,36 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   }
 
   Future<void> _signUp() async {
-    if (!_formKey.currentState!.validate()) return;
-    
+    if (!_formKey.currentState!.validate()) {
+      AppMessenger.error('Please complete all required fields correctly.');
+      return;
+    }
+
     setState(() => _isLoading = true);
     try {
-      await ref.read(authRepositoryProvider).signUp(
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
-        firstName: _firstNameController.text.trim(),
-        lastName: _lastNameController.text.trim(),
+      final response = await ref.read(authRepositoryProvider).signUp(
+            email: _emailController.text.trim(),
+            password: _passwordController.text,
+            firstName: _firstNameController.text.trim(),
+            lastName: _lastNameController.text.trim(),
+          );
+
+      if (!mounted) return;
+
+      if (response.session != null) {
+        AppMessenger.success('Account created. You are signed in.');
+        context.go('/');
+        return;
+      }
+
+      AppMessenger.info(
+        'Account created. Sign in with your email and password.',
       );
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Registration successful! Please verify your email.')),
-        );
-        // Supabase might automatically log in depending on 'Confirm Email' settings,
-        // GoRouterRefreshStream will handle redirect if so, else we stay/pop.
-        context.pop(); // Pop back to login screen
-      }
+      context.go('/login');
     } on AuthException catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message)),
-        );
-      }
+      AppMessenger.error(AppMessenger.describeError(e));
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('An unexpected error occurred: $e')),
-        );
-      }
+      AppMessenger.fromError(e, prefix: 'Registration failed.');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -86,7 +86,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Join ReviewFlow to collaborate on engineering designs.',
+              'Join Evalio Design to collaborate on engineering reviews.',
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
@@ -207,7 +207,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
                 TextButton(
-                  onPressed: () => context.pop(),
+                  onPressed: () => context.go('/login'),
                   child: const Text('Sign in here'),
                 ),
               ],

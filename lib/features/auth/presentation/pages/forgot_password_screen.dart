@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:engineering_werk/core/utils/app_messenger.dart';
 import 'package:engineering_werk/features/auth/presentation/providers/auth_provider.dart';
 import 'package:engineering_werk/features/auth/presentation/widgets/auth_layout.dart';
 
@@ -25,26 +26,24 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   }
 
   Future<void> _sendResetLink() async {
-    if (!_formKey.currentState!.validate()) return;
-    
+    if (!_formKey.currentState!.validate()) {
+      AppMessenger.error('Enter a valid email to reset your password.');
+      return;
+    }
+
     setState(() => _isLoading = true);
     try {
       await ref.read(authRepositoryProvider).resetPasswordForEmail(
-        _emailController.text.trim(),
-      );
+            _emailController.text.trim(),
+          );
       if (mounted) setState(() => _isSent = true);
+      AppMessenger.success(
+        'If that email exists, a reset link has been sent.',
+      );
     } on AuthException catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message)),
-        );
-      }
+      AppMessenger.error(AppMessenger.describeError(e));
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('An unexpected error occurred: $e')),
-        );
-      }
+      AppMessenger.fromError(e, prefix: 'Could not send reset email.');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -74,7 +73,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                   width: double.infinity,
                   height: 52,
                   child: OutlinedButton(
-                    onPressed: () => context.pop(),
+                    onPressed: () => context.go('/login'),
                     child: const Text('Back to Sign In'),
                   ),
                 ),
@@ -89,7 +88,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                     alignment: Alignment.centerLeft,
                     padding: EdgeInsets.zero,
                     icon: const Icon(Icons.arrow_back),
-                    onPressed: () => context.pop(),
+                    onPressed: () => context.go('/login'),
                   ),
                   const SizedBox(height: 16),
                   Text(

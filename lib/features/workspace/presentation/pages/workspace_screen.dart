@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:go_router/go_router.dart';
+import 'package:engineering_werk/core/utils/app_messenger.dart';
 import 'package:engineering_werk/features/dashboard/presentation/theme/dashboard_design.dart';
 import 'package:engineering_werk/features/reviews/domain/utils/default_stages.dart';
 import 'package:engineering_werk/features/workspace/domain/entities/workspace_data.dart';
@@ -124,7 +125,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
     }
   }
 
-  Future<void> _saveData() async {
+  Future<void> _saveData({bool silent = false}) async {
     final repo = ref.read(workspaceRepositoryProvider);
     final updated = _currentData!.copyWith(
       notes: _notesController.text,
@@ -134,8 +135,15 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
       assignee: _assigneeController.text,
       discipline: _disciplineController.text,
     );
-    await repo.saveWorkspace(updated);
-    _currentData = updated;
+    try {
+      await repo.saveWorkspace(updated);
+      _currentData = updated;
+    } catch (e) {
+      if (!silent) {
+        AppMessenger.fromError(e, prefix: 'Could not save workspace.');
+      }
+      rethrow;
+    }
   }
 
   void _addActivityLog(String log) {
@@ -147,7 +155,9 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
         ],
       );
     });
-    _saveData();
+    _saveData(silent: true).catchError((Object e) {
+      AppMessenger.fromError(e, prefix: 'Could not save activity.');
+    });
   }
 
   Future<void> _pickEvidence() async {
@@ -166,9 +176,14 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
       ],
     );
 
-    await ref.read(workspaceRepositoryProvider).saveWorkspace(updated);
-    if (!mounted) return;
-    setState(() => _currentData = updated);
+    try {
+      await ref.read(workspaceRepositoryProvider).saveWorkspace(updated);
+      if (!mounted) return;
+      setState(() => _currentData = updated);
+      AppMessenger.success('Evidence files attached.');
+    } catch (e) {
+      AppMessenger.fromError(e, prefix: 'Could not save evidence.');
+    }
   }
 
   @override
@@ -283,16 +298,12 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
   }
 
   Future<void> _saveWithMessage() async {
-    await _saveData();
-    if (!mounted) return;
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        const SnackBar(
-          content: Text('Progress saved'),
-          backgroundColor: DashboardDesign.primary,
-        ),
-      );
+    try {
+      await _saveData(silent: true);
+      AppMessenger.success('Progress saved.');
+    } catch (e) {
+      AppMessenger.fromError(e, prefix: 'Could not save progress.');
+    }
   }
 
   Widget _buildItemDetailsCard(BuildContext context) {

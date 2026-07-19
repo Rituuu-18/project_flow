@@ -13,7 +13,11 @@ final authStateProvider = StreamProvider<AuthState>((ref) {
   return authRepo.authStateChanges;
 });
 
+/// Current user — watches [authStateProvider] so UI rebuilds on sign-in/out.
 final currentUserProvider = Provider<User?>((ref) {
-  final authRepo = ref.watch(authRepositoryProvider);
-  return authRepo.currentUser;
+  final authAsync = ref.watch(authStateProvider);
+  return authAsync.maybeWhen(
+    data: (state) => state.session?.user,
+    orElse: () => ref.watch(authRepositoryProvider).currentUser,
+  );
 });

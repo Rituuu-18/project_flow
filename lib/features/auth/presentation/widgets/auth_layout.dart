@@ -17,7 +17,31 @@ class AuthLayout extends StatelessWidget {
                 padding: const EdgeInsets.all(24.0),
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 450),
-                  child: child,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        'Evalio Design',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context)
+                            .textTheme
+                            .headlineSmall
+                            ?.copyWith(fontWeight: FontWeight.w700),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Engineering design reviews, kept clear',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
+                            ),
+                      ),
+                      const SizedBox(height: 28),
+                      child,
+                    ],
+                  ),
                 ),
               ),
             );
@@ -29,36 +53,61 @@ class AuthLayout extends StatelessWidget {
               // Hero Brand Section
               Expanded(
                 flex: 5,
-                child: Container(
-                  color: Theme.of(context).colorScheme.primary,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primary,
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Theme.of(context).colorScheme.primary,
+                        Color.lerp(
+                              Theme.of(context).colorScheme.primary,
+                              const Color(0xFF0B1F44),
+                              0.35,
+                            ) ??
+                            Theme.of(context).colorScheme.primary,
+                      ],
+                    ),
+                  ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Image.asset(
-                        'assets/ed-logo.png', // Fallback to provided assets
-                        height: 120,
+                        'assets/evalio_logo.png',
+                        height: 96,
+                        fit: BoxFit.contain,
                         errorBuilder: (context, error, stackTrace) {
-                          return const Icon(
-                            Icons.engineering,
-                            size: 120,
-                            color: Colors.white,
+                          return Image.asset(
+                            'assets/ed-logo.png',
+                            height: 96,
+                            errorBuilder: (_, __, ___) => const Icon(
+                              Icons.insights_rounded,
+                              size: 72,
+                              color: Colors.white,
+                            ),
                           );
                         },
                       ),
-                      const SizedBox(height: 32),
+                      const SizedBox(height: 28),
                       Text(
-                        'ReviewFlow',
-                        style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                        'Evalio Design',
+                        style: Theme.of(context)
+                            .textTheme
+                            .headlineLarge
+                            ?.copyWith(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
+                              letterSpacing: -0.5,
                             ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 12),
                       Text(
-                        'Enterprise Engineering Design Reviews',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              color: Colors.white70,
-                            ),
+                        'Engineering design reviews, kept clear',
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  color: Colors.white70,
+                                ),
                       ),
                     ],
                   ),

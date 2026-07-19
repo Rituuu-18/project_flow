@@ -21,20 +21,16 @@ final routerProvider = Provider<GoRouter>((ref) {
     refreshListenable: GoRouterRefreshStream(authRepo.authStateChanges),
     redirect: (context, state) {
       final session = authRepo.currentUser;
-      final isAuthRoute = state.matchedLocation == '/login' || 
-                          state.matchedLocation == '/register' || 
-                          state.matchedLocation == '/forgot-password';
-                          
-      final isPublicRoute = state.matchedLocation == '/' ||
-                            state.matchedLocation.startsWith('/project') ||
-                            state.matchedLocation.startsWith('/workspace');
+      final isAuthRoute = state.matchedLocation == '/login' ||
+          state.matchedLocation == '/register' ||
+          state.matchedLocation == '/forgot-password';
 
-      // If user is not logged in, they must go to login EXCEPT if they are on a public route or an auth route
-      if (session == null && !isAuthRoute && !isPublicRoute) {
-        return '/login';
+      // App data requires a session (RLS). Keep guests on auth screens only.
+      if (session == null && !isAuthRoute) {
+        return '/login?reason=auth';
       }
 
-      // If user is logged in but tries to access an auth route, send them to dashboard
+      // Logged-in users should not stay on auth screens.
       if (session != null && isAuthRoute) {
         return '/';
       }
