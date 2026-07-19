@@ -3,8 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:engineering_werk/core/database/supabase_storage.dart';
 import 'package:engineering_werk/core/utils/app_messenger.dart';
 import 'package:engineering_werk/features/dashboard/presentation/theme/dashboard_design.dart';
+import 'package:engineering_werk/features/reviews/domain/entities/stakeholder.dart';
 import 'package:engineering_werk/features/reviews/domain/utils/default_stages.dart';
 import 'package:engineering_werk/features/workspace/domain/entities/workspace_data.dart';
 import 'package:engineering_werk/features/workspace/presentation/providers/workspace_provider.dart';
@@ -33,6 +37,7 @@ class WorkspaceScreen extends ConsumerStatefulWidget {
 class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
   WorkspaceData? _currentData;
   bool _isLoading = true;
+  Future<void> _saveChain = Future.value();
 
   late TextEditingController _notesController;
   late TextEditingController _engineeringCommentsController;
@@ -146,6 +151,17 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
     }
   }
 
+  Future<void> _enqueueSave({bool silent = false}) {
+    final next = _saveChain.then((_) => _saveData(silent: silent));
+    // Keep the chain alive after failures so later saves still run.
+    _saveChain = next.catchError((Object e) {
+      if (silent) {
+        AppMessenger.fromError(e, prefix: 'Could not save activity.');
+      }
+    });
+    return next;
+  }
+
   void _addActivityLog(String log) {
     setState(() {
       _currentData = _currentData!.copyWith(
@@ -155,35 +171,95 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
         ],
       );
     });
-    _saveData(silent: true).catchError((Object e) {
-      AppMessenger.fromError(e, prefix: 'Could not save activity.');
-    });
+    _enqueueSave(silent: true);
   }
 
   Future<void> _pickEvidence() async {
-    final result = await FilePicker.pickFiles(allowMultiple: true);
+    final result = await FilePicker.pickFiles(
+      allowMultiple: true,
+      withData: true,
+    );
     if (result == null || result.files.isEmpty) return;
 
-    final selected = result.files
-        .map((file) => file.path ?? file.name)
-        .where((value) => value.trim().isNotEmpty);
-    final attachments = {..._currentData!.attachments, ...selected}.toList();
-    final updated = _currentData!.copyWith(
-      attachments: attachments,
-      activityLogs: [
-        ..._currentData!.activityLogs,
-        "${DateFormat('HH:mm').format(DateTime.now())} - Added ${result.files.length} evidence file(s).",
-      ],
-    );
+    final storage = SupabaseStorage(Supabase.instance.client);
+    final uploadedRefs = <String>[];
 
     try {
+      AppMessenger.info('Uploading evidence…');
+      for (final file in result.files) {
+        final bytes = file.bytes;
+        if (bytes == null || bytes.isEmpty) {
+          AppMessenger.error('Could not read "${file.name}".');
+          continue;
+        }
+        if (bytes.length > 20 * 1024 * 1024) {
+          AppMessenger.error('"${file.name}" is too large (max 20 MB).');
+          continue;
+        }
+        final refPath = await storage.uploadWorkspaceAttachment(
+          workspaceId: widget.workspaceId,
+          bytes: bytes,
+          mimeType: file.extension == null
+              ? null
+              : _mimeFromExtension(file.extension!),
+          fileName: file.name,
+        );
+        uploadedRefs.add(refPath);
+      }
+
+      if (uploadedRefs.isEmpty) {
+        AppMessenger.error('No evidence files were uploaded.');
+        return;
+      }
+
+      final attachments = {
+        ..._currentData!.attachments,
+        ...uploadedRefs,
+      }.toList();
+      final updated = _currentData!.copyWith(
+        attachments: attachments,
+        activityLogs: [
+          ..._currentData!.activityLogs,
+          "${DateFormat('HH:mm').format(DateTime.now())} - Added ${uploadedRefs.length} evidence file(s).",
+        ],
+      );
+
       await ref.read(workspaceRepositoryProvider).saveWorkspace(updated);
       if (!mounted) return;
       setState(() => _currentData = updated);
-      AppMessenger.success('Evidence files attached.');
+      AppMessenger.success('Evidence files uploaded.');
     } catch (e) {
-      AppMessenger.fromError(e, prefix: 'Could not save evidence.');
+      AppMessenger.fromError(e, prefix: 'Could not upload evidence.');
     }
+  }
+
+  Future<void> _openAttachment(String stored) async {
+    try {
+      final url = await SupabaseStorage(Supabase.instance.client)
+          .resolveAttachmentUrl(stored);
+      if (url == null) {
+        AppMessenger.error('Could not open this attachment.');
+        return;
+      }
+      final uri = Uri.parse(url);
+      final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!opened) {
+        AppMessenger.error('Could not open this attachment.');
+      }
+    } catch (e) {
+      AppMessenger.fromError(e, prefix: 'Could not open attachment.');
+    }
+  }
+
+  static String? _mimeFromExtension(String ext) {
+    return switch (ext.toLowerCase()) {
+      'png' => 'image/png',
+      'jpg' || 'jpeg' => 'image/jpeg',
+      'webp' => 'image/webp',
+      'gif' => 'image/gif',
+      'pdf' => 'application/pdf',
+      _ => null,
+    };
   }
 
   @override
@@ -299,7 +375,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
 
   Future<void> _saveWithMessage() async {
     try {
-      await _saveData(silent: true);
+      await _enqueueSave(silent: true);
       AppMessenger.success('Progress saved.');
     } catch (e) {
       AppMessenger.fromError(e, prefix: 'Could not save progress.');
@@ -414,26 +490,36 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                   ..._currentData!.attachments.map(
                     (attachment) => Padding(
                       padding: const EdgeInsets.only(bottom: 8),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.attach_file_rounded,
-                            size: 17,
-                            color: DashboardDesign.primary,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              _attachmentLabel(attachment),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: DashboardDesign.text(context),
-                                fontSize: 13,
+                      child: InkWell(
+                        onTap: () => _openAttachment(attachment),
+                        borderRadius: BorderRadius.circular(8),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.attach_file_rounded,
+                              size: 17,
+                              color: DashboardDesign.primary,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                _attachmentLabel(attachment),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: DashboardDesign.text(context),
+                                  fontSize: 13,
+                                  decoration: TextDecoration.underline,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                            Icon(
+                              Icons.open_in_new_rounded,
+                              size: 16,
+                              color: DashboardDesign.mutedText(context),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -447,7 +533,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
   }
 
   String _attachmentLabel(String value) {
-    return value.split(RegExp(r'[/\\]')).last;
+    return SupabaseStorage.attachmentDisplayName(value);
   }
 
   Widget _buildActionRequiredCard(BuildContext context) {
@@ -469,25 +555,48 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
 
   Widget _buildAssignmentCard(BuildContext context) {
     final reviewsAsync = ref.watch(designReviewsStreamProvider);
-    final stakeholders = reviewsAsync.valueOrNull
+    final reviewStakeholders = reviewsAsync.valueOrNull
             ?.where((r) => r.id == widget.reviewId)
             .firstOrNull
-            ?.stakeholders ??
-        [];
+            ?.stakeholders;
+    final stakeholders = reviewStakeholders ?? const <Stakeholder>[];
+    final streamReady = reviewsAsync.hasValue || reviewsAsync.hasError;
+    final hasStakeholders = stakeholders.isNotEmpty;
+    final currentAssignee = _assigneeController.text.trim();
 
-    final dropdownItems = stakeholders
-        .map((s) => DropdownMenuItem(
-              value: s.name,
-              child: Text(s.name, style: TextStyle(color: DashboardDesign.text(context))),
-            ))
+    final matchedByName = stakeholders
+        .where((s) => s.name.trim() == currentAssignee)
         .toList();
+    String? selectedId = matchedByName.length == 1 ? matchedByName.first.id : null;
 
-    final currentValue = _assigneeController.text.trim();
-    if (currentValue.isNotEmpty && !stakeholders.any((s) => s.name == currentValue)) {
-      dropdownItems.insert(0, DropdownMenuItem(
-        value: currentValue,
-        child: Text(currentValue, style: TextStyle(color: DashboardDesign.text(context))),
-      ));
+    final dropdownItems = <DropdownMenuItem<String>>[
+      ...stakeholders.map(
+        (s) => DropdownMenuItem(
+          value: s.id,
+          child: Text(
+            s.role.trim().isEmpty ? s.name : '${s.name} — ${s.role}',
+            style: TextStyle(color: DashboardDesign.text(context)),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ),
+    ];
+
+    // Orphan assignee (saved name not in stakeholder list).
+    const orphanValue = '__orphan_assignee__';
+    if (currentAssignee.isNotEmpty &&
+        !stakeholders.any((s) => s.name.trim() == currentAssignee)) {
+      dropdownItems.insert(
+        0,
+        DropdownMenuItem(
+          value: orphanValue,
+          child: Text(
+            currentAssignee,
+            style: TextStyle(color: DashboardDesign.text(context)),
+          ),
+        ),
+      );
+      selectedId = orphanValue;
     }
 
     return _SectionCard(
@@ -495,85 +604,204 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _LabelText('Responsible Person'),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
-            decoration: BoxDecoration(
-              color: DashboardDesign.surface(context),
-              border: Border.all(color: DashboardDesign.border(context)),
-              borderRadius: BorderRadius.circular(12),
+          const _LabelText('Responsible Person (stakeholder)'),
+          if (reviewsAsync.isLoading && !streamReady) ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Row(
+                children: [
+                  const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    currentAssignee.isEmpty
+                        ? 'Loading stakeholders…'
+                        : 'Loading stakeholders… Current: $currentAssignee',
+                    style: TextStyle(
+                      color: DashboardDesign.mutedText(context),
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
             ),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                value: currentValue.isEmpty ? null : currentValue,
-                isExpanded: true,
-                hint: Text('Select assignee...', style: TextStyle(color: DashboardDesign.mutedText(context))),
-                dropdownColor: DashboardDesign.surface(context),
-                icon: Icon(Icons.arrow_drop_down, color: DashboardDesign.mutedText(context)),
-                style: TextStyle(color: DashboardDesign.text(context), fontSize: 14),
-                items: dropdownItems,
-                onChanged: (value) {
-                  if (value != null) {
-                    final matched = stakeholders.where((s) => s.name == value).firstOrNull;
-                    final role = matched?.role ?? '';
+          ] else if (reviewsAsync.hasError) ...[
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: DashboardDesign.subtleSurface(context),
+                border: Border.all(color: DashboardDesign.border(context)),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    currentAssignee.isEmpty
+                        ? 'Could not load stakeholders.'
+                        : 'Could not load stakeholders. Current assignee: $currentAssignee',
+                    style: TextStyle(
+                      color: DashboardDesign.mutedText(context),
+                      height: 1.4,
+                      fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextButton(
+                    onPressed: () =>
+                        ref.invalidate(designReviewsStreamProvider),
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
+            ),
+          ] else if (!hasStakeholders) ...[
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: DashboardDesign.subtleSurface(context),
+                border: Border.all(color: DashboardDesign.border(context)),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                currentAssignee.isEmpty
+                    ? 'No stakeholders yet. Add them on the design review page — they will appear here, and discipline will fill from their role.'
+                    : 'No stakeholders yet. Current assignee: $currentAssignee. Add stakeholders on the design review page to pick from the list.',
+                style: TextStyle(
+                  color: DashboardDesign.mutedText(context),
+                  height: 1.4,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          ] else
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+              decoration: BoxDecoration(
+                color: DashboardDesign.surface(context),
+                border: Border.all(color: DashboardDesign.border(context)),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: selectedId,
+                  isExpanded: true,
+                  hint: Text(
+                    'Select stakeholder...',
+                    style: TextStyle(
+                      color: DashboardDesign.mutedText(context),
+                    ),
+                  ),
+                  dropdownColor: DashboardDesign.surface(context),
+                  icon: Icon(
+                    Icons.arrow_drop_down,
+                    color: DashboardDesign.mutedText(context),
+                  ),
+                  style: TextStyle(
+                    color: DashboardDesign.text(context),
+                    fontSize: 14,
+                  ),
+                  items: dropdownItems,
+                  onChanged: (value) {
+                    if (value == null || value == orphanValue) return;
+                    final matched =
+                        stakeholders.where((s) => s.id == value).firstOrNull;
+                    if (matched == null) return;
+                    final role = matched.role.trim();
                     setState(() {
-                      _assigneeController.text = value;
+                      _assigneeController.text = matched.name;
                       if (role.isNotEmpty) {
                         _disciplineController.text = role;
                       }
                       _currentData = _currentData!.copyWith(
-                        assignee: value,
-                        discipline: role.isNotEmpty ? role : _currentData!.discipline,
+                        assignee: matched.name,
+                        discipline: role.isNotEmpty
+                            ? role
+                            : _currentData!.discipline,
                       );
                     });
-                    _addActivityLog('Assigned to $value');
-                  }
-                },
+                    _addActivityLog(
+                      role.isEmpty
+                          ? 'Assigned to ${matched.name}'
+                          : 'Assigned to ${matched.name} ($role)',
+                    );
+                  },
+                ),
               ),
             ),
-          ),
           const SizedBox(height: 12),
           const _LabelText('Discipline'),
           TextField(
             controller: _disciplineController,
+            readOnly: hasStakeholders,
             style: TextStyle(color: DashboardDesign.text(context)),
-            decoration: _boxDecoration(context, 'Discipline...'),
+            decoration: _boxDecoration(
+              context,
+              hasStakeholders
+                  ? 'Auto-filled from stakeholder role'
+                  : 'Discipline...',
+            ),
           ),
           const SizedBox(height: 12),
           const _LabelText('Due Date'),
-          InkWell(
-            onTap: () async {
-              final d = await showDatePicker(
-                context: context,
-                initialDate: DateTime.now(),
-                firstDate: DateTime.now(),
-                lastDate: DateTime(2030),
-                builder: (context, child) {
-                  return Theme(
-                    data: Theme.of(context).copyWith(
-                      colorScheme: Theme.of(context).colorScheme.copyWith(
-                            primary: DashboardDesign.primary,
+          Row(
+            children: [
+              Expanded(
+                child: InkWell(
+                  onTap: () async {
+                    final d = await showDatePicker(
+                      context: context,
+                      initialDate: _currentData!.dueDate ?? DateTime.now(),
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime(2030),
+                      builder: (context, child) {
+                        return Theme(
+                          data: Theme.of(context).copyWith(
+                            colorScheme: Theme.of(context).colorScheme.copyWith(
+                                  primary: DashboardDesign.primary,
+                                ),
                           ),
-                    ),
-                    child: child!,
-                  );
-                },
-              );
-              if (d != null) {
-                setState(() {
-                  _currentData = _currentData!.copyWith(dueDate: d);
-                });
-                _addActivityLog(
-                  'Changed due date to ${DateFormat('yyyy-MM-dd').format(d)}',
-                );
-              }
-            },
-            child: _BoxContext(
-              _currentData!.dueDate == null
-                  ? 'Select date'
-                  : DateFormat('dd MMM yyyy').format(_currentData!.dueDate!),
-            ),
+                          child: child!,
+                        );
+                      },
+                    );
+                    if (d != null) {
+                      setState(() {
+                        _currentData = _currentData!.copyWith(dueDate: d);
+                      });
+                      _addActivityLog(
+                        'Changed due date to ${DateFormat('yyyy-MM-dd').format(d)}',
+                      );
+                    }
+                  },
+                  child: _BoxContext(
+                    _currentData!.dueDate == null
+                        ? 'Select date'
+                        : DateFormat('dd MMM yyyy')
+                            .format(_currentData!.dueDate!),
+                  ),
+                ),
+              ),
+              if (_currentData!.dueDate != null) ...[
+                const SizedBox(width: 8),
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      _currentData =
+                          _currentData!.copyWith(clearDueDate: true);
+                    });
+                    _addActivityLog('Cleared due date');
+                  },
+                  child: const Text('Clear'),
+                ),
+              ],
+            ],
           ),
         ],
       ),

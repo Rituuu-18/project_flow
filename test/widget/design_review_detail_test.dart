@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:engineering_werk/features/projects/presentation/pages/design_review_detail_screen.dart';
 import 'package:engineering_werk/features/reviews/domain/entities/design_review.dart';
 import 'package:engineering_werk/features/reviews/domain/entities/stage.dart';
+import 'package:engineering_werk/features/reviews/domain/entities/stakeholder.dart';
 import 'package:engineering_werk/features/reviews/domain/entities/sub_step.dart';
 import 'package:engineering_werk/features/reviews/presentation/providers/design_review_provider.dart';
 import 'package:engineering_werk/features/reviews/domain/repositories/design_review_repository.dart';
@@ -27,6 +28,9 @@ void main() {
         createdAt: DateTime.now(),
         lastUpdated: DateTime.now(),
       ),
+    );
+    registerFallbackValue(
+      const Stakeholder(id: '', name: '', role: ''),
     );
   });
 
@@ -281,7 +285,7 @@ void main() {
       () => mockRepository.getAllReviews(),
     ).thenAnswer((_) => Future.value([review]));
     when(
-      () => mockRepository.saveReview(any()),
+      () => mockRepository.addStakeholder(any(), any()),
     ).thenAnswer((_) => Future.value());
 
     await tester.pumpWidget(createTestWidget('rev-1'));
@@ -296,7 +300,7 @@ void main() {
     await tester.tap(find.text('Add stakeholder'));
     await tester.pump();
 
-    verify(() => mockRepository.saveReview(any())).called(1);
+    verify(() => mockRepository.addStakeholder(any(), any())).called(1);
   });
 
   testWidgets('Updating substep status updates progress', (

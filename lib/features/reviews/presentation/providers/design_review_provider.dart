@@ -32,6 +32,11 @@ final designReviewsStreamProvider = StreamProvider<List<DesignReview>>((ref) {
 class DesignReviewNotifier extends AsyncNotifier<List<DesignReview>> {
   DesignReviewRepository get _repo => ref.read(designReviewRepositoryProvider);
 
+  void _refreshLists() {
+    ref.invalidateSelf();
+    ref.invalidate(designReviewsStreamProvider);
+  }
+
   @override
   Future<List<DesignReview>> build() {
     return _repo.getAllReviews();
@@ -45,31 +50,51 @@ class DesignReviewNotifier extends AsyncNotifier<List<DesignReview>> {
       finalReview = review.copyWith(stages: getDefaultStages());
     }
     await _repo.saveReview(finalReview);
-    ref.invalidateSelf();
+    _refreshLists();
   }
 
   /// Updates an existing review (e.g. changing status) and refreshes state.
   Future<void> updateReview(DesignReview review) async {
     await _repo.saveReview(review);
-    ref.invalidateSelf();
+    _refreshLists();
   }
 
-  /// Adds a stakeholder to a review
+  /// Adds a stakeholder to a review (targeted insert — does not rewrite stages).
   Future<void> addStakeholder(String reviewId, Stakeholder stakeholder) async {
+    final name = stakeholder.name.trim();
+    if (name.isEmpty) {
+      throw Exception('Stakeholder name is required.');
+    }
     final reviews = await _repo.getAllReviews();
     final review = reviews.where((r) => r.id == reviewId).firstOrNull;
     if (review != null) {
-      final updated = review.copyWith(
-        stakeholders: [...review.stakeholders, stakeholder],
+      final duplicate = review.stakeholders.any(
+        (s) => s.name.trim().toLowerCase() == name.toLowerCase(),
       );
-      await updateReview(updated);
+      if (duplicate) {
+        throw Exception(
+          'A stakeholder named "$name" already exists on this review.',
+        );
+      }
     }
+    final normalized = stakeholder.copyWith(
+      name: name,
+      role: stakeholder.role.trim(),
+    );
+    await _repo.addStakeholder(reviewId, normalized);
+    _refreshLists();
+  }
+
+  /// Updates only the card preview image.
+  Future<void> updateImageUrl(String reviewId, String? imageUrl) async {
+    await _repo.updateImageUrl(reviewId, imageUrl);
+    _refreshLists();
   }
 
   /// Removes a review by [id] and refreshes state.
   Future<void> deleteReview(String id) async {
     await _repo.deleteReview(id);
-    ref.invalidateSelf();
+    _refreshLists();
   }
 }
 

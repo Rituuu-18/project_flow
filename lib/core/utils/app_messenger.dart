@@ -120,7 +120,9 @@ class AppMessenger {
   static bool isAuthError(Object err) {
     final message = describeError(err).toLowerCase();
     return message.contains('not signed in') ||
+        message.contains('not authenticated') ||
         message.contains('sign in') ||
-        message.contains('permission denied');
+        message.contains('permission denied') ||
+        message.contains('failed (auth)');
   }
 }

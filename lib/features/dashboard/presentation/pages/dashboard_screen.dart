@@ -1,16 +1,16 @@
-import 'dart:convert';
-
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../../core/database/supabase_storage.dart';
 import '../../../../core/utils/app_messenger.dart';
 import '../../../../core/utils/enums.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../reviews/domain/entities/design_review.dart';
+import '../../../reviews/domain/utils/clone_for_copy.dart';
 import '../../../reviews/presentation/providers/design_review_provider.dart';
 import '../../../settings/presentation/providers/theme_provider.dart';
 import '../theme/dashboard_design.dart';
@@ -445,23 +445,58 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   }
 
   Future<void> _uploadImage(DesignReview review) async {
-    final file = await ImagePicker().pickImage(
-      source: ImageSource.gallery,
-      maxWidth: 1200,
-      imageQuality: 82,
-    );
-    if (file == null) return;
+    if (ref.read(currentUserProvider) == null) {
+      AppMessenger.authRequired(onSignIn: () {
+        if (mounted) context.go('/login');
+      });
+      return;
+    }
 
     try {
+      final file = await ImagePicker().pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1600,
+        imageQuality: 85,
+      );
+      if (file == null) {
+        AppMessenger.info('Image selection cancelled.');
+        return;
+      }
+
       final bytes = await file.readAsBytes();
-      final base64 = await compute(base64Encode, bytes);
-      final encoded = 'data:image/*;base64,$base64';
-      await ref.read(designReviewNotifierProvider.notifier).updateReview(
-            review.copyWith(imageUrl: encoded, lastUpdated: DateTime.now()),
-          );
-      AppMessenger.success('Preview image updated.');
+      if (bytes.isEmpty) {
+        AppMessenger.error('Could not read the selected image.');
+        return;
+      }
+      if (bytes.length > 5 * 1024 * 1024) {
+        AppMessenger.error(
+          'Image is too large. Choose a photo under 5 MB.',
+        );
+        return;
+      }
+
+      AppMessenger.info('Uploading image…');
+      final storage = SupabaseStorage(Supabase.instance.client);
+      final publicUrl = await storage.uploadReviewImage(
+        reviewId: review.id,
+        bytes: bytes,
+        mimeType: file.mimeType,
+        fileName: file.name,
+      );
+
+      await ref
+          .read(designReviewNotifierProvider.notifier)
+          .updateImageUrl(review.id, publicUrl);
+      await storage.deleteReviewImageIfOwned(review.imageUrl);
+      AppMessenger.success('Preview image uploaded.');
     } catch (e) {
-      AppMessenger.fromError(e, prefix: 'Could not update image.');
+      if (AppMessenger.isAuthError(e)) {
+        AppMessenger.authRequired(onSignIn: () {
+          if (mounted) context.go('/login');
+        });
+        return;
+      }
+      AppMessenger.fromError(e, prefix: 'Could not upload image.');
     }
   }
 
@@ -472,17 +507,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   }
 
   Future<void> _copyReview(DesignReview review) async {
-    final now = DateTime.now();
     try {
-      await ref.read(designReviewNotifierProvider.notifier).createReview(
-            review.copyWith(
-              id: const Uuid().v4(),
-              name: 'Copy of ${review.name}',
-              status: ProjectStatus.active,
-              createdAt: now,
-              lastUpdated: now,
-            ),
-          );
+      await ref
+          .read(designReviewNotifierProvider.notifier)
+          .createReview(cloneForCopy(review));
       AppMessenger.success('Review copied.');
     } catch (e) {
       AppMessenger.fromError(e, prefix: 'Could not copy review.');

@@ -92,6 +92,7 @@ class WorkspaceData extends Equatable {
     String? assignee,
     String? discipline,
     DateTime? dueDate,
+    bool clearDueDate = false,
     List<String>? activityLogs,
     List<String>? stakeholders,
   }) {
@@ -113,7 +114,7 @@ class WorkspaceData extends Equatable {
       priority: priority ?? this.priority,
       assignee: assignee ?? this.assignee,
       discipline: discipline ?? this.discipline,
-      dueDate: dueDate ?? this.dueDate,
+      dueDate: clearDueDate ? null : (dueDate ?? this.dueDate),
       activityLogs: activityLogs ?? this.activityLogs,
       stakeholders: stakeholders ?? this.stakeholders,
     );

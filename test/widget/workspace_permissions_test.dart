@@ -1,3 +1,5 @@
+import 'package:engineering_werk/features/reviews/domain/entities/design_review.dart';
+import 'package:engineering_werk/features/reviews/presentation/providers/design_review_provider.dart';
 import 'package:engineering_werk/features/workspace/domain/entities/workspace_data.dart';
 import 'package:engineering_werk/features/workspace/domain/repositories/workspace_repository.dart';
 import 'package:engineering_werk/features/workspace/presentation/pages/workspace_screen.dart';
@@ -34,7 +36,12 @@ void main() {
 
   Widget createWidget() {
     return ProviderScope(
-      overrides: [workspaceRepositoryProvider.overrideWithValue(repository)],
+      overrides: [
+        workspaceRepositoryProvider.overrideWithValue(repository),
+        designReviewsStreamProvider.overrideWith(
+          (ref) => Stream.value(const <DesignReview>[]),
+        ),
+      ],
       child: const MaterialApp(
         home: WorkspaceScreen(
           workspaceId: 'workspace-1',
@@ -48,7 +55,7 @@ void main() {
   }
 
   testWidgets(
-    'workspace hides stakeholders and locks admin-owned item details',
+    'workspace hides stakeholders section and locks admin-owned item details',
     (tester) async {
       tester.view.physicalSize = const Size(1200, 1500);
       tester.view.devicePixelRatio = 1;
@@ -59,6 +66,10 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Stakeholders'), findsNothing);
+      expect(
+        find.textContaining('No stakeholders yet'),
+        findsOneWidget,
+      );
       expect(find.text('Managed by admin'), findsOneWidget);
       expect(find.text('Back to review page'), findsOneWidget);
       expect(find.text('Admin checklist item'), findsOneWidget);

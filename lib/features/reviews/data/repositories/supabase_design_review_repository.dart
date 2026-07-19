@@ -157,6 +157,57 @@ class SupabaseDesignReviewRepository implements DesignReviewRepository {
     }, operation: 'saveReview');
   }
 
+  @override
+  Future<void> addStakeholder(String reviewId, Stakeholder stakeholder) async {
+    final currentUser = _supabaseClient.auth.currentUser;
+    if (currentUser == null) throw Exception('User not authenticated');
+
+    final role = stakeholder.role.trim();
+
+    await supabaseCall(() async {
+      await _supabaseClient.from('stakeholders').upsert({
+        'id': stakeholder.id,
+        'design_review_id': reviewId,
+        'name': stakeholder.name.trim(),
+        'role': role,
+      });
+
+      final index = _cache.indexWhere((r) => r.id == reviewId);
+      if (index >= 0) {
+        final existing = _cache[index];
+        final next = [
+          ...existing.stakeholders.where((s) => s.id != stakeholder.id),
+          stakeholder.copyWith(role: role),
+        ];
+        _cache[index] = existing.copyWith(stakeholders: next);
+        _controller.add(List<DesignReview>.from(_cache));
+      } else {
+        // Ensure listeners refresh from network on next watch cycle.
+        await getAllReviews();
+      }
+    }, operation: 'addStakeholder');
+  }
+
+  @override
+  Future<void> updateImageUrl(String reviewId, String? imageUrl) async {
+    final currentUser = _supabaseClient.auth.currentUser;
+    if (currentUser == null) throw Exception('User not authenticated');
+
+    await supabaseCall(() async {
+      await _supabaseClient.from('design_reviews').update({
+        'image_url': imageUrl,
+      }).eq('id', reviewId);
+
+      final index = _cache.indexWhere((r) => r.id == reviewId);
+      if (index >= 0) {
+        _cache[index] = _cache[index].copyWith(imageUrl: imageUrl);
+        _controller.add(List<DesignReview>.from(_cache));
+      } else {
+        await getAllReviews();
+      }
+    }, operation: 'updateImageUrl');
+  }
+
   // ── Delete ──────────────────────────────────────────────────────────────
 
   @override

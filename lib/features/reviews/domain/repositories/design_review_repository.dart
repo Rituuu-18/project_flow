@@ -1,4 +1,5 @@
 import '../entities/design_review.dart';
+import '../entities/stakeholder.dart';
 
 /// Abstract repository for Design Review CRUD operations.
 abstract class DesignReviewRepository {
@@ -10,6 +11,12 @@ abstract class DesignReviewRepository {
 
   /// Persists [review] (insert or update by id).
   Future<void> saveReview(DesignReview review);
+
+  /// Inserts one stakeholder for [reviewId] without rewriting the whole review.
+  Future<void> addStakeholder(String reviewId, Stakeholder stakeholder);
+
+  /// Updates only the preview image URL for [reviewId].
+  Future<void> updateImageUrl(String reviewId, String? imageUrl);
 
   /// Removes the review with the given [id].
   Future<void> deleteReview(String id);
