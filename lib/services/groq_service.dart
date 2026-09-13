@@ -4,7 +4,6 @@ import 'dart:io';
 
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 
 class GroqException implements Exception {
   final String message;
@@ -17,33 +16,21 @@ class GroqException implements Exception {
 }
 
 class GroqService {
-  static const String _prefsKey = 'custom_groq_api_key';
   static const String _endpoint =
       'https://api.groq.com/openai/v1/chat/completions';
+
+  /// Primary and fallback model hierarchy on Groq.
   static const List<String> availableModels = [
     'openai/gpt-oss-120b',
     'qwen/qwen3.8-27b',
     'groq/compound',
-    'llama-3.3-70b-versatile',
   ];
   static const String defaultModel = 'openai/gpt-oss-120b';
 
-
-  /// Resolves the Groq API key safely from:
-  /// 1. Locally saved in SharedPreferences (user override/APK fallback)
-  /// 2. .env file (GROQ_API_KEY)
-  /// 3. Compile-time --dart-define=GROQ_API_KEY=...
-  static Future<String?> getApiKey() async {
-    // 1. SharedPreferences override
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final localKey = prefs.getString(_prefsKey)?.trim();
-      if (localKey != null && localKey.isNotEmpty) {
-        return localKey;
-      }
-    } catch (_) {}
-
-    // 2. dotenv
+  /// Resolves the Groq API key strictly from:
+  /// 1. .env file (GROQ_API_KEY)
+  /// 2. Compile-time environment definition (--dart-define=GROQ_API_KEY=...)
+  static String? getApiKey() {
     try {
       final envKey = dotenv.env['GROQ_API_KEY']?.trim();
       if (envKey != null && envKey.isNotEmpty) {
@@ -51,7 +38,6 @@ class GroqService {
       }
     } catch (_) {}
 
-    // 3. dart-define compile-time environment variable
     const defineKey = String.fromEnvironment('GROQ_API_KEY');
     if (defineKey.trim().isNotEmpty) {
       return defineKey.trim();
@@ -60,27 +46,10 @@ class GroqService {
     return null;
   }
 
-  /// Checks if any valid API key is currently accessible.
-  static Future<bool> hasApiKey() async {
-    final key = await getApiKey();
+  /// Checks if the Groq API key is present in .env or environment.
+  static bool hasApiKey() {
+    final key = getApiKey();
     return key != null && key.isNotEmpty;
-  }
-
-  /// Saves a custom API key to SharedPreferences (e.g. from in-app dialog in APK).
-  static Future<void> setCustomApiKey(String key) async {
-    final prefs = await SharedPreferences.getInstance();
-    final trimmed = key.trim();
-    if (trimmed.isEmpty) {
-      await prefs.remove(_prefsKey);
-    } else {
-      await prefs.setString(_prefsKey, trimmed);
-    }
-  }
-
-  /// Removes any custom API key saved in SharedPreferences.
-  static Future<void> clearCustomApiKey() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_prefsKey);
   }
 
   /// Performs an AI-assisted engineering review analysis of a sub-step.
@@ -93,22 +62,22 @@ class GroqService {
     required String discipline,
     String? existingNotes,
   }) async {
-    final apiKey = await getApiKey();
+    final apiKey = getApiKey();
     if (apiKey == null || apiKey.isEmpty) {
       throw const GroqException(
-        'Groq API key not found. Please provide your API key in .env or via settings.',
+        'Groq API key not configured. Please add GROQ_API_KEY to your .env file.',
         isMissingKey: true,
       );
     }
 
     final promptBuffer = StringBuffer();
-    promptBuffer.writeln('Analyze the following engineering review checklist item for our product project:');
-    promptBuffer.writeln('• Project Name: $projectName');
-    promptBuffer.writeln('• Review Stage: $stageName');
+    promptBuffer.writeln('Review the following engineering checklist item for a product engineering project:');
+    promptBuffer.writeln('• Project: $projectName');
+    promptBuffer.writeln('• Stage: $stageName');
     if (stageDescription != null && stageDescription.isNotEmpty) {
       promptBuffer.writeln('• Stage Objective: $stageDescription');
     }
-    promptBuffer.writeln('• Checklist Item / Sub-step: $checklistItem');
+    promptBuffer.writeln('• Checklist Item: $checklistItem');
     if (itemDescription.isNotEmpty) {
       promptBuffer.writeln('• Item Description: $itemDescription');
     }
@@ -116,17 +85,24 @@ class GroqService {
       promptBuffer.writeln('• Lead Discipline: $discipline');
     }
     if (existingNotes != null && existingNotes.trim().isNotEmpty) {
-      promptBuffer.writeln('• Current Team Notes: ${existingNotes.trim()}');
+      promptBuffer.writeln('• Existing Team Notes: ${existingNotes.trim()}');
     }
 
     promptBuffer.writeln();
     promptBuffer.writeln(
-      'Please generate a concise, rigorous engineering review analysis formatted clearly with the following sections:\n'
-      '1. KEY VERIFICATION CHECKS (Must-verify acceptance criteria & technical checks)\n'
-      '2. RISK & FAILURE MODES (Critical edge cases, potential failure modes, or common pitfalls)\n'
-      '3. RECOMMENDED EVIDENCE & ARTIFACTS (Specific test reports, calculations, CAD/simulation data to attach)\n'
-      '4. RECOMMENDED NEXT ACTIONS (Immediate tactical steps to close this item)\n\n'
-      'Keep it structured, engineering-focused, bullet-pointed, and ready to be directly saved as review notes.',
+      'CRITICAL INSTRUCTIONS:\n'
+      '- DO NOT output markdown tables (no pipes "|" or dashed table rows).\n'
+      '- DO NOT output conversational filler, preambles, or concluding remarks.\n'
+      '- Structure your response under these exact 4 section headers:\n\n'
+      '### 1. KEY VERIFICATION CHECKS\n'
+      '• **[Item Name]**: [Concise, measurable acceptance criteria and verification method]\n\n'
+      '### 2. RISKS & FAILURE MODES\n'
+      '• **[Failure Mode/Risk]**: [Likely cause, severity, and preventive check]\n\n'
+      '### 3. RECOMMENDED EVIDENCE\n'
+      '• **[Document/Artifact]**: [Specific calculations, CAD/simulation files, or test reports to attach]\n\n'
+      '### 4. RECOMMENDED NEXT ACTIONS\n'
+      '• **[Action Item]**: [Immediate tactical step to close or advance this item]\n\n'
+      'Provide 3-4 bullet points per section. Keep it crisp, rigorous, and directly useful as engineering review notes.',
     );
 
     final client = http.Client();
@@ -140,15 +116,16 @@ class GroqService {
               'role': 'system',
               'content':
                   'You are a senior engineering design review specialist and systems engineer. '
-                  'Provide concise, high-density, professional technical review notes. Avoid marketing fluff or generic platitudes.',
+                  'Provide concise, high-density, professional technical review notes. '
+                  'Never output markdown tables or pleasantries.',
             },
             {
               'role': 'user',
               'content': promptBuffer.toString(),
             },
           ],
-          'temperature': 0.25,
-          'max_tokens': 1500,
+          'temperature': 0.2,
+          'max_tokens': 1200,
         };
 
         final response = await client
@@ -175,7 +152,7 @@ class GroqService {
           continue;
         } else if (response.statusCode == 401) {
           throw const GroqException(
-            'Invalid Groq API key (401 Unauthorized). Please verify your key.',
+            'Invalid Groq API key in .env (401 Unauthorized). Please check your key.',
             isMissingKey: true,
           );
         } else if (response.statusCode == 429) {
@@ -189,7 +166,7 @@ class GroqService {
             final errMsg = errJson['error']?['message']?.toString() ?? '';
             lastError = errMsg;
             if (errCode == 'model_not_found' || errMsg.contains('model')) {
-              continue;
+              continue; // try next candidate model
             }
           } catch (_) {}
           throw GroqException(

@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:engineering_werk/features/workspace/presentation/widgets/ai_analysis_sheet.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUp(() {
-    SharedPreferences.setMockInitialValues({});
+    dotenv.testLoad(fileInput: '');
   });
 
-  testWidgets('AIAnalysisSheet shows missing key UI gracefully when key is absent',
+  testWidgets('AIAnalysisSheet shows missing key state without any input field in UI',
       (tester) async {
     await tester.pumpWidget(
       ProviderScope(
@@ -39,8 +39,9 @@ void main() {
     expect(find.text('AI Engineering Analysis'), findsOneWidget);
     expect(find.text('Detailed Design • Tolerance Stack'), findsOneWidget);
 
-    // Verify missing key prompt appears since no key was configured
-    expect(find.byIcon(Icons.vpn_key_rounded), findsOneWidget);
-    expect(find.byType(TextField), findsOneWidget);
+    // Verify missing key prompt appears without any input box on frontend
+    expect(find.byIcon(Icons.vpn_key_off_rounded), findsOneWidget);
+    expect(find.text('Retry'), findsOneWidget);
+    expect(find.byType(TextField), findsNothing);
   });
 }
