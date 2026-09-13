@@ -201,156 +201,241 @@ class PdfReportService {
     );
 
     // ==========================================
-    // PAGES 3+: Comprehensive Design Review Stages (Steps 1 to 10)
-    // Unified MultiPage flow for continuous page numbering and optimal spacing
+    // PAGE 3+: Design Review Step 1 — Requirements
     // ==========================================
     pdf.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.symmetric(horizontal: 40, vertical: 34),
         header: (context) => _buildHeader(logoBytes),
-        footer: (context) => _buildFooter(context.pageNumber + 2, context.pagesCount + 2),
+        footer: (context) => _buildFooter(context.pageNumber, context.pagesCount),
         build: (context) {
-          final stagesConfig = <({
-            String title,
-            int stepNum,
-            List<pw.Widget> Function() buildSubSteps,
-          })>[
-            (
-              title: 'Design Review Step 1 - Requirements',
-              stepNum: 1,
-              buildSubSteps: () => _buildRequirementsSubSteps(
-                review: review,
-                workspaces: workspaces,
-                workspaceImages: workspaceImages,
-                workspaceAttachmentUrls: pdfData.workspaceAttachmentUrls,
-              ),
-            ),
-            (
-              title: 'Design Review Step 2 - Concept',
-              stepNum: 2,
-              buildSubSteps: () => _buildConceptSubSteps(
-                review: review,
-                workspaces: workspaces,
-                workspaceImages: workspaceImages,
-                workspaceAttachmentUrls: pdfData.workspaceAttachmentUrls,
-              ),
-            ),
-            (
-              title: 'Design Review Step 3 - Preliminary Design',
-              stepNum: 3,
-              buildSubSteps: () => _buildPreliminaryDesignSubSteps(
-                review: review,
-                workspaces: workspaces,
-                workspaceImages: workspaceImages,
-                workspaceAttachmentUrls: pdfData.workspaceAttachmentUrls,
-              ),
-            ),
-            (
-              title: 'Design Review Step 4 - Detailed Design',
-              stepNum: 4,
-              buildSubSteps: () => _buildDetailedDesignSubSteps(
-                review: review,
-                workspaces: workspaces,
-                workspaceImages: workspaceImages,
-                workspaceAttachmentUrls: pdfData.workspaceAttachmentUrls,
-              ),
-            ),
-            (
-              title: 'Design Review Step 5 - Simulation (FEA, CFD...)',
-              stepNum: 5,
-              buildSubSteps: () => _buildSimulationSubSteps(
-                review: review,
-                workspaces: workspaces,
-                workspaceImages: workspaceImages,
-                workspaceAttachmentUrls: pdfData.workspaceAttachmentUrls,
-              ),
-            ),
-            (
-              title: 'Design Review Step 6 - Prototype',
-              stepNum: 6,
-              buildSubSteps: () => _buildPrototypeSubSteps(
-                review: review,
-                workspaces: workspaces,
-                workspaceImages: workspaceImages,
-                workspaceAttachmentUrls: pdfData.workspaceAttachmentUrls,
-              ),
-            ),
-            (
-              title: 'Design Review Step 7 - Testing Validation',
-              stepNum: 7,
-              buildSubSteps: () => _buildTestingValidationSubSteps(
-                review: review,
-                workspaces: workspaces,
-                workspaceImages: workspaceImages,
-                workspaceAttachmentUrls: pdfData.workspaceAttachmentUrls,
-              ),
-            ),
-            (
-              title: 'Design Review Step 8 - Manufacturing Readiness',
-              stepNum: 8,
-              buildSubSteps: () => _buildManufacturingReadinessSubSteps(
-                review: review,
-                workspaces: workspaces,
-                workspaceImages: workspaceImages,
-                workspaceAttachmentUrls: pdfData.workspaceAttachmentUrls,
-              ),
-            ),
-            (
-              title: 'Design Review Step 9 - Final Release',
-              stepNum: 9,
-              buildSubSteps: () => _buildFinalReleaseSubSteps(
-                review: review,
-                workspaces: workspaces,
-                workspaceImages: workspaceImages,
-                workspaceAttachmentUrls: pdfData.workspaceAttachmentUrls,
-              ),
-            ),
-            (
-              title: 'Design Review Step 10 - Continuous Improvement',
-              stepNum: 10,
-              buildSubSteps: () => _buildContinuousImprovementSubSteps(
-                review: review,
-                workspaces: workspaces,
-                workspaceImages: workspaceImages,
-                workspaceAttachmentUrls: pdfData.workspaceAttachmentUrls,
-              ),
+          return [
+            _buildSectionHeader('Design Review Step 1 - Requirements'),
+            pw.SizedBox(height: 10),
+            ..._buildRequirementsSubSteps(
+              review: review,
+              workspaces: workspaces,
+              workspaceImages: workspaceImages,
+              workspaceAttachmentUrls: pdfData.workspaceAttachmentUrls,
             ),
           ];
+        },
+      ),
+    );
 
-          final allWidgets = <pw.Widget>[];
+    // ==========================================
+    // PAGE X+: Design Review Step 2 - Concept
+    // ==========================================
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.symmetric(horizontal: 40, vertical: 34),
+        header: (context) => _buildHeader(logoBytes),
+        footer: (context) => _buildFooter(context.pageNumber, context.pagesCount),
+        build: (context) {
+          return [
+            _buildSectionHeader('Design Review Step 2 - Concept'),
+            pw.SizedBox(height: 10),
+            ..._buildConceptSubSteps(
+              review: review,
+              workspaces: workspaces,
+              workspaceImages: workspaceImages,
+              workspaceAttachmentUrls: pdfData.workspaceAttachmentUrls,
+            ),
+          ];
+        },
+      ),
+    );
 
-          for (int i = 0; i < stagesConfig.length; i++) {
-            final stageItem = stagesConfig[i];
-            final subStepWidgets = stageItem.buildSubSteps();
+    // ==========================================
+    // PAGE X+: Design Review Step 3 - Preliminary Design
+    // ==========================================
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.symmetric(horizontal: 40, vertical: 34),
+        header: (context) => _buildHeader(logoBytes),
+        footer: (context) => _buildFooter(context.pageNumber, context.pagesCount),
+        build: (context) {
+          return [
+            _buildSectionHeader('Design Review Step 3 - Preliminary Design'),
+            pw.SizedBox(height: 10),
+            ..._buildPreliminaryDesignSubSteps(
+              review: review,
+              workspaces: workspaces,
+              workspaceImages: workspaceImages,
+              workspaceAttachmentUrls: pdfData.workspaceAttachmentUrls,
+            ),
+          ];
+        },
+      ),
+    );
 
-            // Inter-stage vertical rhythm
-            if (i > 0) {
-              allWidgets.add(pw.SizedBox(height: 18));
-            }
+    // ==========================================
+    // PAGE X+: Design Review Step 4 - Detailed Design
+    // ==========================================
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.symmetric(horizontal: 40, vertical: 34),
+        header: (context) => _buildHeader(logoBytes),
+        footer: (context) => _buildFooter(context.pageNumber, context.pagesCount),
+        build: (context) {
+          return [
+            _buildSectionHeader('Design Review Step 4 - Detailed Design'),
+            pw.SizedBox(height: 10),
+            ..._buildDetailedDesignSubSteps(
+              review: review,
+              workspaces: workspaces,
+              workspaceImages: workspaceImages,
+              workspaceAttachmentUrls: pdfData.workspaceAttachmentUrls,
+            ),
+          ];
+        },
+      ),
+    );
 
-            // Prevent orphan section header: bind header with first substep if available
-            if (subStepWidgets.isNotEmpty) {
-              allWidgets.add(
-                pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: [
-                    _buildSectionHeader(stageItem.title, stageNumber: stageItem.stepNum),
-                    pw.SizedBox(height: 10),
-                    subStepWidgets.first,
-                  ],
-                ),
-              );
-              for (int j = 1; j < subStepWidgets.length; j++) {
-                allWidgets.add(pw.SizedBox(height: 10));
-                allWidgets.add(subStepWidgets[j]);
-              }
-            } else {
-              allWidgets.add(_buildSectionHeader(stageItem.title, stageNumber: stageItem.stepNum));
-            }
-          }
+    // ==========================================
+    // PAGE X+: Design Review Step 5 - Simulation (FEA, CFD...)
+    // ==========================================
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.symmetric(horizontal: 40, vertical: 34),
+        header: (context) => _buildHeader(logoBytes),
+        footer: (context) => _buildFooter(context.pageNumber, context.pagesCount),
+        build: (context) {
+          return [
+            _buildSectionHeader('Design Review Step 5 - Simulation (FEA, CFD...)'),
+            pw.SizedBox(height: 10),
+            ..._buildSimulationSubSteps(
+              review: review,
+              workspaces: workspaces,
+              workspaceImages: workspaceImages,
+              workspaceAttachmentUrls: pdfData.workspaceAttachmentUrls,
+            ),
+          ];
+        },
+      ),
+    );
 
-          return allWidgets;
+    // ==========================================
+    // PAGE X+: Design Review Step 6 - Prototype
+    // ==========================================
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.symmetric(horizontal: 40, vertical: 34),
+        header: (context) => _buildHeader(logoBytes),
+        footer: (context) => _buildFooter(context.pageNumber, context.pagesCount),
+        build: (context) {
+          return [
+            _buildSectionHeader('Design Review Step 6 - Prototype'),
+            pw.SizedBox(height: 10),
+            ..._buildPrototypeSubSteps(
+              review: review,
+              workspaces: workspaces,
+              workspaceImages: workspaceImages,
+              workspaceAttachmentUrls: pdfData.workspaceAttachmentUrls,
+            ),
+          ];
+        },
+      ),
+    );
+
+    // ==========================================
+    // PAGE X+: Design Review Step 7 - Testing Validation
+    // ==========================================
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.symmetric(horizontal: 40, vertical: 34),
+        header: (context) => _buildHeader(logoBytes),
+        footer: (context) => _buildFooter(context.pageNumber, context.pagesCount),
+        build: (context) {
+          return [
+            _buildSectionHeader('Design Review Step 7 - Testing Validation'),
+            pw.SizedBox(height: 10),
+            ..._buildTestingValidationSubSteps(
+              review: review,
+              workspaces: workspaces,
+              workspaceImages: workspaceImages,
+              workspaceAttachmentUrls: pdfData.workspaceAttachmentUrls,
+            ),
+          ];
+        },
+      ),
+    );
+
+    // ==========================================
+    // PAGE X+: Design Review Step 8 - Manufacturing Readiness
+    // ==========================================
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.symmetric(horizontal: 40, vertical: 34),
+        header: (context) => _buildHeader(logoBytes),
+        footer: (context) => _buildFooter(context.pageNumber, context.pagesCount),
+        build: (context) {
+          return [
+            _buildSectionHeader('Design Review Step 8 - Manufacturing Readiness'),
+            pw.SizedBox(height: 10),
+            ..._buildManufacturingReadinessSubSteps(
+              review: review,
+              workspaces: workspaces,
+              workspaceImages: workspaceImages,
+              workspaceAttachmentUrls: pdfData.workspaceAttachmentUrls,
+            ),
+          ];
+        },
+      ),
+    );
+
+    // ==========================================
+    // PAGE X+: Design Review Step 9 - Final Release
+    // ==========================================
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.symmetric(horizontal: 40, vertical: 34),
+        header: (context) => _buildHeader(logoBytes),
+        footer: (context) => _buildFooter(context.pageNumber, context.pagesCount),
+        build: (context) {
+          return [
+            _buildSectionHeader('Design Review Step 9 - Final Release'),
+            pw.SizedBox(height: 10),
+            ..._buildFinalReleaseSubSteps(
+              review: review,
+              workspaces: workspaces,
+              workspaceImages: workspaceImages,
+              workspaceAttachmentUrls: pdfData.workspaceAttachmentUrls,
+            ),
+          ];
+        },
+      ),
+    );
+
+    // ==========================================
+    // PAGE X+: Design Review Step 10 - Continuous Improvement
+    // ==========================================
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.symmetric(horizontal: 40, vertical: 34),
+        header: (context) => _buildHeader(logoBytes),
+        footer: (context) => _buildFooter(context.pageNumber, context.pagesCount),
+        build: (context) {
+          return [
+            _buildSectionHeader('Design Review Step 10 - Continuous Improvement'),
+            pw.SizedBox(height: 10),
+            ..._buildContinuousImprovementSubSteps(
+              review: review,
+              workspaces: workspaces,
+              workspaceImages: workspaceImages,
+              workspaceAttachmentUrls: pdfData.workspaceAttachmentUrls,
+            ),
+          ];
         },
       ),
     );
@@ -907,71 +992,22 @@ class PdfReportService {
     );
   }
 
-  // ── Section Header ──────────────────────────────────────────────────────────
-  static pw.Widget _buildSectionHeader(String title, {int? stageNumber}) {
-    String stepLabel = stageNumber != null
-        ? 'STAGE ${stageNumber.toString().padLeft(2, '0')}'
-        : 'STAGE';
-    String mainTitle = title;
-
-    if (title.contains('-')) {
-      final parts = title.split('-');
-      mainTitle = parts.last.trim();
-    } else if (title.contains('—')) {
-      final parts = title.split('—');
-      mainTitle = parts.last.trim();
-    }
-
+  // ── Generic Section Header ──────────────────────────────────────────────────
+  static pw.Widget _buildSectionHeader(String title) {
     return pw.Container(
       width: double.infinity,
       padding: const pw.EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: pw.BoxDecoration(
         color: PdfColor.fromHex('#0F172A'),
         borderRadius: const pw.BorderRadius.all(pw.Radius.circular(6)),
-        border: pw.Border.all(color: PdfColor.fromHex('#1E293B'), width: 1),
       ),
-      child: pw.Row(
-        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: pw.CrossAxisAlignment.center,
-        children: [
-          pw.Row(
-            children: [
-              pw.Container(
-                padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: const pw.BoxDecoration(
-                  color: PdfColor.fromInt(0xFF2563EB),
-                  borderRadius: pw.BorderRadius.all(pw.Radius.circular(4)),
-                ),
-                child: pw.Text(
-                  stepLabel,
-                  style: pw.TextStyle(
-                    fontSize: 8.5,
-                    fontWeight: pw.FontWeight.bold,
-                    color: PdfColors.white,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ),
-              pw.SizedBox(width: 10),
-              pw.Text(
-                mainTitle,
-                style: pw.TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: pw.FontWeight.bold,
-                  color: PdfColors.white,
-                ),
-              ),
-            ],
-          ),
-          pw.Text(
-            'Stage Gate Checklist',
-            style: pw.TextStyle(
-              fontSize: 8.5,
-              color: PdfColor.fromHex('#94A3B8'),
-              fontWeight: pw.FontWeight.bold,
-            ),
-          ),
-        ],
+      child: pw.Text(
+        title,
+        style: pw.TextStyle(
+          fontSize: 15,
+          fontWeight: pw.FontWeight.bold,
+          color: PdfColors.white,
+        ),
       ),
     );
   }
@@ -1026,9 +1062,12 @@ class PdfReportService {
           workspaceImages: workspaceImages,
           workspaceAttachmentUrls: workspaceAttachmentUrls,
           projectStakeholders: review.stakeholders,
-          status: subStepEntity.status,
         ),
       );
+
+      if (i < _requirementsSubStepNames.length - 1) {
+        widgets.add(pw.SizedBox(height: 10));
+      }
     }
 
     return widgets;
@@ -1053,21 +1092,12 @@ class PdfReportService {
 
     if (subSteps.isEmpty) {
       widgets.add(
-        pw.Container(
-          width: double.infinity,
-          padding: const pw.EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: pw.BoxDecoration(
-            color: PdfColor.fromHex('#F8FAFC'),
-            border: pw.Border.all(color: PdfColor.fromHex('#E2E8F0'), width: 0.8),
-            borderRadius: const pw.BorderRadius.all(pw.Radius.circular(6)),
-          ),
-          child: pw.Text(
-            'No Concept substeps recorded for this project.',
-            style: pw.TextStyle(
-              fontSize: 9.5,
-              color: PdfColor.fromHex('#64748B'),
-              fontStyle: pw.FontStyle.italic,
-            ),
+        pw.Text(
+          'No Concept substeps found for this project.',
+          style: pw.TextStyle(
+            fontSize: 11.5,
+            color: PdfColor.fromHex('#64748B'),
+            fontStyle: pw.FontStyle.italic,
           ),
         ),
       );
@@ -1091,9 +1121,12 @@ class PdfReportService {
           workspaceImages: workspaceImages,
           workspaceAttachmentUrls: workspaceAttachmentUrls,
           projectStakeholders: review.stakeholders,
-          status: subStepEntity.status,
         ),
       );
+
+      if (i < subSteps.length - 1) {
+        widgets.add(pw.SizedBox(height: 10));
+      }
     }
 
     return widgets;
@@ -1118,21 +1151,12 @@ class PdfReportService {
 
     if (subSteps.isEmpty) {
       widgets.add(
-        pw.Container(
-          width: double.infinity,
-          padding: const pw.EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: pw.BoxDecoration(
-            color: PdfColor.fromHex('#F8FAFC'),
-            border: pw.Border.all(color: PdfColor.fromHex('#E2E8F0'), width: 0.8),
-            borderRadius: const pw.BorderRadius.all(pw.Radius.circular(6)),
-          ),
-          child: pw.Text(
-            'No Preliminary Design substeps recorded for this project.',
-            style: pw.TextStyle(
-              fontSize: 9.5,
-              color: PdfColor.fromHex('#64748B'),
-              fontStyle: pw.FontStyle.italic,
-            ),
+        pw.Text(
+          'No Preliminary Design substeps found for this project.',
+          style: pw.TextStyle(
+            fontSize: 11.5,
+            color: PdfColor.fromHex('#64748B'),
+            fontStyle: pw.FontStyle.italic,
           ),
         ),
       );
@@ -1156,9 +1180,12 @@ class PdfReportService {
           workspaceImages: workspaceImages,
           workspaceAttachmentUrls: workspaceAttachmentUrls,
           projectStakeholders: review.stakeholders,
-          status: subStepEntity.status,
         ),
       );
+
+      if (i < subSteps.length - 1) {
+        widgets.add(pw.SizedBox(height: 10));
+      }
     }
 
     return widgets;
@@ -1183,21 +1210,12 @@ class PdfReportService {
 
     if (subSteps.isEmpty) {
       widgets.add(
-        pw.Container(
-          width: double.infinity,
-          padding: const pw.EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: pw.BoxDecoration(
-            color: PdfColor.fromHex('#F8FAFC'),
-            border: pw.Border.all(color: PdfColor.fromHex('#E2E8F0'), width: 0.8),
-            borderRadius: const pw.BorderRadius.all(pw.Radius.circular(6)),
-          ),
-          child: pw.Text(
-            'No Detailed Design substeps recorded for this project.',
-            style: pw.TextStyle(
-              fontSize: 9.5,
-              color: PdfColor.fromHex('#64748B'),
-              fontStyle: pw.FontStyle.italic,
-            ),
+        pw.Text(
+          'No Detailed Design substeps found for this project.',
+          style: pw.TextStyle(
+            fontSize: 11.5,
+            color: PdfColor.fromHex('#64748B'),
+            fontStyle: pw.FontStyle.italic,
           ),
         ),
       );
@@ -1221,9 +1239,12 @@ class PdfReportService {
           workspaceImages: workspaceImages,
           workspaceAttachmentUrls: workspaceAttachmentUrls,
           projectStakeholders: review.stakeholders,
-          status: subStepEntity.status,
         ),
       );
+
+      if (i < subSteps.length - 1) {
+        widgets.add(pw.SizedBox(height: 10));
+      }
     }
 
     return widgets;
@@ -1248,21 +1269,12 @@ class PdfReportService {
 
     if (subSteps.isEmpty) {
       widgets.add(
-        pw.Container(
-          width: double.infinity,
-          padding: const pw.EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: pw.BoxDecoration(
-            color: PdfColor.fromHex('#F8FAFC'),
-            border: pw.Border.all(color: PdfColor.fromHex('#E2E8F0'), width: 0.8),
-            borderRadius: const pw.BorderRadius.all(pw.Radius.circular(6)),
-          ),
-          child: pw.Text(
-            'No Simulation substeps recorded for this project.',
-            style: pw.TextStyle(
-              fontSize: 9.5,
-              color: PdfColor.fromHex('#64748B'),
-              fontStyle: pw.FontStyle.italic,
-            ),
+        pw.Text(
+          'No Simulation substeps found for this project.',
+          style: pw.TextStyle(
+            fontSize: 11.5,
+            color: PdfColor.fromHex('#64748B'),
+            fontStyle: pw.FontStyle.italic,
           ),
         ),
       );
@@ -1286,9 +1298,12 @@ class PdfReportService {
           workspaceImages: workspaceImages,
           workspaceAttachmentUrls: workspaceAttachmentUrls,
           projectStakeholders: review.stakeholders,
-          status: subStepEntity.status,
         ),
       );
+
+      if (i < subSteps.length - 1) {
+        widgets.add(pw.SizedBox(height: 10));
+      }
     }
 
     return widgets;
@@ -1310,21 +1325,12 @@ class PdfReportService {
 
     if (subSteps.isEmpty) {
       widgets.add(
-        pw.Container(
-          width: double.infinity,
-          padding: const pw.EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: pw.BoxDecoration(
-            color: PdfColor.fromHex('#F8FAFC'),
-            border: pw.Border.all(color: PdfColor.fromHex('#E2E8F0'), width: 0.8),
-            borderRadius: const pw.BorderRadius.all(pw.Radius.circular(6)),
-          ),
-          child: pw.Text(
-            'No Prototype substeps recorded for this project.',
-            style: pw.TextStyle(
-              fontSize: 9.5,
-              color: PdfColor.fromHex('#64748B'),
-              fontStyle: pw.FontStyle.italic,
-            ),
+        pw.Text(
+          'No Prototype substeps found for this project.',
+          style: pw.TextStyle(
+            fontSize: 11.5,
+            color: PdfColor.fromHex('#64748B'),
+            fontStyle: pw.FontStyle.italic,
           ),
         ),
       );
@@ -1348,9 +1354,12 @@ class PdfReportService {
           workspaceImages: workspaceImages,
           workspaceAttachmentUrls: workspaceAttachmentUrls,
           projectStakeholders: review.stakeholders,
-          status: subStepEntity.status,
         ),
       );
+
+      if (i < subSteps.length - 1) {
+        widgets.add(pw.SizedBox(height: 10));
+      }
     }
 
     return widgets;
@@ -1375,21 +1384,12 @@ class PdfReportService {
 
     if (subSteps.isEmpty) {
       widgets.add(
-        pw.Container(
-          width: double.infinity,
-          padding: const pw.EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: pw.BoxDecoration(
-            color: PdfColor.fromHex('#F8FAFC'),
-            border: pw.Border.all(color: PdfColor.fromHex('#E2E8F0'), width: 0.8),
-            borderRadius: const pw.BorderRadius.all(pw.Radius.circular(6)),
-          ),
-          child: pw.Text(
-            'No Testing Validation substeps recorded for this project.',
-            style: pw.TextStyle(
-              fontSize: 9.5,
-              color: PdfColor.fromHex('#64748B'),
-              fontStyle: pw.FontStyle.italic,
-            ),
+        pw.Text(
+          'No Testing Validation substeps found for this project.',
+          style: pw.TextStyle(
+            fontSize: 11.5,
+            color: PdfColor.fromHex('#64748B'),
+            fontStyle: pw.FontStyle.italic,
           ),
         ),
       );
@@ -1413,9 +1413,12 @@ class PdfReportService {
           workspaceImages: workspaceImages,
           workspaceAttachmentUrls: workspaceAttachmentUrls,
           projectStakeholders: review.stakeholders,
-          status: subStepEntity.status,
         ),
       );
+
+      if (i < subSteps.length - 1) {
+        widgets.add(pw.SizedBox(height: 10));
+      }
     }
 
     return widgets;
@@ -1437,21 +1440,12 @@ class PdfReportService {
 
     if (subSteps.isEmpty) {
       widgets.add(
-        pw.Container(
-          width: double.infinity,
-          padding: const pw.EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: pw.BoxDecoration(
-            color: PdfColor.fromHex('#F8FAFC'),
-            border: pw.Border.all(color: PdfColor.fromHex('#E2E8F0'), width: 0.8),
-            borderRadius: const pw.BorderRadius.all(pw.Radius.circular(6)),
-          ),
-          child: pw.Text(
-            'No Manufacturing Readiness substeps recorded for this project.',
-            style: pw.TextStyle(
-              fontSize: 9.5,
-              color: PdfColor.fromHex('#64748B'),
-              fontStyle: pw.FontStyle.italic,
-            ),
+        pw.Text(
+          'No Manufacturing Readiness substeps found for this project.',
+          style: pw.TextStyle(
+            fontSize: 11.5,
+            color: PdfColor.fromHex('#64748B'),
+            fontStyle: pw.FontStyle.italic,
           ),
         ),
       );
@@ -1475,9 +1469,12 @@ class PdfReportService {
           workspaceImages: workspaceImages,
           workspaceAttachmentUrls: workspaceAttachmentUrls,
           projectStakeholders: review.stakeholders,
-          status: subStepEntity.status,
         ),
       );
+
+      if (i < subSteps.length - 1) {
+        widgets.add(pw.SizedBox(height: 10));
+      }
     }
 
     return widgets;
@@ -1499,21 +1496,12 @@ class PdfReportService {
 
     if (subSteps.isEmpty) {
       widgets.add(
-        pw.Container(
-          width: double.infinity,
-          padding: const pw.EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: pw.BoxDecoration(
-            color: PdfColor.fromHex('#F8FAFC'),
-            border: pw.Border.all(color: PdfColor.fromHex('#E2E8F0'), width: 0.8),
-            borderRadius: const pw.BorderRadius.all(pw.Radius.circular(6)),
-          ),
-          child: pw.Text(
-            'No Final Release substeps recorded for this project.',
-            style: pw.TextStyle(
-              fontSize: 9.5,
-              color: PdfColor.fromHex('#64748B'),
-              fontStyle: pw.FontStyle.italic,
-            ),
+        pw.Text(
+          'No Final Release substeps found for this project.',
+          style: pw.TextStyle(
+            fontSize: 11.5,
+            color: PdfColor.fromHex('#64748B'),
+            fontStyle: pw.FontStyle.italic,
           ),
         ),
       );
@@ -1537,9 +1525,12 @@ class PdfReportService {
           workspaceImages: workspaceImages,
           workspaceAttachmentUrls: workspaceAttachmentUrls,
           projectStakeholders: review.stakeholders,
-          status: subStepEntity.status,
         ),
       );
+
+      if (i < subSteps.length - 1) {
+        widgets.add(pw.SizedBox(height: 10));
+      }
     }
 
     return widgets;
@@ -1561,21 +1552,12 @@ class PdfReportService {
 
     if (subSteps.isEmpty) {
       widgets.add(
-        pw.Container(
-          width: double.infinity,
-          padding: const pw.EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: pw.BoxDecoration(
-            color: PdfColor.fromHex('#F8FAFC'),
-            border: pw.Border.all(color: PdfColor.fromHex('#E2E8F0'), width: 0.8),
-            borderRadius: const pw.BorderRadius.all(pw.Radius.circular(6)),
-          ),
-          child: pw.Text(
-            'No Continuous Improvement substeps recorded for this project.',
-            style: pw.TextStyle(
-              fontSize: 9.5,
-              color: PdfColor.fromHex('#64748B'),
-              fontStyle: pw.FontStyle.italic,
-            ),
+        pw.Text(
+          'No Continuous Improvement substeps found for this project.',
+          style: pw.TextStyle(
+            fontSize: 11.5,
+            color: PdfColor.fromHex('#64748B'),
+            fontStyle: pw.FontStyle.italic,
           ),
         ),
       );
@@ -1599,15 +1581,17 @@ class PdfReportService {
           workspaceImages: workspaceImages,
           workspaceAttachmentUrls: workspaceAttachmentUrls,
           projectStakeholders: review.stakeholders,
-          status: subStepEntity.status,
         ),
       );
+
+      if (i < subSteps.length - 1) {
+        widgets.add(pw.SizedBox(height: 10));
+      }
     }
 
     return widgets;
   }
 
-  // ── Executive Sub-Step Card ─────────────────────────────────────────────────
   static pw.Widget _buildSubStepCard({
     required int subStepNumber,
     required String subStepName,
@@ -1615,225 +1599,53 @@ class PdfReportService {
     required Map<String, Uint8List> workspaceImages,
     required Map<String, String> workspaceAttachmentUrls,
     required List<Stakeholder> projectStakeholders,
-    StageStatus status = StageStatus.notStarted,
   }) {
-    // 1. Resolve Lead and Discipline
-    String person = wsData.assignee.trim();
-    String discipline = wsData.discipline.trim();
-
-    for (final stageContent in defaultStageContent.values) {
-      final defaultInfo = stageContent.subSteps[subStepName];
-      if (defaultInfo != null) {
-        if (discipline.isEmpty && defaultInfo.discipline.trim().isNotEmpty) {
-          discipline = defaultInfo.discipline.trim();
-        }
-        break;
-      }
-    }
-
-    if (person.isEmpty && discipline.isNotEmpty) {
-      final matched = projectStakeholders.firstWhere(
-        (s) =>
-            s.role.trim().toLowerCase() == discipline.toLowerCase() &&
-            s.name.trim().isNotEmpty,
-        orElse: () => const Stakeholder(id: '', name: '', role: ''),
-      );
-      if (matched.name.trim().isNotEmpty) {
-        person = matched.name.trim();
-      }
-    }
-
-    final isCompleted = status == StageStatus.completed ||
-        wsData.approvalStatus == ApprovalStatus.approved;
-
-    final (statusBg, statusFg, statusBorder, statusText) = switch (status) {
-      StageStatus.completed => (
-        PdfColor.fromHex('#ECFDF5'),
-        PdfColor.fromHex('#047857'),
-        PdfColor.fromHex('#A7F3D0'),
-        'COMPLETED',
-      ),
-      StageStatus.inProgress => (
-        PdfColor.fromHex('#EFF6FF'),
-        PdfColor.fromHex('#1D4ED8'),
-        PdfColor.fromHex('#BFDBFE'),
-        'IN PROGRESS',
-      ),
-      StageStatus.notRequired => (
-        PdfColor.fromHex('#F1F5F9'),
-        PdfColor.fromHex('#64748B'),
-        PdfColor.fromHex('#CBD5E1'),
-        'NOT REQUIRED',
-      ),
-      StageStatus.notStarted => (
-        PdfColor.fromHex('#F8FAFC'),
-        PdfColor.fromHex('#64748B'),
-        PdfColor.fromHex('#E2E8F0'),
-        'OPEN',
-      ),
-    };
-
-    // Sub-widgets
-    final notesWidget = _buildFieldNotes(wsData);
-    final evidenceWidget = _buildFieldEvidence(
-      wsData,
-      workspaceImages,
-      workspaceAttachmentUrls,
-    );
-    final actionWidget = _buildFieldActionDescription(wsData);
-
     return pw.Container(
       decoration: pw.BoxDecoration(
-        color: PdfColors.white,
+        color: PdfColor.fromHex('#FFFFFF'),
         border: pw.Border.all(
-          color: isCompleted
-              ? PdfColor.fromHex('#CBD5E1')
-              : PdfColor.fromHex('#E2E8F0'),
-          width: 0.9,
+          color: PdfColor.fromHex('#E2E8F0'),
+          width: 1,
         ),
-        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(6)),
+        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(8)),
       ),
       child: pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
-          // ── Header Bar ──────────────────────────────
+          // Substep Header Bar
           pw.Container(
-            padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: const pw.BoxDecoration(
-              color: PdfColor.fromInt(0xFFF8FAFC),
-              border: pw.Border(
-                bottom: pw.BorderSide(color: PdfColor.fromInt(0xFFE2E8F0), width: 0.8),
+            width: double.infinity,
+            padding: const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: pw.BoxDecoration(
+              color: PdfColor.fromHex('#F1F5F9'),
+              borderRadius: const pw.BorderRadius.only(
+                topLeft: pw.Radius.circular(7),
+                topRight: pw.Radius.circular(7),
               ),
             ),
-            child: pw.Row(
-              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: pw.CrossAxisAlignment.center,
-              children: [
-                pw.Row(
-                  children: [
-                    pw.Container(
-                      padding: const pw.EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                      decoration: pw.BoxDecoration(
-                        color: isCompleted
-                            ? PdfColor.fromHex('#059669')
-                            : PdfColor.fromHex('#0F172A'),
-                        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(3)),
-                      ),
-                      child: pw.Text(
-                        subStepNumber.toString().padLeft(2, '0'),
-                        style: pw.TextStyle(
-                          fontSize: 8,
-                          fontWeight: pw.FontWeight.bold,
-                          color: PdfColors.white,
-                        ),
-                      ),
-                    ),
-                    pw.SizedBox(width: 8),
-                    pw.Text(
-                      subStepName,
-                      style: pw.TextStyle(
-                        fontSize: 9.5,
-                        fontWeight: pw.FontWeight.bold,
-                        color: PdfColor.fromHex('#0F172A'),
-                      ),
-                    ),
-                  ],
-                ),
-                pw.Row(
-                  children: [
-                    if (discipline.isNotEmpty) ...[
-                      pw.Container(
-                        padding: const pw.EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
-                        decoration: pw.BoxDecoration(
-                          color: PdfColor.fromHex('#F1F5F9'),
-                          border: pw.Border.all(color: PdfColor.fromHex('#E2E8F0'), width: 0.7),
-                          borderRadius: const pw.BorderRadius.all(pw.Radius.circular(3)),
-                        ),
-                        child: pw.Text(
-                          discipline,
-                          style: pw.TextStyle(
-                            fontSize: 7,
-                            fontWeight: pw.FontWeight.bold,
-                            color: PdfColor.fromHex('#475569'),
-                          ),
-                        ),
-                      ),
-                      pw.SizedBox(width: 5),
-                    ],
-                    pw.Container(
-                      padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: pw.BoxDecoration(
-                        color: statusBg,
-                        border: pw.Border.all(color: statusBorder, width: 0.7),
-                        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(3)),
-                      ),
-                      child: pw.Text(
-                        statusText,
-                        style: pw.TextStyle(
-                          fontSize: 7,
-                          fontWeight: pw.FontWeight.bold,
-                          color: statusFg,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+            child: pw.Text(
+              '$subStepNumber. $subStepName',
+              style: pw.TextStyle(
+                fontSize: 11,
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColor.fromHex('#0F172A'),
+              ),
             ),
           ),
-
-          // ── Lead meta bar (if lead is known) ────────
-          if (person.isNotEmpty)
-            pw.Container(
-              padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-              color: PdfColor.fromHex('#FAFAFA'),
-              child: pw.Row(
-                children: [
-                  pw.Text(
-                    'Lead: ',
-                    style: pw.TextStyle(
-                      fontSize: 7.5,
-                      color: PdfColor.fromHex('#64748B'),
-                    ),
-                  ),
-                  pw.Text(
-                    person,
-                    style: pw.TextStyle(
-                      fontSize: 7.5,
-                      fontWeight: pw.FontWeight.bold,
-                      color: PdfColor.fromHex('#334155'),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-          // ── Card Body ────────────────────────────────
           pw.Padding(
-            padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            padding: const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                // Description (Scope & Objectives)
                 _buildFieldDescription(subStepName, wsData),
-
-                // Formatted Notes (if non-empty)
-                if (notesWidget != null) ...[
-                  pw.SizedBox(height: 7),
-                  notesWidget,
-                ],
-
-                // Evidence (if non-empty)
-                if (evidenceWidget != null) ...[
-                  pw.SizedBox(height: 7),
-                  evidenceWidget,
-                ],
-
-                // Action Item (if non-empty)
-                if (actionWidget != null) ...[
-                  pw.SizedBox(height: 7),
-                  actionWidget,
-                ],
+                pw.SizedBox(height: 7),
+                _buildFieldNotes(wsData),
+                pw.SizedBox(height: 7),
+                _buildFieldEvidence(wsData, workspaceImages, workspaceAttachmentUrls),
+                pw.SizedBox(height: 7),
+                _buildFieldActionDescription(wsData),
+                pw.SizedBox(height: 7),
+                _buildFieldResponsiblePerson(subStepName, wsData, projectStakeholders),
               ],
             ),
           ),
@@ -1842,7 +1654,18 @@ class PdfReportService {
     );
   }
 
-  // ── Scope & Objective Callout ───────────────────────────────────────────────
+  static pw.Widget _buildFieldHeader(String title) {
+    return pw.Text(
+      title,
+      style: pw.TextStyle(
+        fontSize: 10,
+        fontWeight: pw.FontWeight.bold,
+        color: PdfColor.fromHex('#005CFF'),
+      ),
+    );
+  }
+
+  // a. Description
   static pw.Widget _buildFieldDescription(String subStepName, WorkspaceData wsData) {
     String desc = wsData.itemDescription.trim();
     if (desc.isEmpty) {
@@ -1854,131 +1677,84 @@ class PdfReportService {
         }
       }
     }
+    final isNone = desc.isEmpty;
+    final textContent = isNone ? 'No description provided.' : desc;
 
-    final displayText = desc.isNotEmpty
-        ? desc
-        : 'Objective and scope validation item as specified in engineering design baseline.';
-
-    return pw.Container(
-      width: double.infinity,
-      padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-      decoration: const pw.BoxDecoration(
-        color: PdfColor.fromInt(0xFFF8FAFC),
-        border: pw.Border(
-          left: pw.BorderSide(color: PdfColor.fromInt(0xFF2563EB), width: 2.2),
-          top: pw.BorderSide(color: PdfColor.fromInt(0xFFE2E8F0), width: 0.7),
-          right: pw.BorderSide(color: PdfColor.fromInt(0xFFE2E8F0), width: 0.7),
-          bottom: pw.BorderSide(color: PdfColor.fromInt(0xFFE2E8F0), width: 0.7),
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        _buildFieldHeader('a. Description'),
+        pw.SizedBox(height: 4),
+        pw.Text(
+          textContent,
+          style: pw.TextStyle(
+            fontSize: 9.5,
+            color: isNone ? PdfColor.fromHex('#64748B') : PdfColor.fromHex('#334155'),
+            fontStyle: isNone ? pw.FontStyle.italic : pw.FontStyle.normal,
+            height: 1.3,
+          ),
         ),
-      ),
-      child: pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          pw.Text(
-            'SCOPE & OBJECTIVE',
-            style: pw.TextStyle(
-              fontSize: 7,
-              fontWeight: pw.FontWeight.bold,
-              color: PdfColor.fromHex('#2563EB'),
-              letterSpacing: 0.4,
-            ),
-          ),
-          pw.SizedBox(height: 2),
-          pw.Text(
-            displayText,
-            style: pw.TextStyle(
-              fontSize: 8.5,
-              color: PdfColor.fromHex('#334155'),
-              height: 1.25,
-            ),
-          ),
-        ],
-      ),
+      ],
     );
   }
 
-  // ── Notes, Comments & Observations (returns null if empty) ──────────────────
-  static pw.Widget? _buildFieldNotes(WorkspaceData wsData) {
-    final hasNotes = wsData.notes.trim().isNotEmpty;
-    final hasEngComments = wsData.engineeringComments.trim().isNotEmpty;
-    final hasComments = wsData.comments.isNotEmpty;
+  // b. Notes
+  static pw.Widget _buildFieldNotes(WorkspaceData wsData) {
+    final noteItems = <pw.Widget>[];
 
-    if (!hasNotes && !hasEngComments && !hasComments) {
-      return null;
-    }
-
-    final contentWidgets = <pw.Widget>[];
-
-    if (hasNotes) {
-      contentWidgets.addAll(_buildFormattedNotesContent(wsData.notes.trim()));
-    }
-
-    if (hasEngComments) {
-      if (contentWidgets.isNotEmpty) contentWidgets.add(pw.SizedBox(height: 4));
-      contentWidgets.add(
-        pw.Container(
-          width: double.infinity,
-          padding: const pw.EdgeInsets.symmetric(horizontal: 7, vertical: 4),
-          decoration: pw.BoxDecoration(
-            color: PdfColor.fromHex('#F1F5F9'),
-            borderRadius: const pw.BorderRadius.all(pw.Radius.circular(3)),
-            border: pw.Border.all(color: PdfColor.fromHex('#E2E8F0'), width: 0.6),
+    if (wsData.notes.trim().isNotEmpty) {
+      noteItems.add(
+        pw.Text(
+          wsData.notes.trim(),
+          style: pw.TextStyle(
+            fontSize: 9.5,
+            color: PdfColor.fromHex('#334155'),
+            height: 1.3,
           ),
-          child: pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Text(
-                'Engineering Comments:',
-                style: pw.TextStyle(
-                  fontSize: 7.5,
-                  fontWeight: pw.FontWeight.bold,
-                  color: PdfColor.fromHex('#1E293B'),
-                ),
-              ),
-              pw.SizedBox(height: 1),
-              pw.Text(
-                wsData.engineeringComments.trim(),
-                style: pw.TextStyle(
-                  fontSize: 8,
-                  color: PdfColor.fromHex('#334155'),
-                  height: 1.25,
-                ),
-              ),
-            ],
+        ),
+      );
+    }
+
+    if (wsData.engineeringComments.trim().isNotEmpty) {
+      if (noteItems.isNotEmpty) noteItems.add(pw.SizedBox(height: 4));
+      noteItems.add(
+        pw.Text(
+          'Engineering Comments: ${wsData.engineeringComments.trim()}',
+          style: pw.TextStyle(
+            fontSize: 9.5,
+            color: PdfColor.fromHex('#334155'),
+            height: 1.3,
           ),
         ),
       );
     }
 
     for (final comment in wsData.comments) {
-      if (contentWidgets.isNotEmpty) contentWidgets.add(pw.SizedBox(height: 3));
+      if (noteItems.isNotEmpty) noteItems.add(pw.SizedBox(height: 4));
       final authorStr = comment.author.trim().isEmpty ? 'Author' : comment.author.trim();
       final dateStr = DateFormat('dd MMM yyyy HH:mm').format(comment.createdAt);
-      contentWidgets.add(
-        pw.Padding(
-          padding: const pw.EdgeInsets.only(left: 4),
-          child: pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Text(
-                comment.content.trim(),
-                style: pw.TextStyle(
-                  fontSize: 8,
-                  color: PdfColor.fromHex('#334155'),
-                  height: 1.25,
-                ),
+      noteItems.add(
+        pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Text(
+              comment.content.trim(),
+              style: pw.TextStyle(
+                fontSize: 9.5,
+                color: PdfColor.fromHex('#334155'),
+                height: 1.3,
               ),
-              pw.SizedBox(height: 1),
-              pw.Text(
-                '- $authorStr on $dateStr',
-                style: pw.TextStyle(
-                  fontSize: 7,
-                  color: PdfColor.fromHex('#64748B'),
-                  fontStyle: pw.FontStyle.italic,
-                ),
+            ),
+            pw.SizedBox(height: 2),
+            pw.Text(
+              '- $authorStr on $dateStr',
+              style: pw.TextStyle(
+                fontSize: 8.5,
+                color: PdfColor.fromHex('#64748B'),
+                fontStyle: pw.FontStyle.italic,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       );
     }
@@ -1986,151 +1762,28 @@ class PdfReportService {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
-        pw.Container(
-          padding: const pw.EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
-          decoration: pw.BoxDecoration(
-            color: PdfColor.fromHex('#F1F5F9'),
-            borderRadius: const pw.BorderRadius.all(pw.Radius.circular(3)),
-          ),
-          child: pw.Text(
-            'NOTES & ENGINEERING OBSERVATIONS',
+        _buildFieldHeader('b. Notes'),
+        pw.SizedBox(height: 4),
+        if (noteItems.isEmpty)
+          pw.Text(
+            'No notes available.',
             style: pw.TextStyle(
-              fontSize: 7,
-              fontWeight: pw.FontWeight.bold,
-              color: PdfColor.fromHex('#334155'),
-              letterSpacing: 0.4,
+              fontSize: 9.5,
+              color: PdfColor.fromHex('#64748B'),
+              fontStyle: pw.FontStyle.italic,
             ),
+          )
+        else
+          pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: noteItems,
           ),
-        ),
-        pw.SizedBox(height: 3),
-        ...contentWidgets,
       ],
     );
   }
 
-  // ── Smart Line Formatter for Groq AI & Engineer Notes ──────────────────────
-  static List<pw.Widget> _buildFormattedNotesContent(String rawNotes) {
-    final widgets = <pw.Widget>[];
-    final lines = rawNotes.split('\n');
-
-    for (final rawLine in lines) {
-      final line = rawLine.trim();
-      if (line.isEmpty) {
-        widgets.add(pw.SizedBox(height: 2.5));
-        continue;
-      }
-
-      // Heading detection: ### or ## or #
-      if (line.startsWith('### ') || line.startsWith('## ') || line.startsWith('# ')) {
-        final headingText = line.replaceFirst(RegExp(r'^#{1,3}\s*'), '');
-        widgets.add(
-          pw.Padding(
-            padding: const pw.EdgeInsets.only(top: 3, bottom: 1.5),
-            child: pw.Text(
-              headingText,
-              style: pw.TextStyle(
-                fontSize: 8.5,
-                fontWeight: pw.FontWeight.bold,
-                color: PdfColor.fromHex('#1E293B'),
-              ),
-            ),
-          ),
-        );
-        continue;
-      }
-
-      // Bullet detection: * or - or •
-      if (line.startsWith('* ') || line.startsWith('- ') || line.startsWith('• ')) {
-        final bulletText = line.substring(2).trim();
-        widgets.add(
-          pw.Padding(
-            padding: const pw.EdgeInsets.only(left: 6, bottom: 2),
-            child: pw.Row(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
-              children: [
-                pw.Container(
-                  width: 3,
-                  height: 3,
-                  margin: const pw.EdgeInsets.only(top: 4, right: 5),
-                  decoration: const pw.BoxDecoration(
-                    color: PdfColor.fromInt(0xFF2563EB),
-                    shape: pw.BoxShape.circle,
-                  ),
-                ),
-                pw.Expanded(
-                  child: pw.Text(
-                    bulletText,
-                    style: pw.TextStyle(
-                      fontSize: 8,
-                      color: PdfColor.fromHex('#334155'),
-                      height: 1.25,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-        continue;
-      }
-
-      // Numbered list detection: 1. 2. etc.
-      final numMatch = RegExp(r'^(\d+)\.\s+(.*)').firstMatch(line);
-      if (numMatch != null) {
-        final numStr = numMatch.group(1)!;
-        final itemText = numMatch.group(2)!;
-        widgets.add(
-          pw.Padding(
-            padding: const pw.EdgeInsets.only(left: 6, bottom: 2),
-            child: pw.Row(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
-              children: [
-                pw.SizedBox(
-                  width: 12,
-                  child: pw.Text(
-                    '$numStr.',
-                    style: pw.TextStyle(
-                      fontSize: 8,
-                      fontWeight: pw.FontWeight.bold,
-                      color: PdfColor.fromHex('#2563EB'),
-                    ),
-                  ),
-                ),
-                pw.Expanded(
-                  child: pw.Text(
-                    itemText,
-                    style: pw.TextStyle(
-                      fontSize: 8,
-                      color: PdfColor.fromHex('#334155'),
-                      height: 1.25,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-        continue;
-      }
-
-      // Normal text
-      widgets.add(
-        pw.Text(
-          line,
-          style: pw.TextStyle(
-            fontSize: 8,
-            color: PdfColor.fromHex('#334155'),
-            height: 1.25,
-          ),
-        ),
-      );
-    }
-
-    return widgets;
-  }
-
-  // ── Evidence & Attachments (returns null if empty) ─────────────────────────
-  static pw.Widget? _buildFieldEvidence(
+  // c. Evidence
+  static pw.Widget _buildFieldEvidence(
     WorkspaceData wsData,
     Map<String, Uint8List> workspaceImages,
     Map<String, String> workspaceAttachmentUrls,
@@ -2139,10 +1792,24 @@ class PdfReportService {
       ...wsData.attachments,
       ...wsData.images,
       ...wsData.documents,
-    }.where((s) => s.trim().isNotEmpty).toList();
+    }.toList();
 
     if (allEvidenceRefs.isEmpty) {
-      return null;
+      return pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          _buildFieldHeader('c. Evidence'),
+          pw.SizedBox(height: 4),
+          pw.Text(
+            'No evidence uploaded.',
+            style: pw.TextStyle(
+              fontSize: 9.5,
+              color: PdfColor.fromHex('#64748B'),
+              fontStyle: pw.FontStyle.italic,
+            ),
+          ),
+        ],
+      );
     }
 
     final items = <pw.Widget>[];
@@ -2163,13 +1830,13 @@ class PdfReportService {
           : null;
 
       if (bytes != null && bytes.isNotEmpty && isImageFile) {
-        final imgWidget = pw.Container(
-          margin: const pw.EdgeInsets.only(top: 3, bottom: 3),
-          padding: const pw.EdgeInsets.all(4),
+        final widget = pw.Container(
+          margin: const pw.EdgeInsets.symmetric(vertical: 4),
+          padding: const pw.EdgeInsets.all(6),
           decoration: pw.BoxDecoration(
             color: PdfColor.fromHex('#F8FAFC'),
-            border: pw.Border.all(color: PdfColor.fromHex('#CBD5E1'), width: 0.8),
-            borderRadius: const pw.BorderRadius.all(pw.Radius.circular(4)),
+            border: pw.Border.all(color: PdfColor.fromHex('#E2E8F0')),
+            borderRadius: const pw.BorderRadius.all(pw.Radius.circular(6)),
           ),
           child: pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -2177,220 +1844,238 @@ class PdfReportService {
               pw.Center(
                 child: pw.Image(
                   pw.MemoryImage(bytes),
-                  height: 90,
+                  height: 95,
                   fit: pw.BoxFit.contain,
                 ),
               ),
-              pw.SizedBox(height: 2),
+              pw.SizedBox(height: 4),
               pw.Text(
-                fileName,
+                'Image: $fileName',
                 style: pw.TextStyle(
-                  fontSize: 7.5,
-                  color: url != null ? PdfColor.fromHex('#2563EB') : PdfColor.fromHex('#475569'),
+                  fontSize: 8.5,
+                  color: url != null
+                      ? PdfColor.fromHex('#2563EB')
+                      : PdfColor.fromHex('#475569'),
+                  decoration: url != null
+                      ? pw.TextDecoration.underline
+                      : pw.TextDecoration.none,
                   fontWeight: pw.FontWeight.bold,
-                  decoration: url != null ? pw.TextDecoration.underline : pw.TextDecoration.none,
                 ),
               ),
             ],
           ),
         );
 
-        items.add(url != null ? pw.UrlLink(destination: url, child: imgWidget) : imgWidget);
+        items.add(
+          url != null ? pw.UrlLink(destination: url, child: widget) : widget,
+        );
       } else {
-        final (chipBg, chipFg, chipLabel) = _getFileTypeBadge(fileName);
+        final typeLabel = _getFileTypeLabel(fileName);
 
-        final docWidget = pw.Container(
-          margin: const pw.EdgeInsets.only(top: 2, bottom: 2),
-          padding: const pw.EdgeInsets.symmetric(horizontal: 7, vertical: 3.5),
+        final widget = pw.Container(
+          margin: const pw.EdgeInsets.only(top: 3, bottom: 3),
+          padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: pw.BoxDecoration(
             color: PdfColor.fromHex('#F8FAFC'),
-            border: pw.Border.all(color: PdfColor.fromHex('#E2E8F0'), width: 0.7),
-            borderRadius: const pw.BorderRadius.all(pw.Radius.circular(3)),
+            border: pw.Border.all(color: PdfColor.fromHex('#E2E8F0')),
+            borderRadius: const pw.BorderRadius.all(pw.Radius.circular(6)),
           ),
           child: pw.Row(
+            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
             children: [
-              pw.Container(
-                padding: const pw.EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                decoration: pw.BoxDecoration(
-                  color: chipBg,
-                  borderRadius: const pw.BorderRadius.all(pw.Radius.circular(2)),
-                ),
-                child: pw.Text(
-                  chipLabel,
-                  style: pw.TextStyle(
-                    fontSize: 6.5,
-                    fontWeight: pw.FontWeight.bold,
-                    color: chipFg,
-                  ),
-                ),
-              ),
-              pw.SizedBox(width: 5),
               pw.Expanded(
                 child: pw.Text(
                   fileName,
                   style: pw.TextStyle(
-                    fontSize: 8,
+                    fontSize: 9,
                     fontWeight: pw.FontWeight.bold,
-                    color: url != null ? PdfColor.fromHex('#2563EB') : PdfColor.fromHex('#0F172A'),
-                    decoration: url != null ? pw.TextDecoration.underline : pw.TextDecoration.none,
+                    color: url != null
+                        ? PdfColor.fromHex('#2563EB')
+                        : PdfColor.fromHex('#0F172A'),
+                    decoration: url != null
+                        ? pw.TextDecoration.underline
+                        : pw.TextDecoration.none,
                   ),
                 ),
               ),
-              if (url != null)
-                pw.Text(
-                  'View File >',
-                  style: pw.TextStyle(
-                    fontSize: 7,
-                    color: PdfColor.fromHex('#2563EB'),
-                    fontWeight: pw.FontWeight.bold,
-                  ),
+              pw.SizedBox(width: 8),
+              pw.Text(
+                url != null ? typeLabel : 'File unavailable',
+                style: pw.TextStyle(
+                  fontSize: 8.5,
+                  color: url != null
+                      ? PdfColor.fromHex('#005CFF')
+                      : PdfColor.fromHex('#EF4444'),
+                  fontWeight: pw.FontWeight.bold,
                 ),
+              ),
             ],
           ),
         );
 
-        items.add(url != null ? pw.UrlLink(destination: url, child: docWidget) : docWidget);
+        items.add(
+          url != null ? pw.UrlLink(destination: url, child: widget) : widget,
+        );
       }
     }
 
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
-        pw.Container(
-          padding: const pw.EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
-          decoration: pw.BoxDecoration(
-            color: PdfColor.fromHex('#EFF6FF'),
-            borderRadius: const pw.BorderRadius.all(pw.Radius.circular(3)),
-          ),
-          child: pw.Text(
-            'EVIDENCE & ATTACHMENTS (${allEvidenceRefs.length})',
-            style: pw.TextStyle(
-              fontSize: 7,
-              fontWeight: pw.FontWeight.bold,
-              color: PdfColor.fromHex('#1D4ED8'),
-              letterSpacing: 0.4,
-            ),
-          ),
+        _buildFieldHeader('c. Evidence'),
+        pw.SizedBox(height: 4),
+        pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: items,
         ),
-        pw.SizedBox(height: 3),
-        ...items,
       ],
     );
   }
 
-  static (PdfColor, PdfColor, String) _getFileTypeBadge(String filename) {
+  static String _getFileTypeLabel(String filename) {
     final ext = filename.split('.').last.toLowerCase();
     return switch (ext) {
-      'pdf' => (PdfColor.fromHex('#FEE2E2'), PdfColor.fromHex('#DC2626'), 'PDF'),
-      'dwg' || 'dxf' || 'step' || 'stp' || 'iges' || 'igs' || 'sldprt' => (
-        PdfColor.fromHex('#F3E8FF'),
-        PdfColor.fromHex('#7E22CE'),
-        'CAD',
-      ),
-      'doc' || 'docx' => (PdfColor.fromHex('#DBEAFE'), PdfColor.fromHex('#1D4ED8'), 'DOC'),
-      'xls' || 'xlsx' || 'csv' => (PdfColor.fromHex('#DCFCE7'), PdfColor.fromHex('#15803D'), 'SHEET'),
-      'ppt' || 'pptx' => (PdfColor.fromHex('#FFEDD5'), PdfColor.fromHex('#C2410C'), 'SLIDES'),
-      'png' || 'jpg' || 'jpeg' || 'webp' => (PdfColor.fromHex('#E0E7FF'), PdfColor.fromHex('#4338CA'), 'IMG'),
-      _ => (PdfColor.fromHex('#F1F5F9'), PdfColor.fromHex('#475569'), ext.toUpperCase()),
+      'pdf' => 'PDF Document',
+      'dwg' || 'dxf' || 'step' || 'stp' || 'iges' || 'igs' || 'sldprt' => 'CAD File (.${ext.toUpperCase()})',
+      'doc' || 'docx' => 'Word Document',
+      'xls' || 'xlsx' || 'csv' => 'Excel Spreadsheet',
+      'ppt' || 'pptx' => 'Presentation',
+      'png' || 'jpg' || 'jpeg' || 'webp' || 'gif' => 'Image (${ext.toUpperCase()})',
+      _ => 'Document (.$ext)',
     };
   }
 
-  // ── Action Item Callout (returns null if empty) ─────────────────────────────
-  static pw.Widget? _buildFieldActionDescription(WorkspaceData wsData) {
+  // d. Action Description
+  static pw.Widget _buildFieldActionDescription(WorkspaceData wsData) {
     final actionText = wsData.actionDescription.trim();
     if (actionText.isEmpty) {
-      return null;
-    }
-
-    final isHigh = wsData.priority.trim().toLowerCase() == 'high' ||
-        wsData.priority.trim().toLowerCase() == 'critical';
-    final isMed = wsData.priority.trim().toLowerCase() == 'medium';
-
-    final badgeBg = isHigh
-        ? PdfColor.fromHex('#FEF2F2')
-        : (isMed ? PdfColor.fromHex('#FEF3C7') : PdfColor.fromHex('#F1F5F9'));
-    final badgeFg = isHigh
-        ? PdfColor.fromHex('#DC2626')
-        : (isMed ? PdfColor.fromHex('#D97706') : PdfColor.fromHex('#475569'));
-
-    return pw.Container(
-      width: double.infinity,
-      padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-      decoration: const pw.BoxDecoration(
-        color: PdfColor.fromInt(0xFFFFFBEB),
-        border: pw.Border(
-          left: pw.BorderSide(color: PdfColor.fromInt(0xFFF59E0B), width: 2.2),
-          top: pw.BorderSide(color: PdfColor.fromInt(0xFFFDE68A), width: 0.7),
-          right: pw.BorderSide(color: PdfColor.fromInt(0xFFFDE68A), width: 0.7),
-          bottom: pw.BorderSide(color: PdfColor.fromInt(0xFFFDE68A), width: 0.7),
-        ),
-      ),
-      child: pw.Column(
+      return pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
-          pw.Row(
-            children: [
-              pw.Text(
-                'ACTION ITEM',
-                style: pw.TextStyle(
-                  fontSize: 7,
-                  fontWeight: pw.FontWeight.bold,
-                  color: PdfColor.fromHex('#B45309'),
-                  letterSpacing: 0.4,
-                ),
-              ),
-              if (wsData.priority.trim().isNotEmpty) ...[
-                pw.SizedBox(width: 5),
-                pw.Container(
-                  padding: const pw.EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                  decoration: pw.BoxDecoration(
-                    color: badgeBg,
-                    borderRadius: const pw.BorderRadius.all(pw.Radius.circular(2)),
-                  ),
-                  child: pw.Text(
-                    wsData.priority.trim().toUpperCase(),
-                    style: pw.TextStyle(
-                      fontSize: 6.5,
-                      fontWeight: pw.FontWeight.bold,
-                      color: badgeFg,
-                    ),
-                  ),
-                ),
-              ],
-              if (wsData.dueDate != null) ...[
-                pw.SizedBox(width: 5),
-                pw.Text(
-                  'Due: ${DateFormat('dd MMM yyyy').format(wsData.dueDate!)}',
-                  style: pw.TextStyle(
-                    fontSize: 7,
-                    color: PdfColor.fromHex('#78350F'),
-                    fontWeight: pw.FontWeight.bold,
-                  ),
-                ),
-              ],
-              if (wsData.assignee.trim().isNotEmpty) ...[
-                pw.Spacer(),
-                pw.Text(
-                  'Assignee: ${wsData.assignee.trim()}',
-                  style: pw.TextStyle(
-                    fontSize: 7,
-                    color: PdfColor.fromHex('#78350F'),
-                  ),
-                ),
-              ],
-            ],
-          ),
-          pw.SizedBox(height: 2.5),
+          _buildFieldHeader('d. Action Description'),
+          pw.SizedBox(height: 4),
           pw.Text(
-            actionText,
+            'No actions recorded.',
             style: pw.TextStyle(
-              fontSize: 8,
-              color: PdfColor.fromHex('#1E293B'),
-              height: 1.25,
+              fontSize: 9.5,
+              color: PdfColor.fromHex('#64748B'),
+              fontStyle: pw.FontStyle.italic,
             ),
           ),
         ],
-      ),
+      );
+    }
+
+    final metaDetails = <String>[];
+    if (wsData.priority.trim().isNotEmpty) {
+      metaDetails.add('Priority: ${wsData.priority.trim()}');
+    }
+    if (wsData.assignee.trim().isNotEmpty) {
+      metaDetails.add('Assigned: ${wsData.assignee.trim()}');
+    }
+    if (wsData.dueDate != null) {
+      metaDetails.add('Due: ${DateFormat('dd MMM yyyy').format(wsData.dueDate!)}');
+    }
+    if (wsData.approvalStatus != ApprovalStatus.pending) {
+      metaDetails.add('Status: ${wsData.approvalStatus.name}');
+    }
+
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        _buildFieldHeader('d. Action Description'),
+        pw.SizedBox(height: 4),
+        pw.Text(
+          actionText,
+          style: pw.TextStyle(
+            fontSize: 9.5,
+            color: PdfColor.fromHex('#334155'),
+            height: 1.3,
+          ),
+        ),
+        if (metaDetails.isNotEmpty) ...[
+          pw.SizedBox(height: 3),
+          pw.Text(
+            metaDetails.join(' | '),
+            style: pw.TextStyle(
+              fontSize: 8.5,
+              color: PdfColor.fromHex('#64748B'),
+              fontWeight: pw.FontWeight.bold,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  // e. Responsible Person & Discipline
+  static pw.Widget _buildFieldResponsiblePerson(
+    String subStepName,
+    WorkspaceData wsData,
+    List<Stakeholder> projectStakeholders,
+  ) {
+    String person = wsData.assignee.trim();
+    String discipline = wsData.discipline.trim();
+
+    if (person.isEmpty) {
+      final defaultInfo = defaultStageContent['Requirements']?.subSteps[subStepName];
+      final targetDiscipline = discipline.isNotEmpty
+          ? discipline
+          : (defaultInfo?.discipline ?? '');
+
+      final matched = projectStakeholders.firstWhere(
+        (s) => s.role.trim().toLowerCase() == targetDiscipline.toLowerCase() && s.name.trim().isNotEmpty,
+        orElse: () => const Stakeholder(id: '', name: '', role: ''),
+      );
+
+      if (matched.name.trim().isNotEmpty) {
+        person = matched.name.trim();
+        discipline = matched.role.trim();
+      }
+    }
+
+    if (person.isEmpty) {
+      return pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          _buildFieldHeader('e. Responsible Person'),
+          pw.SizedBox(height: 4),
+          pw.Text(
+            'No responsible person assigned.',
+            style: pw.TextStyle(
+              fontSize: 9.5,
+              color: PdfColor.fromHex('#64748B'),
+              fontStyle: pw.FontStyle.italic,
+            ),
+          ),
+        ],
+      );
+    }
+
+    final finalDiscipline = discipline.isEmpty ? 'General Engineering' : discipline;
+
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        _buildFieldHeader('e. Responsible Person'),
+        pw.SizedBox(height: 4),
+        pw.Text(
+          'Responsible Person: $person',
+          style: pw.TextStyle(
+            fontSize: 9.5,
+            fontWeight: pw.FontWeight.bold,
+            color: PdfColor.fromHex('#0F172A'),
+          ),
+        ),
+        pw.SizedBox(height: 1),
+        pw.Text(
+          'Discipline: $finalDiscipline',
+          style: pw.TextStyle(
+            fontSize: 9.5,
+            color: PdfColor.fromHex('#475569'),
+          ),
+        ),
+      ],
     );
   }
 }
