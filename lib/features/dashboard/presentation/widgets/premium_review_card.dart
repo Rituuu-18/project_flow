@@ -2,16 +2,18 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/utils/enums.dart';
 import '../../../reviews/domain/entities/design_review.dart';
 import '../theme/dashboard_design.dart';
 import 'dashboard_motion.dart';
+import 'drl_gauge.dart';
 
 enum ReviewCardAction { uploadImage, prepareSlide, copy, createPdf, delete }
 
-class PremiumReviewCard extends StatelessWidget {
+class PremiumReviewCard extends StatefulWidget {
   const PremiumReviewCard({
     required this.review,
     required this.onOpen,
@@ -26,10 +28,17 @@ class PremiumReviewCard extends StatelessWidget {
   final ValueChanged<ProjectStatus> onStatusChanged;
 
   @override
+  State<PremiumReviewCard> createState() => _PremiumReviewCardState();
+}
+
+class _PremiumReviewCardState extends State<PremiumReviewCard> {
+
+  @override
   Widget build(BuildContext context) {
+    final review = widget.review;
     return PressScale(
       semanticLabel: 'Open ${review.name}',
-      onTap: onOpen,
+      onTap: widget.onOpen,
       child: Container(
         clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
@@ -41,74 +50,157 @@ class PremiumReviewCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            RepaintBoundary(child: _ReviewImage(review: review)),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(6, 6, 6, 0),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(
+                  DashboardDesign.cardRadius > 6
+                      ? DashboardDesign.cardRadius - 6
+                      : 6,
+                ),
+                child: RepaintBoundary(child: _ReviewImage(review: review)),
+              ),
+            ),
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            review.name,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: DashboardDesign.text(context),
-                              fontSize: 18,
-                              height: 1.2,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: -0.45,
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    return SingleChildScrollView(
+                      physics: const NeverScrollableScrollPhysics(),
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minHeight: constraints.maxHeight,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        review.name,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          color: DashboardDesign.text(context),
+                                          fontSize: 18,
+                                          height: 1.2,
+                                          fontWeight: FontWeight.w700,
+                                          letterSpacing: -0.45,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    _ActionMenu(review: review, onSelected: widget.onAction),
+                                  ],
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  _reviewMeta(review),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: DashboardDesign.mutedText(context),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Flexible(
+                                            child: Text(
+                                              'Design Readiness Level',
+                                              overflow: TextOverflow.ellipsis,
+                                              style: TextStyle(
+                                                color: DashboardDesign.text(context),
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Icon(
+                                            Icons.info_outline_rounded,
+                                            size: 16,
+                                            color: DashboardDesign.mutedText(context),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.chevron_right_rounded, size: 20),
+                                      style: IconButton.styleFrom(
+                                        backgroundColor: DashboardDesign.surface(context),
+                                        side: BorderSide(color: DashboardDesign.border(context)),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                        minimumSize: const Size(36, 36),
+                                        fixedSize: const Size(36, 36),
+                                        padding: EdgeInsets.zero,
+                                      ),
+                                      onPressed: () {
+                                        context.push('/project/${review.id}/drl');
+                                      },
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                Center(
+                                  child: DrlGauge(progress: review.progress, size: 120),
+                                ),
+                                const SizedBox(height: 8),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Flexible(
+                                      child: _StatusMenu(
+                                        status: review.status,
+                                        onChanged: widget.onStatusChanged,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          DateFormat('MMM d').format(review.lastUpdated),
+                                          style: TextStyle(
+                                            color: DashboardDesign.mutedText(context),
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Icon(
+                                          Icons.arrow_forward_rounded,
+                                          color: DashboardDesign.mutedText(context),
+                                          size: 14,
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 8),
-                        _ActionMenu(review: review, onSelected: onAction),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      _reviewMeta(review),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: DashboardDesign.mutedText(context),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
                       ),
-                    ),
-                    const Spacer(),
-                    _ProgressRow(progress: review.progress),
-                    const SizedBox(height: 14),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _StatusMenu(
-                            status: review.status,
-                            onChanged: onStatusChanged,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          DateFormat('MMM d').format(review.lastUpdated),
-                          style: TextStyle(
-                            color: DashboardDesign.mutedText(context),
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(width: 2),
-                        Icon(
-                          Icons.arrow_forward_rounded,
-                          color: DashboardDesign.mutedText(context),
-                          size: 16,
-                        ),
-                      ],
-                    ),
-                  ],
+                    );
+                  },
                 ),
               ),
             ),
@@ -126,6 +218,7 @@ class PremiumReviewCard extends StatelessWidget {
     return values.isEmpty ? 'No owner or discipline added' : values.join(' / ');
   }
 }
+
 
 class _ReviewImage extends StatefulWidget {
   const _ReviewImage({required this.review});
@@ -159,15 +252,15 @@ class _ReviewImageState extends State<_ReviewImage> {
     final imageProvider = _provider == null
         ? null
         : ResizeImage.resizeIfNeeded(
-            (480 * devicePixelRatio).round(),
-            (146 * devicePixelRatio).round(),
+            (600 * devicePixelRatio).round(),
+            null,
             _provider!,
           );
     final disableAnimations =
         MediaQuery.maybeOf(context)?.disableAnimations ?? false;
 
     return SizedBox(
-      height: 146,
+      height: 138,
       width: double.infinity,
       child: DecoratedBox(
         decoration: BoxDecoration(
@@ -178,7 +271,7 @@ class _ReviewImageState extends State<_ReviewImage> {
             : Image(
                 image: imageProvider,
                 fit: BoxFit.cover,
-                filterQuality: FilterQuality.low,
+                filterQuality: FilterQuality.high,
                 gaplessPlayback: true,
                 frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
                   if (wasSynchronouslyLoaded) return child;
@@ -230,76 +323,55 @@ class _ImageFallback extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.image_outlined,
-            size: 24,
-            color: DashboardDesign.mutedText(context),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            hasCustomImage ? 'Preview unavailable' : 'Add a preview image',
-            style: TextStyle(
-              color: DashboardDesign.mutedText(context),
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primary = DashboardDesign.primary;
+    
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            primary.withValues(alpha: isDark ? 0.15 : 0.08),
+            primary.withValues(alpha: isDark ? 0.05 : 0.02),
+          ],
+        ),
+      ),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: primary.withValues(alpha: isDark ? 0.2 : 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                hasCustomImage
+                    ? Icons.broken_image_rounded
+                    : Icons.add_photo_alternate_rounded,
+                size: 28,
+                color: primary,
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 12),
+            Text(
+              hasCustomImage ? 'Preview unavailable' : 'Add a preview image',
+              style: TextStyle(
+                color: primary.withValues(alpha: isDark ? 0.9 : 0.7),
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                letterSpacing: -0.2,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-class _ProgressRow extends StatelessWidget {
-  const _ProgressRow({required this.progress});
-
-  final double progress;
-
-  @override
-  Widget build(BuildContext context) {
-    final safeProgress = progress.clamp(0, 1).toDouble();
-
-    return Column(
-      children: [
-        Row(
-          children: [
-            Text(
-              'Progress',
-              style: TextStyle(
-                color: DashboardDesign.mutedText(context),
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const Spacer(),
-            Text(
-              '${(safeProgress * 100).round()}%',
-              style: TextStyle(
-                color: DashboardDesign.text(context),
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 7),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(99),
-          child: LinearProgressIndicator(
-            value: safeProgress,
-            minHeight: 5,
-            backgroundColor: DashboardDesign.offsetSurface(context),
-            valueColor: const AlwaysStoppedAnimation(DashboardDesign.primary),
-          ),
-        ),
-      ],
-    );
-  }
-}
 
 class _StatusMenu extends StatelessWidget {
   const _StatusMenu({required this.status, required this.onChanged});
@@ -329,31 +401,31 @@ class _StatusMenu extends StatelessWidget {
         ),
         PopupMenuItem(value: ProjectStatus.completed, child: Text('Completed')),
       ],
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(99),
-            border: Border.all(color: color.withValues(alpha: 0.22)),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(99),
+          border: Border.all(color: color.withValues(alpha: 0.22)),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: Text(
                   label,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: color,
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(width: 4),
-                Icon(Icons.keyboard_arrow_down_rounded, size: 14, color: color),
-              ],
-            ),
+              ),
+              const SizedBox(width: 4),
+              Icon(Icons.keyboard_arrow_down_rounded, size: 14, color: color),
+            ],
           ),
         ),
       ),

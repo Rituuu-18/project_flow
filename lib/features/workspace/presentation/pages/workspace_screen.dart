@@ -11,6 +11,7 @@ import 'package:engineering_werk/features/dashboard/presentation/theme/dashboard
 import 'package:engineering_werk/features/reviews/domain/entities/stakeholder.dart';
 import 'package:engineering_werk/features/reviews/domain/utils/default_stages.dart';
 import 'package:engineering_werk/features/workspace/domain/entities/workspace_data.dart';
+import 'package:engineering_werk/core/localization/locale_provider.dart';
 import 'package:engineering_werk/features/workspace/presentation/providers/workspace_provider.dart';
 import 'package:engineering_werk/features/reviews/presentation/providers/design_review_provider.dart';
 
@@ -175,6 +176,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
   }
 
   Future<void> _pickEvidence() async {
+    final t = ref.read(localeProvider.notifier).t;
     final result = await FilePicker.pickFiles(
       allowMultiple: true,
       withData: true,
@@ -185,15 +187,15 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
     final uploadedRefs = <String>[];
 
     try {
-      AppMessenger.info('Uploading evidence…');
+      AppMessenger.info(t('uploading_evidence'));
       for (final file in result.files) {
         final bytes = file.bytes;
         if (bytes == null || bytes.isEmpty) {
-          AppMessenger.error('Could not read "${file.name}".');
+          AppMessenger.error('${t('could_not_read')} "${file.name}".');
           continue;
         }
         if (bytes.length > 20 * 1024 * 1024) {
-          AppMessenger.error('"${file.name}" is too large (max 20 MB).');
+          AppMessenger.error('"${file.name}" ${t('file_too_large_max_20')}.');
           continue;
         }
         final refPath = await storage.uploadWorkspaceAttachment(
@@ -208,7 +210,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
       }
 
       if (uploadedRefs.isEmpty) {
-        AppMessenger.error('No evidence files were uploaded.');
+        AppMessenger.error(t('no_evidence_uploaded'));
         return;
       }
 
@@ -220,34 +222,35 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
         attachments: attachments,
         activityLogs: [
           ..._currentData!.activityLogs,
-          "${DateFormat('HH:mm').format(DateTime.now())} - Added ${uploadedRefs.length} evidence file(s).",
+          "${DateFormat('HH:mm').format(DateTime.now())} - ${t('added_evidence_files', {'count': '${uploadedRefs.length}'})}",
         ],
       );
 
       await ref.read(workspaceRepositoryProvider).saveWorkspace(updated);
       if (!mounted) return;
       setState(() => _currentData = updated);
-      AppMessenger.success('Evidence files uploaded.');
+      AppMessenger.success(t('evidence_uploaded_success'));
     } catch (e) {
-      AppMessenger.fromError(e, prefix: 'Could not upload evidence.');
+      AppMessenger.fromError(e, prefix: t('evidence_upload_failed'));
     }
   }
 
   Future<void> _openAttachment(String stored) async {
+    final t = ref.read(localeProvider.notifier).t;
     try {
       final url = await SupabaseStorage(Supabase.instance.client)
           .resolveAttachmentUrl(stored);
       if (url == null) {
-        AppMessenger.error('Could not open this attachment.');
+        AppMessenger.error(t('could_not_open_attachment'));
         return;
       }
       final uri = Uri.parse(url);
       final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
       if (!opened) {
-        AppMessenger.error('Could not open this attachment.');
+        AppMessenger.error(t('could_not_open_attachment'));
       }
     } catch (e) {
-      AppMessenger.fromError(e, prefix: 'Could not open attachment.');
+      AppMessenger.fromError(e, prefix: t('could_not_open_attachment'));
     }
   }
 
@@ -264,6 +267,8 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(localeProvider);
+    final t = ref.read(localeProvider.notifier).t;
     if (_isLoading) return const Scaffold(body: _WorkspaceLoadingState());
 
     return Scaffold(
@@ -275,6 +280,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
             _WorkspaceHeader(
               projectName: widget.projectName,
               stageName: widget.stageName,
+              reviewId: widget.reviewId,
               onSave: _saveWithMessage,
             ),
             Expanded(
@@ -285,25 +291,6 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    OutlinedButton.icon(
-                      onPressed: () => context.go('/project/${widget.reviewId}'),
-                      icon: const Icon(Icons.arrow_back_rounded, size: 18),
-                      label: const Text('Back to review page'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: DashboardDesign.text(context),
-                        side: BorderSide(
-                          color: DashboardDesign.border(context),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 12,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
                     Text(
                       widget.stageName,
                       style: TextStyle(
@@ -315,7 +302,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                     const SizedBox(height: 8),
                     Text(
                       defaultStageContent[widget.stageName]?.description ??
-                          'Context, notes, status, evidence, and actions in one focused screen.',
+                          t('workspace_description_fallback'),
                       style: TextStyle(
                         fontSize: 16,
                         color: DashboardDesign.mutedText(context),
@@ -374,17 +361,19 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
   }
 
   Future<void> _saveWithMessage() async {
+    final t = ref.read(localeProvider.notifier).t;
     try {
       await _enqueueSave(silent: true);
-      AppMessenger.success('Progress saved.');
+      AppMessenger.success(t('save_progress_success'));
     } catch (e) {
       AppMessenger.fromError(e, prefix: 'Could not save progress.');
     }
   }
 
   Widget _buildItemDetailsCard(BuildContext context) {
+    final t = ref.read(localeProvider.notifier).t;
     return _SectionCard(
-      title: 'Item Details',
+      title: t('item_details'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -397,7 +386,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
               ),
               const SizedBox(width: 7),
               Text(
-                'Managed by admin',
+                t('managed_by_admin'),
                 style: TextStyle(
                   color: DashboardDesign.mutedText(context),
                   fontSize: 12,
@@ -407,14 +396,14 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
             ],
           ),
           const SizedBox(height: 18),
-          _LabelText('Checklist item'),
+          _LabelText(t('checklist_item')),
           _ReadOnlyAdminField(
             text: _currentData!.checklistItem.isEmpty
                 ? widget.subStepName
                 : _currentData!.checklistItem,
           ),
           const SizedBox(height: 16),
-          _LabelText('Description'),
+          _LabelText(t('description_label')),
           _ReadOnlyAdminField(
             text: _currentData!.itemDescription,
           ),
@@ -424,17 +413,18 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
   }
 
   Widget _buildAddDetailsCard(BuildContext context) {
+    final t = ref.read(localeProvider.notifier).t;
     return _SectionCard(
-      title: 'Add Details',
+      title: t('add_details'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _LabelText('Notes'),
+          _LabelText(t('notes')),
           TextField(
             controller: _notesController,
             maxLines: 4,
             style: TextStyle(color: DashboardDesign.text(context)),
-            decoration: _boxDecoration(context, 'Enter notes...'),
+            decoration: _boxDecoration(context, t('enter_notes')),
           ),
         ],
       ),
@@ -442,12 +432,13 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
   }
 
   Widget _buildEvidenceCard(BuildContext context) {
+    final t = ref.read(localeProvider.notifier).t;
     return _SectionCard(
-      title: 'Evidence & Actions',
+      title: t('evidence_actions'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _LabelText('File Upload'),
+          _LabelText(t('file_upload')),
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(24),
@@ -468,7 +459,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Drop Images, PDFs, CAD Files, Drawings here',
+                  t('drop_files_here'),
                   style: TextStyle(
                     color: DashboardDesign.mutedText(context),
                   ),
@@ -481,7 +472,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                     backgroundColor: DashboardDesign.primary,
                     foregroundColor: Colors.white,
                   ),
-                  child: const Text('Browse Files'),
+                  child: Text(t('browse_files')),
                 ),
                 if (_currentData!.attachments.isNotEmpty) ...[
                   const SizedBox(height: 16),
@@ -537,16 +528,17 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
   }
 
   Widget _buildActionRequiredCard(BuildContext context) {
+    final t = ref.read(localeProvider.notifier).t;
     return _SectionCard(
-      title: 'Action Required',
+      title: t('action_required'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _LabelText('Action Description'),
+          _LabelText(t('action_description')),
           TextField(
             controller: _actionDescController,
             style: TextStyle(color: DashboardDesign.text(context)),
-            decoration: _boxDecoration(context, 'Describe action...'),
+            decoration: _boxDecoration(context, t('describe_action')),
           ),
         ],
       ),
@@ -599,12 +591,13 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
       selectedId = orphanValue;
     }
 
+    final t = ref.read(localeProvider.notifier).t;
     return _SectionCard(
-      title: 'Assignment',
+      title: t('assignment'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _LabelText('Responsible Person (stakeholder)'),
+          _LabelText(t('responsible_person')),
           if (reviewsAsync.isLoading && !streamReady) ...[
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
@@ -618,8 +611,8 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                   const SizedBox(width: 12),
                   Text(
                     currentAssignee.isEmpty
-                        ? 'Loading stakeholders…'
-                        : 'Loading stakeholders… Current: $currentAssignee',
+                        ? t('loading_stakeholders_empty')
+                        : t('loading_stakeholders_current', {'assignee': currentAssignee}),
                     style: TextStyle(
                       color: DashboardDesign.mutedText(context),
                       fontSize: 13,
@@ -642,8 +635,8 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                 children: [
                   Text(
                     currentAssignee.isEmpty
-                        ? 'Could not load stakeholders.'
-                        : 'Could not load stakeholders. Current assignee: $currentAssignee',
+                        ? t('could_not_load_stakeholders_empty')
+                        : t('could_not_load_stakeholders_current', {'assignee': currentAssignee}),
                     style: TextStyle(
                       color: DashboardDesign.mutedText(context),
                       height: 1.4,
@@ -654,7 +647,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                   TextButton(
                     onPressed: () =>
                         ref.invalidate(designReviewsStreamProvider),
-                    child: const Text('Retry'),
+                    child: Text(t('retry')),
                   ),
                 ],
               ),
@@ -670,8 +663,8 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
               ),
               child: Text(
                 currentAssignee.isEmpty
-                    ? 'No stakeholders yet. Add them on the design review page — they will appear here, and discipline will fill from their role.'
-                    : 'No stakeholders yet. Current assignee: $currentAssignee. Add stakeholders on the design review page to pick from the list.',
+                    ? t('no_stakeholders_yet_empty')
+                    : t('no_stakeholders_yet_current', {'assignee': currentAssignee}),
                 style: TextStyle(
                   color: DashboardDesign.mutedText(context),
                   height: 1.4,
@@ -693,7 +686,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                   value: selectedId,
                   isExpanded: true,
                   hint: Text(
-                    'Select stakeholder...',
+                    t('select_stakeholder'),
                     style: TextStyle(
                       color: DashboardDesign.mutedText(context),
                     ),
@@ -728,15 +721,15 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                     });
                     _addActivityLog(
                       role.isEmpty
-                          ? 'Assigned to ${matched.name}'
-                          : 'Assigned to ${matched.name} ($role)',
+                          ? t('assigned_to_name', {'name': matched.name})
+                          : t('assigned_to_name_role', {'name': matched.name, 'role': role}),
                     );
                   },
                 ),
               ),
             ),
           const SizedBox(height: 12),
-          const _LabelText('Discipline'),
+          _LabelText(t('discipline')),
           TextField(
             controller: _disciplineController,
             readOnly: hasStakeholders,
@@ -744,12 +737,12 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
             decoration: _boxDecoration(
               context,
               hasStakeholders
-                  ? 'Auto-filled from stakeholder role'
-                  : 'Discipline...',
+                  ? t('auto_filled_role')
+                  : t('discipline_hint'),
             ),
           ),
           const SizedBox(height: 12),
-          const _LabelText('Due Date'),
+          _LabelText(t('due_date')),
           Row(
             children: [
               Expanded(
@@ -762,11 +755,11 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                       lastDate: DateTime(2030),
                       builder: (context, child) {
                         return Theme(
-                          data: Theme.of(context).copyWith(
-                            colorScheme: Theme.of(context).colorScheme.copyWith(
-                                  primary: DashboardDesign.primary,
-                                ),
-                          ),
+                           data: Theme.of(context).copyWith(
+                             colorScheme: Theme.of(context).colorScheme.copyWith(
+                                   primary: DashboardDesign.primary,
+                                 ),
+                           ),
                           child: child!,
                         );
                       },
@@ -776,13 +769,13 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                         _currentData = _currentData!.copyWith(dueDate: d);
                       });
                       _addActivityLog(
-                        'Changed due date to ${DateFormat('yyyy-MM-dd').format(d)}',
+                        t('changed_due_date', {'date': DateFormat('yyyy-MM-dd').format(d)}),
                       );
                     }
                   },
                   child: _BoxContext(
                     _currentData!.dueDate == null
-                        ? 'Select date'
+                        ? t('select_date')
                         : DateFormat('dd MMM yyyy')
                             .format(_currentData!.dueDate!),
                   ),
@@ -796,9 +789,9 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                       _currentData =
                           _currentData!.copyWith(clearDueDate: true);
                     });
-                    _addActivityLog('Cleared due date');
+                    _addActivityLog(t('cleared_due_date'));
                   },
-                  child: const Text('Clear'),
+                  child: Text(t('clear')),
                 ),
               ],
             ],
@@ -809,8 +802,9 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
   }
 
   Widget _buildActivityCard(BuildContext context) {
+    final t = ref.read(localeProvider.notifier).t;
     return _SectionCard(
-      title: 'Activity',
+      title: t('activity'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -839,7 +833,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
           ),
           if (_currentData!.activityLogs.isEmpty)
             Text(
-              'No recent activity.',
+              t('no_recent_activity'),
               style: TextStyle(color: DashboardDesign.mutedText(context)),
             ),
         ],
@@ -851,11 +845,13 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
 class _WorkspaceHeader extends StatelessWidget {
   final String projectName;
   final String stageName;
+  final String reviewId;
   final VoidCallback onSave;
 
   const _WorkspaceHeader({
     required this.projectName,
     required this.stageName,
+    required this.reviewId,
     required this.onSave,
   });
 
@@ -956,7 +952,7 @@ class _WorkspaceHeader extends StatelessWidget {
                       ],
                     ),
                   ),
-                  // Right side: Save button action
+                  // Right side: Save button + Back button
                   isCompact
                       ? _HeaderIconButton(
                           tooltip: 'Save Progress',
@@ -981,6 +977,19 @@ class _WorkspaceHeader extends StatelessWidget {
                             ),
                           ),
                         ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    onPressed: () => GoRouter.of(context).go('/project/$reviewId'),
+                    tooltip: 'Back',
+                    icon: const Icon(Icons.arrow_back_rounded, size: 20),
+                    style: IconButton.styleFrom(
+                      foregroundColor: DashboardDesign.text(context),
+                      backgroundColor: DashboardDesign.surface(context),
+                      side: BorderSide(color: DashboardDesign.border(context)),
+                      shape: const CircleBorder(),
+                      fixedSize: const Size(40, 40),
+                    ),
+                  ),
                 ],
               ),
             ),

@@ -1,18 +1,26 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../../core/database/supabase_storage.dart';
 import '../../../../core/utils/app_messenger.dart';
+import '../../../../core/localization/locale_provider.dart';
 import '../../../../core/utils/enums.dart';
+import '../../../../services/pdf_report_service.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../reviews/domain/entities/design_review.dart';
 import '../../../reviews/domain/utils/clone_for_copy.dart';
 import '../../../reviews/presentation/providers/design_review_provider.dart';
 import '../../../settings/presentation/providers/theme_provider.dart';
+import '../../../workspace/domain/entities/workspace_data.dart';
+import '../../../workspace/presentation/providers/workspace_provider.dart';
 import '../theme/dashboard_design.dart';
 import '../widgets/clean_header.dart';
 import '../widgets/dashboard_motion.dart';
@@ -55,8 +63,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     super.dispose();
   }
 
+  // Translation helper – accessible from every method in this state.
+  String Function(String, [Map<String, String>?]) get t =>
+      ref.read(localeProvider.notifier).t;
+
   @override
   Widget build(BuildContext context) {
+    ref.watch(localeProvider);
+
     final reviewsAsync = ref.watch(designReviewsStreamProvider);
     final width = MediaQuery.sizeOf(context).width;
 
@@ -172,11 +186,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                     _sectionHeader(
                       width: width,
                       title: _showCompleted
-                          ? 'Completed Design Reviews'
-                          : 'Active Design Reviews',
-                      description: _showCompleted
-                          ? 'Approved records and decision history'
-                          : 'In progress and awaiting review',
+                          ? t('completed_reviews_title')
+                          : t('active_reviews_title'),
                       count: displayList.length,
                     ),
                     _reviewGrid(displayList, width, startIndex: 0),
@@ -200,7 +211,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   Widget _sectionHeader({
     required double width,
     required String title,
-    required String description,
     required int count,
   }) {
     return SliverPadding(
@@ -234,15 +244,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                             : 24,
                         fontWeight: FontWeight.w700,
                         letterSpacing: -0.7,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      description,
-                      style: TextStyle(
-                        color: DashboardDesign.mutedText(context),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
@@ -290,7 +291,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           crossAxisCount: columnCount,
           crossAxisSpacing: 18,
           mainAxisSpacing: 18,
-          mainAxisExtent: 356,
+          mainAxisExtent: width < DashboardDesign.mobileBreakpoint ? 465 : 450,
         ),
         delegate: SliverChildBuilderDelegate(
           (context, index) {
@@ -517,8 +518,43 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     }
   }
 
+  bool _isCreatingPdf = false;
+
   Future<void> _createPdf(DesignReview review) async {
-    AppMessenger.info('PDF export for "${review.name}" is not available yet.');
+    if (_isCreatingPdf) return;
+    
+    setState(() => _isCreatingPdf = true);
+    AppMessenger.info('Generating PDF report for "${review.name}"...');
+    
+    try {
+      AppMessenger.info('Preparing project data...');
+      final pdfData = await PdfReportService.loadFreshProjectPdfData(
+        review.id,
+        ref.read(designReviewRepositoryProvider),
+        ref.read(workspaceRepositoryProvider),
+      );
+
+      AppMessenger.info('Generating PDF...');
+      final pdfBytes = await PdfReportService.generateReport(pdfData);
+      final freshReview = pdfData.review;
+
+      final pdfName = 'Design_Review_${freshReview.name.replaceAll(' ', '_')}.pdf';
+      final base64String = base64Encode(pdfBytes);
+      final dataUrl = 'data:application/pdf;base64,$base64String';
+
+      await Supabase.instance.client.from('pdf_storage').insert({
+        'name': pdfName,
+        'file_url': dataUrl,
+        'created_by': Supabase.instance.client.auth.currentUser!.id,
+      });
+
+      AppMessenger.success('Successfully Created');
+      
+    } catch (e) {
+      AppMessenger.fromError(e, prefix: 'Failed to generate PDF:');
+    } finally {
+      if (mounted) setState(() => _isCreatingPdf = false);
+    }
   }
 
   Future<void> _confirmDelete(DesignReview review) async {

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/utils/app_messenger.dart';
+import '../../../../core/localization/locale_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../theme/dashboard_design.dart';
 
@@ -105,18 +106,44 @@ class CleanHeader extends ConsumerWidget {
                           ),
                           const SizedBox(width: 10),
                         ],
-                        _HeaderIconButton(
-                          tooltip: 'Toggle theme',
-                          icon: DashboardDesign.isDark(context)
-                              ? Icons.light_mode_outlined
-                              : Icons.dark_mode_outlined,
-                          onPressed: onToggleTheme,
-                        ),
+                        Consumer(builder: (context, ref, child) {
+                          final locale = ref.watch(localeProvider);
+                          return PopupMenuButton<String>(
+                            tooltip: 'Change language',
+                            initialValue: locale,
+                            onSelected: (value) {
+                              ref.read(localeProvider.notifier).setLocale(value);
+                            },
+                            itemBuilder: (context) => const [
+                              PopupMenuItem(value: 'en', child: Text('English (EN)')),
+                              PopupMenuItem(value: 'nl', child: Text('Dutch (NL)')),
+                              PopupMenuItem(value: 'de', child: Text('Deutsch (DE)')),
+                            ],
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: DashboardDesign.border(context)),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                locale.toUpperCase(),
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: DashboardDesign.text(context),
+                                ),
+                              ),
+                            ),
+                          );
+                        }),
                         const SizedBox(width: 8),
                         PopupMenuButton<String>(
                           tooltip: user == null ? 'Account' : (user.email ?? 'Account'),
                           onSelected: (value) async {
-                            if (value == 'login') {
+                            if (value == 'theme') {
+                              onToggleTheme();
+                            } else if (value == 'pdf') {
+                              context.go('/pdfs');
+                            } else if (value == 'login') {
                               context.go('/login');
                             } else if (value == 'register') {
                               context.go('/register');
@@ -129,13 +156,43 @@ class CleanHeader extends ConsumerWidget {
                             }
                           },
                           itemBuilder: (context) {
+                            final isDark = DashboardDesign.isDark(context);
+                            final themeItem = PopupMenuItem(
+                              value: 'theme',
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+                                    size: 18,
+                                    color: DashboardDesign.mutedText(context),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(isDark ? 'Light mode' : 'Dark mode'),
+                                ],
+                              ),
+                            );
+
+                            final pdfItem = const PopupMenuItem(
+                              value: 'pdf',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.picture_as_pdf_rounded, size: 18),
+                                  SizedBox(width: 8),
+                                  Text('PDFs'),
+                                ],
+                              ),
+                            );
+
                             if (user == null) {
-                              return const [
-                                PopupMenuItem(value: 'login', child: Text('Sign in')),
-                                PopupMenuItem(
+                              return [
+                                const PopupMenuItem(value: 'login', child: Text('Sign in')),
+                                const PopupMenuItem(
                                   value: 'register',
                                   child: Text('Create account'),
                                 ),
+                                const PopupMenuDivider(),
+                                pdfItem,
+                                themeItem,
                               ];
                             }
                             return [
@@ -143,10 +200,13 @@ class CleanHeader extends ConsumerWidget {
                                 enabled: false,
                                 child: Text(user.email ?? 'Signed in'),
                               ),
+                              pdfItem,
                               const PopupMenuItem(
                                 value: 'signout',
                                 child: Text('Sign out'),
                               ),
+                              const PopupMenuDivider(),
+                              themeItem,
                             ];
                           },
                           child: CircleAvatar(
@@ -175,7 +235,7 @@ class CleanHeader extends ConsumerWidget {
   }
 }
 
-class DashboardSearchField extends StatelessWidget {
+class DashboardSearchField extends ConsumerWidget {
   const DashboardSearchField({
     required this.controller,
     required this.onChanged,
@@ -186,7 +246,10 @@ class DashboardSearchField extends StatelessWidget {
   final ValueChanged<String> onChanged;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(localeProvider);
+    final t = ref.read(localeProvider.notifier).t;
+
     return TextField(
       controller: controller,
       onChanged: onChanged,
@@ -197,7 +260,7 @@ class DashboardSearchField extends StatelessWidget {
         fontWeight: FontWeight.w500,
       ),
       decoration: InputDecoration(
-        hintText: 'Search reviews...',
+        hintText: t('search_reviews'),
         hintStyle: TextStyle(
           color: DashboardDesign.mutedText(context),
           fontWeight: FontWeight.w400,

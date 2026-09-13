@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
@@ -92,32 +93,72 @@ class SupabaseStorage {
   }
 
   /// Resolves a stored attachment ref or legacy path/URL into an openable URL.
-  Future<String?> resolveAttachmentUrl(String stored) async {
+  Future<String?> resolveAttachmentUrl(
+    String stored, {
+    String? workspaceId,
+  }) async {
     final trimmed = stored.trim();
     if (trimmed.isEmpty) return null;
     if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
       return trimmed;
     }
 
-    final path = attachmentObjectPath(trimmed);
+    String? path = attachmentObjectPath(trimmed);
     if (path == null) return null;
 
-    return supabaseCall(() async {
-      return _client.storage
-          .from(attachmentsBucket)
-          .createSignedUrl(path, 60 * 60 * 24 * 7);
-    }, operation: 'resolveAttachmentUrl');
+    if (!path.startsWith('workspace/') &&
+        workspaceId != null &&
+        workspaceId.trim().isNotEmpty) {
+      path = 'workspace/${workspaceId.trim()}/$path';
+    }
+
+    try {
+      final signedUrl = await supabaseCall(() async {
+        return _client.storage
+            .from(attachmentsBucket)
+            .createSignedUrl(path!, 60 * 60 * 24 * 7);
+      }, operation: 'resolveAttachmentUrl');
+      if (signedUrl.isNotEmpty) return signedUrl;
+    } catch (e) {
+      debugPrint('Direct signed URL failed for "$path": $e');
+    }
+
+    if (workspaceId != null && workspaceId.trim().isNotEmpty) {
+      try {
+        final folderPath = 'workspace/${workspaceId.trim()}';
+        final files = await _client.storage
+            .from(attachmentsBucket)
+            .list(path: folderPath);
+        final fileNameOnly = attachmentDisplayName(trimmed);
+
+        for (final file in files) {
+          if (file.name == fileNameOnly ||
+              file.name.endsWith('_$fileNameOnly')) {
+            final matchedPath = '$folderPath/${file.name}';
+            final signedUrl = await _client.storage
+                .from(attachmentsBucket)
+                .createSignedUrl(matchedPath, 60 * 60 * 24 * 7);
+            if (signedUrl.isNotEmpty) return signedUrl;
+          }
+        }
+      } catch (e) {
+        debugPrint('List fallback failed for workspace "$workspaceId": $e');
+      }
+    }
+
+    return null;
   }
 
   static String? attachmentObjectPath(String stored) {
     final trimmed = stored.trim();
+    if (trimmed.isEmpty) return null;
     if (trimmed.startsWith(attachmentRefPrefix)) {
       return trimmed.substring(attachmentRefPrefix.length);
     }
     if (trimmed.startsWith('workspace/')) {
       return trimmed;
     }
-    return null;
+    return trimmed;
   }
 
   static String attachmentDisplayName(String stored) {

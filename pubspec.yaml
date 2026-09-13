@@ -38,6 +38,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   flutter_riverpod: ^2.6.1
   path_provider: ^2.1.5
+
   animations: ^2.2.0
   flutter_animate: ^4.5.2
   page_transition: ^2.2.2
@@ -53,6 +54,8 @@ dependencies:
   riverpod_annotation: ^2.6.1
   equatable: ^2.0.8
   url_launcher: ^6.3.2
+  pdf: ^3.11.2
+  printing: ^5.14.1
 
 dev_dependencies:
   flutter_test:
@@ -67,16 +70,13 @@ dev_dependencies:
   build_runner: ^2.4.13
   riverpod_generator: ^2.4.0
   mocktail: ^1.0.5
+  flutter_launcher_icons: ^0.14.4
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
 # The following section is specific to Flutter packages.
 flutter:
-
-  # The following line ensures that the Material Icons font is
-  # included with your application, so that you can use the icons in
-  # the material Icons class.
   uses-material-design: true
 
   assets:
@@ -85,12 +85,8 @@ flutter:
     - assets/evalio_logo.png
     - assets/pump-housing.png
     - assets/ed-logo.png
+    - assets/stakeholders_icon.png
 
-  # An image asset can refer to one or more resolution-specific "variants", see
-  # https://flutter.dev/to/resolution-aware-images
-
-  # For details regarding adding assets from package dependencies, see
-  # https://flutter.dev/to/asset-from-package
 
   # To add custom fonts to your application, add a fonts section here,
   # in this "flutter" section. Each entry in this list should have a
@@ -111,3 +107,9 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/ed-logo-cropped.png"
+  min_sdk_version: 21

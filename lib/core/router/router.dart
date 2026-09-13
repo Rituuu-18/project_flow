@@ -5,10 +5,12 @@ import 'package:engineering_werk/core/router/go_router_refresh_stream.dart';
 import 'package:engineering_werk/features/auth/presentation/providers/auth_provider.dart';
 import 'package:engineering_werk/features/dashboard/presentation/pages/dashboard_screen.dart';
 import 'package:engineering_werk/features/projects/presentation/pages/design_review_detail_screen.dart';
+import 'package:engineering_werk/features/projects/presentation/pages/design_readiness_level_details_screen.dart';
 import 'package:engineering_werk/features/workspace/presentation/pages/workspace_screen.dart';
 import 'package:engineering_werk/features/auth/presentation/pages/login_screen.dart';
 import 'package:engineering_werk/features/auth/presentation/pages/register_screen.dart';
 import 'package:engineering_werk/features/auth/presentation/pages/forgot_password_screen.dart';
+import 'package:engineering_werk/features/dashboard/presentation/pages/pdf_storage_screen.dart';
 
 const _routeTransitionDuration = Duration(milliseconds: 260);
 const _routeReverseTransitionDuration = Duration(milliseconds: 200);
@@ -69,6 +71,16 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
+        path: '/project/:id/drl',
+        pageBuilder: (context, state) {
+          final id = state.pathParameters['id']!;
+          return _buildPage(
+            state: state,
+            child: DesignReadinessLevelDetailsScreen(reviewId: id),
+          );
+        },
+      ),
+      GoRoute(
         path: '/workspace/:id',
         pageBuilder: (context, state) {
           final id = state.pathParameters['id']!;
@@ -89,6 +101,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             ),
           );
         },
+      ),
+      GoRoute(
+        path: '/pdfs',
+        pageBuilder: (context, state) =>
+            _buildPage(state: state, child: const PdfStorageScreen()),
       ),
     ],
   );

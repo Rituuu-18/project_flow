@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:engineering_werk/core/utils/app_messenger.dart';
+import 'package:engineering_werk/core/localization/locale_provider.dart';
 import 'package:engineering_werk/features/auth/presentation/providers/auth_provider.dart';
 import 'package:engineering_werk/features/auth/presentation/widgets/auth_layout.dart';
 
@@ -35,8 +36,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   }
 
   Future<void> _signUp() async {
+    final t = ref.read(localeProvider.notifier).t;
     if (!_formKey.currentState!.validate()) {
-      AppMessenger.error('Please complete all required fields correctly.');
+      AppMessenger.error(t('please_complete_all_fields'));
       return;
     }
 
@@ -52,19 +54,19 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       if (!mounted) return;
 
       if (response.session != null) {
-        AppMessenger.success('Account created. You are signed in.');
+        AppMessenger.success(t('account_created_signed_in'));
         context.go('/');
         return;
       }
 
       AppMessenger.info(
-        'Account created. Sign in with your email and password.',
+        t('account_created_sign_in'),
       );
       context.go('/login');
     } on AuthException catch (e) {
       AppMessenger.error(AppMessenger.describeError(e));
     } catch (e) {
-      AppMessenger.fromError(e, prefix: 'Registration failed.');
+      AppMessenger.fromError(e, prefix: t('registration_failed'));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -72,6 +74,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(localeProvider);
+    final t = ref.read(localeProvider.notifier).t;
+
     return AuthLayout(
       child: Form(
         key: _formKey,
@@ -79,14 +84,14 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              'Create Account',
+              t('create_account_title'),
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
             ),
             const SizedBox(height: 8),
             Text(
-              'Join Evalio Design to collaborate on engineering reviews.',
+              t('create_account_subtitle'),
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
@@ -97,23 +102,23 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 Expanded(
                   child: TextFormField(
                     controller: _firstNameController,
-                    decoration: const InputDecoration(
-                      labelText: 'First Name',
-                      prefixIcon: Icon(Icons.person_outline),
+                    decoration: InputDecoration(
+                      labelText: t('first_name'),
+                      prefixIcon: const Icon(Icons.person_outline),
                     ),
                     textInputAction: TextInputAction.next,
-                    validator: (value) => value == null || value.isEmpty ? 'Required' : null,
+                    validator: (value) => value == null || value.isEmpty ? t('required_field') : null,
                   ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: TextFormField(
                     controller: _lastNameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Last Name',
+                    decoration: InputDecoration(
+                      labelText: t('last_name'),
                     ),
                     textInputAction: TextInputAction.next,
-                    validator: (value) => value == null || value.isEmpty ? 'Required' : null,
+                    validator: (value) => value == null || value.isEmpty ? t('required_field') : null,
                   ),
                 ),
               ],
@@ -121,18 +126,18 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             const SizedBox(height: 20),
             TextFormField(
               controller: _emailController,
-              decoration: const InputDecoration(
-                labelText: 'Email Address',
-                prefixIcon: Icon(Icons.email_outlined),
+              decoration: InputDecoration(
+                labelText: t('email_label'),
+                prefixIcon: const Icon(Icons.email_outlined),
               ),
               keyboardType: TextInputType.emailAddress,
               textInputAction: TextInputAction.next,
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Please enter your email';
+                  return t('please_enter_email');
                 }
                 if (!value.contains('@')) {
-                  return 'Please enter a valid email address';
+                  return t('please_enter_valid_email');
                 }
                 return null;
               },
@@ -141,7 +146,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             TextFormField(
               controller: _passwordController,
               decoration: InputDecoration(
-                labelText: 'Password',
+                labelText: t('password_label'),
                 prefixIcon: const Icon(Icons.lock_outline),
                 suffixIcon: IconButton(
                   icon: Icon(
@@ -156,10 +161,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               textInputAction: TextInputAction.next,
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Please enter a password';
+                  return t('please_enter_password');
                 }
                 if (value.length < 8) {
-                  return 'Password must be at least 8 characters';
+                  return t('password_min_length');
                 }
                 return null;
               },
@@ -167,16 +172,16 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             const SizedBox(height: 20),
             TextFormField(
               controller: _confirmPasswordController,
-              decoration: const InputDecoration(
-                labelText: 'Confirm Password',
-                prefixIcon: Icon(Icons.lock_outline),
+              decoration: InputDecoration(
+                labelText: t('confirm_password'),
+                prefixIcon: const Icon(Icons.lock_outline),
               ),
               obscureText: _obscurePassword,
               textInputAction: TextInputAction.done,
               onFieldSubmitted: (_) => _signUp(),
               validator: (value) {
                 if (value != _passwordController.text) {
-                  return 'Passwords do not match';
+                  return t('passwords_mismatch');
                 }
                 return null;
               },
@@ -195,7 +200,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                           color: Colors.white,
                         ),
                       )
-                    : const Text('Create Account', style: TextStyle(fontSize: 16)),
+                    : Text(t('create_account_title'), style: const TextStyle(fontSize: 16)),
               ),
             ),
             const SizedBox(height: 24),
@@ -203,12 +208,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  "Already have an account?",
+                  t('already_have_account'),
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
                 TextButton(
                   onPressed: () => context.go('/login'),
-                  child: const Text('Sign in here'),
+                  child: Text(t('sign_in_here')),
                 ),
               ],
             ),

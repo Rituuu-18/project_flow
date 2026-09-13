@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/localization/locale_provider.dart';
 import '../theme/dashboard_design.dart';
 import 'clean_header.dart';
 import 'dashboard_motion.dart';
 
-class HeroSection extends StatelessWidget {
+class HeroSection extends ConsumerWidget {
   const HeroSection({
     required this.onCreateReview,
     required this.searchController,
@@ -17,33 +19,20 @@ class HeroSection extends StatelessWidget {
   final ValueChanged<String> onSearchChanged;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(localeProvider);
+    final t = ref.read(localeProvider.notifier).t;
+
     final isMobile =
         MediaQuery.sizeOf(context).width < DashboardDesign.mobileBreakpoint;
 
-    final copy = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Evalio Design',
-          style: TextStyle(
-            color: DashboardDesign.text(context),
-            fontSize: isMobile ? 21 : 24,
-            height: 1.08,
-            fontWeight: FontWeight.w700,
-            letterSpacing: -0.7,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Text(
-          'Track active design reviews, revisit completed records, and keep the next decision moving.',
-          style: TextStyle(
-            color: DashboardDesign.mutedText(context),
-            fontSize: isMobile ? 15 : 16,
-            height: 1.55,
-          ),
-        ),
-      ],
+    final copy = Text(
+      t('dashboard_hero'),
+      style: TextStyle(
+        color: DashboardDesign.mutedText(context),
+        fontSize: isMobile ? 15 : 16,
+        height: 1.55,
+      ),
     );
 
     final createButton = PressScale(
@@ -62,17 +51,17 @@ class HeroSection extends StatelessWidget {
             ),
           ],
         ),
-        child: const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 18, vertical: 15),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 15),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.add_rounded, color: Colors.white, size: 19),
-              SizedBox(width: 8),
+              const Icon(Icons.add_rounded, color: Colors.white, size: 19),
+              const SizedBox(width: 8),
               Text(
-                'New Design Review',
-                style: TextStyle(
+                t('new_design_review'),
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
@@ -87,7 +76,7 @@ class HeroSection extends StatelessWidget {
     return Padding(
       padding: EdgeInsets.fromLTRB(
         isMobile ? 18 : 28,
-        isMobile ? 16 : 36,
+        isMobile ? 12 : 28,
         isMobile ? 18 : 28,
         28,
       ),
@@ -105,7 +94,7 @@ class HeroSection extends StatelessWidget {
             ),
           ] else
             Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Expanded(child: copy),
                 const SizedBox(width: 32),

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:engineering_werk/core/utils/app_messenger.dart';
+import 'package:engineering_werk/core/localization/locale_provider.dart';
 import 'package:engineering_werk/features/auth/presentation/providers/auth_provider.dart';
 import 'package:engineering_werk/features/auth/presentation/widgets/auth_layout.dart';
 
@@ -26,8 +27,9 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   }
 
   Future<void> _sendResetLink() async {
+    final t = ref.read(localeProvider.notifier).t;
     if (!_formKey.currentState!.validate()) {
-      AppMessenger.error('Enter a valid email to reset your password.');
+      AppMessenger.error(t('enter_valid_email_reset'));
       return;
     }
 
@@ -38,12 +40,12 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
           );
       if (mounted) setState(() => _isSent = true);
       AppMessenger.success(
-        'If that email exists, a reset link has been sent.',
+        t('reset_link_sent'),
       );
     } on AuthException catch (e) {
       AppMessenger.error(AppMessenger.describeError(e));
     } catch (e) {
-      AppMessenger.fromError(e, prefix: 'Could not send reset email.');
+      AppMessenger.fromError(e, prefix: t('could_not_send_reset_email'));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -51,6 +53,9 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(localeProvider);
+    final t = ref.read(localeProvider.notifier).t;
+
     return AuthLayout(
       child: _isSent
           ? Column(
@@ -59,12 +64,12 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                 const Icon(Icons.mark_email_read, size: 64, color: Colors.green),
                 const SizedBox(height: 24),
                 Text(
-                  'Check your inbox',
+                  t('check_inbox_title'),
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'We sent a password reset link to\n${_emailController.text}',
+                  t('check_inbox_message', {'email': _emailController.text}),
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodyLarge,
                 ),
@@ -74,7 +79,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                   height: 52,
                   child: OutlinedButton(
                     onPressed: () => context.go('/login'),
-                    child: const Text('Back to Sign In'),
+                    child: Text(t('back_to_sign_in')),
                   ),
                 ),
               ],
@@ -92,14 +97,14 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Reset Password',
+                    t('reset_password_title'),
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Enter your email address and we will send you a link to reset your password.',
+                    t('reset_password_subtitle'),
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
@@ -107,19 +112,19 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                   const SizedBox(height: 32),
                   TextFormField(
                     controller: _emailController,
-                    decoration: const InputDecoration(
-                      labelText: 'Email Address',
-                      prefixIcon: Icon(Icons.email_outlined),
+                    decoration: InputDecoration(
+                      labelText: t('email_label'),
+                      prefixIcon: const Icon(Icons.email_outlined),
                     ),
                     keyboardType: TextInputType.emailAddress,
                     textInputAction: TextInputAction.done,
                     onFieldSubmitted: (_) => _sendResetLink(),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please enter your email';
+                        return t('please_enter_email');
                       }
                       if (!value.contains('@')) {
-                        return 'Please enter a valid email address';
+                        return t('please_enter_valid_email');
                       }
                       return null;
                     },
@@ -138,7 +143,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                                 color: Colors.white,
                               ),
                             )
-                          : const Text('Send Reset Link', style: TextStyle(fontSize: 16)),
+                          : Text(t('send_reset_link'), style: const TextStyle(fontSize: 16)),
                     ),
                   ),
                 ],

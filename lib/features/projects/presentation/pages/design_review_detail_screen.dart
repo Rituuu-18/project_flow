@@ -10,7 +10,10 @@ import 'package:engineering_werk/features/reviews/domain/entities/design_review.
 import 'package:engineering_werk/features/reviews/domain/entities/stage.dart';
 import 'package:engineering_werk/features/reviews/domain/entities/sub_step.dart';
 import 'package:engineering_werk/features/reviews/domain/entities/stakeholder.dart';
+import 'package:engineering_werk/features/reviews/domain/utils/drl_weights.dart';
 
+
+import 'package:engineering_werk/core/localization/locale_provider.dart';
 import 'package:engineering_werk/features/reviews/presentation/providers/design_review_provider.dart';
 import 'package:engineering_werk/features/settings/presentation/providers/theme_provider.dart';
 
@@ -31,6 +34,7 @@ class _DesignReviewDetailScreenState
   final TextEditingController _stakeholderRoleController =
       TextEditingController();
   int? _expandedStageIndex;
+  bool _isStakeholdersExpanded = false;
 
   @override
   void dispose() {
@@ -48,6 +52,9 @@ class _DesignReviewDetailScreenState
         (themeMode == ThemeMode.system &&
             MediaQuery.of(context).platformBrightness == Brightness.dark);
 
+    ref.watch(localeProvider);
+    final t = ref.read(localeProvider.notifier).t;
+
     return Scaffold(
       backgroundColor: DashboardDesign.canvas(context),
       body: SafeArea(
@@ -62,11 +69,11 @@ class _DesignReviewDetailScreenState
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text('Design Review not found'),
+                    Text(t('design_review_not_found')),
                     const SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: () => context.go('/'),
-                      child: const Text('Go Back'),
+                      child: Text(t('go_back')),
                     ),
                   ],
                 ),
@@ -76,7 +83,7 @@ class _DesignReviewDetailScreenState
             final horizontalPadding = MediaQuery.sizeOf(context).width < 600
                 ? 16.0
                 : 24.0;
-            final expandedStageIndex = _expandedStageIndex ?? _firstIncompleteStageIndex(review);
+            final expandedStageIndex = _expandedStageIndex;
 
             return Column(
               children: [
@@ -104,8 +111,6 @@ class _DesignReviewDetailScreenState
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _buildBackButton(isDark),
-                              const SizedBox(height: 32),
                               _buildStakeholdersSection(review, isDark),
                               const SizedBox(height: 48),
                             ],
@@ -146,7 +151,7 @@ class _DesignReviewDetailScreenState
             );
           },
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (err, stack) => Center(child: Text('Error: $err')),
+          error: (err, stack) => Center(child: Text('${t('try_again')}: $err')),
         ),
       ),
     );
@@ -154,6 +159,7 @@ class _DesignReviewDetailScreenState
 
   Widget _buildHeader(DesignReview review) {
     final isDark = DashboardDesign.isDark(context);
+    final t = ref.read(localeProvider.notifier).t;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -217,7 +223,7 @@ class _DesignReviewDetailScreenState
                       ),
                     ),
                     Text(
-                      'Design review workflow',
+                      t('design_review_workflow'),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
@@ -230,23 +236,16 @@ class _DesignReviewDetailScreenState
                   ],
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: DashboardDesign.subtleSurface(context),
-                  borderRadius: BorderRadius.circular(99),
-                  border: Border.all(color: DashboardDesign.border(context)),
-                ),
-                child: Text(
-                  '${review.stages.length} steps',
-                  style: TextStyle(
-                    color: DashboardDesign.text(context),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                  ),
+              IconButton(
+                onPressed: () => context.go('/'),
+                tooltip: t('back_to_dashboard'),
+                icon: const Icon(Icons.arrow_back_rounded, size: 20),
+                style: IconButton.styleFrom(
+                  foregroundColor: DashboardDesign.text(context),
+                  backgroundColor: DashboardDesign.surface(context),
+                  side: BorderSide(color: DashboardDesign.border(context)),
+                  shape: const CircleBorder(),
+                  fixedSize: const Size(40, 40),
                 ),
               ),
             ],
@@ -257,11 +256,12 @@ class _DesignReviewDetailScreenState
   }
 
   Widget _buildIntroSection() {
+    final t = ref.read(localeProvider.notifier).t;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Design review steps',
+          t('design_review_steps'),
           style: TextStyle(
             fontSize: 21,
             fontWeight: FontWeight.bold,
@@ -272,28 +272,12 @@ class _DesignReviewDetailScreenState
     );
   }
 
-  Widget _buildBackButton(bool isDark) {
-    return OutlinedButton(
-      onPressed: () => context.go('/'),
-      style: OutlinedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        side: BorderSide(color: isDark ? Colors.grey[700]! : Colors.grey[300]!),
-      ),
-      child: Text(
-        'Back to Dashboard',
-        style: TextStyle(
-          color: isDark ? Colors.grey[300] : const Color(0xFF1F2937),
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
+
 
   Widget _buildStakeholdersSection(DesignReview review, bool isDark) {
+    final t = ref.read(localeProvider.notifier).t;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1F2937) : const Color(0xFFF9FAFB),
         borderRadius: BorderRadius.circular(24),
@@ -304,99 +288,131 @@ class _DesignReviewDetailScreenState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final label = Text(
-                'STAKEHOLDERS',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: isDark ? Colors.grey[400] : Colors.grey[500],
-                  letterSpacing: 1.2,
-                ),
-              );
-              final fields = Column(
-                children: [
-                  _buildSTField(
-                    _stakeholderNameController,
-                    'Stakeholder name',
-                    isDark,
-                  ),
-                  const SizedBox(height: 12),
-                  _buildSTField(
-                    _stakeholderRoleController,
-                    'Role or discipline',
-                    isDark,
-                  ),
-                  const SizedBox(height: 16),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: ElevatedButton(
-                      onPressed: () => _addStakeholder(review),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: DashboardDesign.primary,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 24,
-                          vertical: 14,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: const Text(
-                        'Add stakeholder',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ),
-                ],
-              );
-
-              if (constraints.maxWidth < 600) {
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [label, const SizedBox(height: 16), fields],
-                );
-              }
-
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  label,
-                  const SizedBox(width: 24),
-                  Expanded(child: fields),
-                ],
-              );
+          InkWell(
+            borderRadius: _isStakeholdersExpanded
+                ? const BorderRadius.vertical(top: Radius.circular(24))
+                : BorderRadius.circular(24),
+            onTap: () {
+              setState(() {
+                _isStakeholdersExpanded = !_isStakeholdersExpanded;
+              });
             },
-          ),
-          if (review.stakeholders.isNotEmpty) ...[
-            const SizedBox(height: 24),
-            const Divider(),
-            const SizedBox(height: 16),
-            ...review.stakeholders.map(
-              (s) => Padding(
-                padding: const EdgeInsets.only(bottom: 8.0),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.person_outline,
-                      size: 18,
-                      color: DashboardDesign.primary,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      '${s.name} - ${s.role}',
-                      style: TextStyle(
-                        color: isDark ? Colors.grey[300] : Colors.black87,
+            child: Padding(
+              padding: const EdgeInsets.all(28),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Image.asset(
+                        'assets/stakeholders_icon.png',
+                        width: 22,
+                        height: 22,
+                        color: isDark ? Colors.grey[400] : Colors.grey[700],
                       ),
-                    ),
-                  ],
-                ),
+                      const SizedBox(width: 10),
+                      Text(
+                        'Add Stakeholders',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? Colors.grey[400] : Colors.grey[700],
+                        ),
+                      ),
+                    ],
+                  ),
+                  Icon(
+                    _isStakeholdersExpanded
+                        ? Icons.expand_less
+                        : Icons.expand_more,
+                    color: isDark ? Colors.grey[400] : Colors.grey[500],
+                    size: 20,
+                  ),
+                ],
               ),
             ),
-          ],
+          ),
+          AnimatedSize(
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeInOut,
+            alignment: Alignment.topCenter,
+            child: !_isStakeholdersExpanded
+                ? const SizedBox(width: double.infinity)
+                : Padding(
+                    padding: const EdgeInsets.only(
+                        left: 28, right: 28, bottom: 28),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Column(
+                          children: [
+                            _buildSTField(
+                              _stakeholderNameController,
+                              t('stakeholder_name'),
+                              isDark,
+                            ),
+                            const SizedBox(height: 12),
+                            _buildSTField(
+                              _stakeholderRoleController,
+                              t('role_or_discipline'),
+                              isDark,
+                            ),
+                            const SizedBox(height: 16),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: ElevatedButton(
+                                onPressed: () => _addStakeholder(review),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: DashboardDesign.primary,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 24,
+                                    vertical: 14,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  elevation: 0,
+                                ),
+                                child: Text(
+                                  t('add_stakeholder'),
+                                  style: const TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (review.stakeholders.isNotEmpty) ...[
+                          const SizedBox(height: 24),
+                          const Divider(),
+                          const SizedBox(height: 16),
+                          ...review.stakeholders.map(
+                            (s) => Padding(
+                              padding: const EdgeInsets.only(bottom: 8.0),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.person_outline,
+                                    size: 18,
+                                    color: DashboardDesign.primary,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    '${s.name} - ${s.role}',
+                                    style: TextStyle(
+                                      color: isDark ? Colors.grey[300] : Colors.black87,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+          ),
         ],
       ),
     );
@@ -571,16 +587,7 @@ class _DesignReviewDetailScreenState
     final title = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'STEP ${index + 1}',
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.bold,
-            color: isDark ? Colors.grey[500] : Colors.grey[400],
-            letterSpacing: 1.2,
-          ),
-        ),
-        const SizedBox(height: 8),
+
         Text(
           stage.name,
           maxLines: isMobile ? 2 : 1,
@@ -617,6 +624,7 @@ class _DesignReviewDetailScreenState
   }
 
   Widget _buildSubStepsTable(DesignReview review, Stage stage, bool isDark) {
+    final t = ref.read(localeProvider.notifier).t;
     return LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxWidth < 620) {
@@ -654,9 +662,9 @@ class _DesignReviewDetailScreenState
                       : const Color(0xFFF3F4F6),
                 ),
                 children: [
-                  _buildTableHeader('SUBSTEP', isDark),
-                  _buildTableHeader('STATUS', isDark),
-                  _buildTableHeader('ACTION', isDark),
+                  _buildTableHeader(t('substep_header'), isDark),
+                  _buildTableHeader(t('status_header'), isDark),
+                  _buildTableHeader(t('action_header'), isDark),
                 ],
               ),
               ...stage.subSteps.map(
@@ -675,6 +683,7 @@ class _DesignReviewDetailScreenState
     SubStep subStep,
     bool isDark,
   ) {
+    final t = ref.read(localeProvider.notifier).t;
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 12),
@@ -704,7 +713,7 @@ class _DesignReviewDetailScreenState
             isExpanded: true,
             dropdownColor: isDark ? const Color(0xFF1F2937) : Colors.white,
             decoration: InputDecoration(
-              labelText: 'Status',
+              labelText: t('status_header'),
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 12,
                 vertical: 10,
@@ -713,18 +722,18 @@ class _DesignReviewDetailScreenState
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
-            items: const [
+            items: [
               DropdownMenuItem(
                 value: StageStatus.notStarted,
-                child: Text('Open'),
+                child: Text(t('status_open')),
               ),
               DropdownMenuItem(
                 value: StageStatus.completed,
-                child: Text('Completed'),
+                child: Text(t('status_completed')),
               ),
               DropdownMenuItem(
                 value: StageStatus.notRequired,
-                child: Text('Not Required'),
+                child: Text(t('status_not_required')),
               ),
             ],
             onChanged: (value) {
@@ -750,9 +759,9 @@ class _DesignReviewDetailScreenState
                   color: isDark ? Colors.grey[700]! : Colors.grey[400]!,
                 ),
               ),
-              child: const Text(
-                'Open workspace',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+              child: Text(
+                t('open_workspace'),
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
               ),
             ),
           ),
@@ -796,6 +805,7 @@ class _DesignReviewDetailScreenState
     SubStep ss,
     bool isDark,
   ) {
+    final t = ref.read(localeProvider.notifier).t;
     return TableRow(
       decoration: BoxDecoration(
         border: Border(
@@ -843,18 +853,18 @@ class _DesignReviewDetailScreenState
                   fontSize: 13,
                   color: isDark ? Colors.white : Colors.black87,
                 ),
-                items: const [
+                items: [
                   DropdownMenuItem(
                     value: StageStatus.notStarted,
-                    child: Text('Open', overflow: TextOverflow.ellipsis),
+                    child: Text(t('status_open'), overflow: TextOverflow.ellipsis),
                   ),
                   DropdownMenuItem(
                     value: StageStatus.completed,
-                    child: Text('Completed', overflow: TextOverflow.ellipsis),
+                    child: Text(t('status_completed'), overflow: TextOverflow.ellipsis),
                   ),
                   DropdownMenuItem(
                     value: StageStatus.notRequired,
-                    child: Text('Not Required', overflow: TextOverflow.ellipsis),
+                    child: Text(t('status_not_required'), overflow: TextOverflow.ellipsis),
                   ),
                 ],
                 onChanged: (val) {
@@ -881,7 +891,7 @@ class _DesignReviewDetailScreenState
               backgroundColor: isDark ? Colors.transparent : Colors.white,
             ),
             child: Text(
-              'Open workspace',
+              t('open_workspace'),
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
@@ -894,16 +904,11 @@ class _DesignReviewDetailScreenState
     );
   }
 
-  int _firstIncompleteStageIndex(DesignReview review) {
-    if (review.stages.isEmpty) return -1;
-    final firstOpenIndex = review.stages.indexWhere(
-      (stage) => stage.status != StageStatus.completed,
-    );
-    return firstOpenIndex == -1 ? 0 : firstOpenIndex;
-  }
+
 
   String _stageProgressLabel(Stage stage) {
-    if (stage.subSteps.isEmpty) return 'No checklist';
+    final t = ref.read(localeProvider.notifier).t;
+    if (stage.subSteps.isEmpty) return t('no_checklist');
     final completed = stage.subSteps
         .where((subStep) => subStep.status == StageStatus.completed)
         .length;
@@ -911,13 +916,17 @@ class _DesignReviewDetailScreenState
         .where((subStep) => subStep.status == StageStatus.notRequired)
         .length;
     final applicable = stage.subSteps.length - notRequired;
-    if (applicable == 0) return 'All not required';
-    return '$completed/$applicable complete';
+    if (applicable == 0) return t('all_not_required');
+    return t('stage_complete_progress', {
+      'completed': '$completed',
+      'applicable': '$applicable',
+    });
   }
 
   Future<void> _addStakeholder(DesignReview review) async {
+    final t = ref.read(localeProvider.notifier).t;
     if (_stakeholderNameController.text.isEmpty) {
-      AppMessenger.error('Enter a stakeholder name first.');
+      AppMessenger.error(t('enter_stakeholder_name'));
       return;
     }
 
@@ -931,7 +940,7 @@ class _DesignReviewDetailScreenState
       await ref
           .read(designReviewNotifierProvider.notifier)
           .addStakeholder(review.id, stakeholder);
-      AppMessenger.success('Stakeholder added.');
+      AppMessenger.success(t('stakeholder_added'));
       _stakeholderNameController.clear();
       _stakeholderRoleController.clear();
       if (mounted) FocusScope.of(context).unfocus();
@@ -974,10 +983,8 @@ class _DesignReviewDetailScreenState
         .map((s) => s.id == updatedStage.id ? updatedStage : s)
         .toList();
 
-    // Overall project progress
-    int totalStages = updatedStages.length;
-    double totalProgress =
-        updatedStages.fold(0.0, (sum, s) => sum + s.progress) / totalStages;
+    // Overall project progress based on DRL
+    double totalProgress = calculateDrl(updatedStages) / 100.0;
 
     final updatedReview = review.copyWith(
       stages: updatedStages,
@@ -990,7 +997,8 @@ class _DesignReviewDetailScreenState
     ref.read(designReviewNotifierProvider.notifier).updateReview(updatedReview).then((_) {
       // Quiet success for frequent checklist toggles — only announce failures.
     }).catchError((Object e) {
-      AppMessenger.fromError(e, prefix: 'Could not save checklist change.');
+      final t = ref.read(localeProvider.notifier).t;
+      AppMessenger.fromError(e, prefix: t('save_checklist_error'));
     });
   }
 }

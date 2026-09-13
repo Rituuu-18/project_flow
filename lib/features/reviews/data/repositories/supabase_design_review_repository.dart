@@ -115,7 +115,7 @@ class SupabaseDesignReviewRepository implements DesignReviewRepository {
             'id': sub.id,
             'design_review_id': review.id,
             'name': sub.name,
-            'status': sub.status.name,
+            'status': sub.status.jsonValue,
             'workspace_id': sub.workspaceId,
           });
         }
@@ -235,10 +235,7 @@ class SupabaseDesignReviewRepository implements DesignReviewRepository {
       return SubStep(
         id: s['id'] as String,
         name: s['name'] as String,
-        status: StageStatus.values.firstWhere(
-          (e) => e.name == s['status'],
-          orElse: () => StageStatus.notStarted,
-        ),
+        status: StageStatusExtension.fromJson(s['status'] as String),
         workspaceId: s['workspace_id'] as String,
       );
     }).toList() ?? [];
@@ -248,9 +245,15 @@ class SupabaseDesignReviewRepository implements DesignReviewRepository {
     for (final stageName in defaultStageContent.keys) {
       final stageDef = defaultStageContent[stageName]!;
       
-      // Find sub-steps that belong to this stage based on name
-      final expectedSubStepNames = stageDef.subSteps.keys.toSet();
-      final stageSubSteps = flatSubSteps.where((sub) => expectedSubStepNames.contains(sub.name)).toList();
+      // Find sub-steps that belong to this stage based on name and consume them
+      final expectedSubStepNames = stageDef.subSteps.keys.toList();
+      final stageSubSteps = <SubStep>[];
+      for (final expectedName in expectedSubStepNames) {
+        final matchIndex = flatSubSteps.indexWhere((sub) => sub.name == expectedName);
+        if (matchIndex != -1) {
+          stageSubSteps.add(flatSubSteps.removeAt(matchIndex));
+        }
+      }
       
       if (stageSubSteps.isNotEmpty) {
         // Calculate progress

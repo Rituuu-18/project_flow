@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/localization/locale_provider.dart';
 import '../theme/dashboard_design.dart';
 
-class PortfolioSummary extends StatelessWidget {
+class PortfolioSummary extends ConsumerWidget {
   const PortfolioSummary({
     required this.activeCount,
     required this.completedCount,
@@ -17,7 +19,10 @@ class PortfolioSummary extends StatelessWidget {
   final VoidCallback onToggleCompleted;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(localeProvider);
+    final t = ref.read(localeProvider.notifier).t;
+
     final compact =
         MediaQuery.sizeOf(context).width < DashboardDesign.mobileBreakpoint;
 
@@ -34,7 +39,7 @@ class PortfolioSummary extends StatelessWidget {
           children: [
             Expanded(
               child: _FilterButton(
-                label: 'Active',
+                label: t('active'),
                 count: activeCount,
                 isSelected: !showCompleted,
                 onTap: showCompleted ? onToggleCompleted : null,
@@ -43,7 +48,7 @@ class PortfolioSummary extends StatelessWidget {
             const SizedBox(width: 10),
             Expanded(
               child: _FilterButton(
-                label: 'Completed',
+                label: t('completed'),
                 count: completedCount,
                 isSelected: showCompleted,
                 onTap: !showCompleted ? onToggleCompleted : null,
