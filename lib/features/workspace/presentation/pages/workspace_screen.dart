@@ -14,6 +14,7 @@ import 'package:engineering_werk/features/workspace/domain/entities/workspace_da
 import 'package:engineering_werk/core/localization/locale_provider.dart';
 import 'package:engineering_werk/features/workspace/presentation/providers/workspace_provider.dart';
 import 'package:engineering_werk/features/reviews/presentation/providers/design_review_provider.dart';
+import '../widgets/ai_analysis_sheet.dart';
 
 class WorkspaceScreen extends ConsumerStatefulWidget {
   final String workspaceId;
@@ -370,6 +371,39 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
     }
   }
 
+  void _openAIAnalysis() {
+    if (_currentData == null) return;
+    final t = ref.read(localeProvider.notifier).t;
+    final stageDesc = defaultStageContent[widget.stageName]?.description;
+    final checklist = _currentData!.checklistItem.isEmpty
+        ? widget.subStepName
+        : _currentData!.checklistItem;
+
+    AIAnalysisSheet.show(
+      context,
+      projectName: widget.projectName,
+      stageName: widget.stageName,
+      stageDescription: stageDesc,
+      checklistItem: checklist,
+      itemDescription: _currentData!.itemDescription,
+      discipline: _currentData!.discipline,
+      existingNotes: _notesController.text,
+      onApplyNotes: (analysisText, append) {
+        setState(() {
+          if (append && _notesController.text.trim().isNotEmpty) {
+            _notesController.text =
+                '${_notesController.text.trim()}\n\n---\nAI Analysis:\n$analysisText';
+          } else {
+            _notesController.text = analysisText;
+          }
+        });
+        _enqueueSave(silent: true);
+        _addActivityLog(t('ai_notes_updated'));
+        AppMessenger.success(t('ai_notes_updated'));
+      },
+    );
+  }
+
   Widget _buildItemDetailsCard(BuildContext context) {
     final t = ref.read(localeProvider.notifier).t;
     return _SectionCard(
@@ -378,19 +412,51 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Icon(
-                Icons.lock_outline_rounded,
-                size: 16,
-                color: DashboardDesign.primary,
+              Row(
+                children: [
+                  const Icon(
+                    Icons.lock_outline_rounded,
+                    size: 16,
+                    color: DashboardDesign.primary,
+                  ),
+                  const SizedBox(width: 7),
+                  Text(
+                    t('managed_by_admin'),
+                    style: TextStyle(
+                      color: DashboardDesign.mutedText(context),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 7),
-              Text(
-                t('managed_by_admin'),
-                style: TextStyle(
-                  color: DashboardDesign.mutedText(context),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
+              InkWell(
+                onTap: _openAIAnalysis,
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.auto_awesome_rounded,
+                        size: 13,
+                        color: DashboardDesign.primary,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        t('ai_analyze_button'),
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: DashboardDesign.primary,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -419,7 +485,51 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _LabelText(t('notes')),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              _LabelText(t('notes')),
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: _openAIAnalysis,
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: DashboardDesign.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: DashboardDesign.primary.withValues(alpha: 0.35),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.auto_awesome_rounded,
+                          size: 14,
+                          color: DashboardDesign.primary,
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          t('ai_analyze_button'),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: DashboardDesign.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
           TextField(
             controller: _notesController,
             maxLines: 4,
@@ -430,6 +540,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
       ),
     );
   }
+
 
   Widget _buildEvidenceCard(BuildContext context) {
     final t = ref.read(localeProvider.notifier).t;
