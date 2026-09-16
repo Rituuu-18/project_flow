@@ -22,6 +22,8 @@ class GroqService {
   /// Primary and fallback model hierarchy on Groq.
   static const List<String> availableModels = [
     'openai/gpt-oss-120b',
+    'llama-3.3-70b-versatile',
+    'llama-3.1-8b-instant',
     'qwen/qwen3.8-27b',
     'groq/compound',
   ];
@@ -55,11 +57,21 @@ class GroqService {
   /// Performs an AI-assisted engineering review analysis of a sub-step.
   static Future<String> analyzeSubStep({
     required String projectName,
+    String? projectOwner,
+    String? projectStatus,
     required String stageName,
     String? stageDescription,
+    String? subStepName,
     required String checklistItem,
     required String itemDescription,
     required String discipline,
+    String? priority,
+    String? assignee,
+    String? problemStatement,
+    List<String>? scopeIn,
+    List<String>? scopeOut,
+    String? engineeringComments,
+    String? actionDescription,
     String? existingNotes,
   }) async {
     final apiKey = getApiKey();
@@ -71,18 +83,56 @@ class GroqService {
     }
 
     final promptBuffer = StringBuffer();
-    promptBuffer.writeln('Review the following engineering checklist item for a product engineering project:');
+    promptBuffer.writeln('Review the following engineering sub-step within its specific project context:');
     promptBuffer.writeln('• Project: $projectName');
+    if (projectOwner != null && projectOwner.trim().isNotEmpty) {
+      promptBuffer.writeln('• Project Lead: ${projectOwner.trim()}');
+    }
+    if (projectStatus != null && projectStatus.trim().isNotEmpty) {
+      promptBuffer.writeln('• Project Status: ${projectStatus.trim()}');
+    }
     promptBuffer.writeln('• Stage: $stageName');
-    if (stageDescription != null && stageDescription.isNotEmpty) {
-      promptBuffer.writeln('• Stage Objective: $stageDescription');
+    if (stageDescription != null && stageDescription.trim().isNotEmpty) {
+      promptBuffer.writeln('• Stage Objective: ${stageDescription.trim()}');
+    }
+    if (subStepName != null &&
+        subStepName.trim().isNotEmpty &&
+        subStepName.trim() != checklistItem.trim()) {
+      promptBuffer.writeln('• Sub-Step: ${subStepName.trim()}');
     }
     promptBuffer.writeln('• Checklist Item: $checklistItem');
-    if (itemDescription.isNotEmpty) {
-      promptBuffer.writeln('• Item Description: $itemDescription');
+    if (itemDescription.trim().isNotEmpty) {
+      promptBuffer.writeln('• Item Scope: ${itemDescription.trim()}');
     }
-    if (discipline.isNotEmpty) {
-      promptBuffer.writeln('• Lead Discipline: $discipline');
+    if (discipline.trim().isNotEmpty) {
+      promptBuffer.writeln('• Lead Discipline: ${discipline.trim()}');
+    }
+    if (priority != null && priority.trim().isNotEmpty) {
+      promptBuffer.writeln('• Priority: ${priority.trim()}');
+    }
+    if (assignee != null && assignee.trim().isNotEmpty) {
+      promptBuffer.writeln('• Assignee: ${assignee.trim()}');
+    }
+    if (problemStatement != null && problemStatement.trim().isNotEmpty) {
+      promptBuffer.writeln('• Problem Statement: ${problemStatement.trim()}');
+    }
+    if (scopeIn != null && scopeIn.isNotEmpty) {
+      final inList = scopeIn.where((s) => s.trim().isNotEmpty).join(', ');
+      if (inList.isNotEmpty) {
+        promptBuffer.writeln('• Scope (In): $inList');
+      }
+    }
+    if (scopeOut != null && scopeOut.isNotEmpty) {
+      final outList = scopeOut.where((s) => s.trim().isNotEmpty).join(', ');
+      if (outList.isNotEmpty) {
+        promptBuffer.writeln('• Scope (Out): $outList');
+      }
+    }
+    if (engineeringComments != null && engineeringComments.trim().isNotEmpty) {
+      promptBuffer.writeln('• Engineering Comments: ${engineeringComments.trim()}');
+    }
+    if (actionDescription != null && actionDescription.trim().isNotEmpty) {
+      promptBuffer.writeln('• Action Plan: ${actionDescription.trim()}');
     }
     if (existingNotes != null && existingNotes.trim().isNotEmpty) {
       promptBuffer.writeln('• Existing Team Notes: ${existingNotes.trim()}');
@@ -90,19 +140,23 @@ class GroqService {
 
     promptBuffer.writeln();
     promptBuffer.writeln(
-      'CRITICAL INSTRUCTIONS:\n'
-      '- DO NOT output markdown tables (no pipes "|" or dashed table rows).\n'
-      '- DO NOT output conversational filler, preambles, or concluding remarks.\n'
-      '- Structure your response under these exact 4 section headers:\n\n'
-      '### 1. KEY VERIFICATION CHECKS\n'
-      '• **[Item Name]**: [Concise, measurable acceptance criteria and verification method]\n\n'
-      '### 2. RISKS & FAILURE MODES\n'
-      '• **[Failure Mode/Risk]**: [Likely cause, severity, and preventive check]\n\n'
-      '### 3. RECOMMENDED EVIDENCE\n'
-      '• **[Document/Artifact]**: [Specific calculations, CAD/simulation files, or test reports to attach]\n\n'
-      '### 4. RECOMMENDED NEXT ACTIONS\n'
-      '• **[Action Item]**: [Immediate tactical step to close or advance this item]\n\n'
-      'Provide 3-4 bullet points per section. Keep it crisp, rigorous, and directly useful as engineering review notes.',
+      'CRITICAL INSTRUCTIONS (FORMAL, SIMPLE, COMPACT):\n'
+      '- Provide a formal, simple, high-signal engineering analysis strictly tailored to this sub-step\'s exact context.\n'
+      '- DO NOT output conversational filler, pleasantries, preambles, or markdown tables.\n'
+      '- Structure your response under these exact 5 compact section headers:\n\n'
+      '### 1. GENERAL PROBLEM STATEMENT\n'
+      '[1 formal, clear paragraph (2-3 sentences): Identify the target user, their core operational need, why traditional/existing methods are inadequate or hazardous, and the operational constraints/impact that must be met.]\n\n'
+      '### 2. ENGINEERING-FOCUSED VERSION\n'
+      '[1 formal, concise engineering design statement (1-2 sentences): "Design/verify a [system/component] that [measurable functional criteria] under [operating load/environmental boundaries] in compliance with [applicable standards] within [weight/geometry limits]."]\n\n'
+      '### 3. KEY CHECKS\n'
+      '• **[Check Name]**: [1 concise, measurable verification criterion and standard]\n'
+      '• **[Check Name]**: [1 concise verification method or test check]\n\n'
+      '### 4. KEY RISKS\n'
+      '• **[Risk / Failure Mode]**: [1 critical technical risk or failure mode to prevent]\n'
+      '• **[Risk / Failure Mode]**: [1 specific safeguard, tolerance limit, or edge case]\n\n'
+      '### 5. NEXT ACTIONS\n'
+      '• **[Action Item]**: [1 immediate tactical engineering task to advance or close this item]\n'
+      '• **[Evidence Artifact]**: [1 specific test data, simulation, or calculation artifact to attach]\n',
     );
 
     final client = http.Client();
@@ -115,9 +169,9 @@ class GroqService {
             {
               'role': 'system',
               'content':
-                  'You are a senior engineering design review specialist and systems engineer. '
-                  'Provide concise, high-density, professional technical review notes. '
-                  'Never output markdown tables or pleasantries.',
+                  'You are a senior engineering design review specialist. '
+                  'Provide formal, simple, high-signal technical problem statements and review notes tailored strictly to the provided project and sub-step context. '
+                  'Never output markdown tables, chit-chat, or filler.',
             },
             {
               'role': 'user',
@@ -125,7 +179,7 @@ class GroqService {
             },
           ],
           'temperature': 0.2,
-          'max_tokens': 1200,
+          'max_tokens': 650,
         };
 
         final response = await client

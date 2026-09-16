@@ -71,7 +71,7 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('Managed by admin'), findsOneWidget);
-      expect(find.text('Back to review page'), findsOneWidget);
+      expect(find.byIcon(Icons.arrow_back_rounded), findsOneWidget);
       expect(find.text('Admin checklist item'), findsOneWidget);
       expect(find.text('Admin-owned description'), findsOneWidget);
       expect(

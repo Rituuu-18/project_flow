@@ -375,18 +375,67 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
     if (_currentData == null) return;
     final t = ref.read(localeProvider.notifier).t;
     final stageDesc = defaultStageContent[widget.stageName]?.description;
+    final defaultInfo = getDefaultSubStepInfo(
+      stageName: widget.stageName,
+      subStepName: widget.subStepName,
+    );
+    final rawItemDesc = _currentData!.itemDescription.trim();
+    final effectiveDescription = rawItemDesc.isNotEmpty
+        ? rawItemDesc
+        : (defaultInfo.description.trim().isNotEmpty
+            ? defaultInfo.description.trim()
+            : (_currentData!.problemStatement.trim().isNotEmpty
+                ? _currentData!.problemStatement.trim()
+                : (stageDesc ?? '')));
+
     final checklist = _currentData!.checklistItem.isEmpty
         ? widget.subStepName
         : _currentData!.checklistItem;
 
+    final reviewsAsync = ref.read(designReviewsStreamProvider);
+    final currentReview = reviewsAsync.valueOrNull
+        ?.where((r) => r.id == widget.reviewId)
+        .firstOrNull;
+
+    final discipline = _disciplineController.text.trim().isNotEmpty
+        ? _disciplineController.text.trim()
+        : _currentData!.discipline;
+
+    final priority = _priorityController.text.trim().isNotEmpty
+        ? _priorityController.text.trim()
+        : _currentData!.priority;
+
+    final assignee = _assigneeController.text.trim().isNotEmpty
+        ? _assigneeController.text.trim()
+        : _currentData!.assignee;
+
+    final engineeringComments =
+        _engineeringCommentsController.text.trim().isNotEmpty
+            ? _engineeringCommentsController.text.trim()
+            : _currentData!.engineeringComments;
+
+    final actionDescription = _actionDescController.text.trim().isNotEmpty
+        ? _actionDescController.text.trim()
+        : _currentData!.actionDescription;
+
     AIAnalysisSheet.show(
       context,
       projectName: widget.projectName,
+      projectOwner: currentReview?.owner,
+      projectStatus: currentReview?.status.name,
       stageName: widget.stageName,
       stageDescription: stageDesc,
+      subStepName: widget.subStepName,
       checklistItem: checklist,
-      itemDescription: _currentData!.itemDescription,
-      discipline: _currentData!.discipline,
+      itemDescription: effectiveDescription,
+      discipline: discipline,
+      priority: priority,
+      assignee: assignee,
+      problemStatement: _currentData!.problemStatement,
+      scopeIn: _currentData!.scopeIn,
+      scopeOut: _currentData!.scopeOut,
+      engineeringComments: engineeringComments,
+      actionDescription: actionDescription,
       existingNotes: _notesController.text,
       onApplyNotes: (analysisText, append) {
         setState(() {
@@ -953,7 +1002,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
   }
 }
 
-class _WorkspaceHeader extends StatelessWidget {
+class _WorkspaceHeader extends ConsumerWidget {
   final String projectName;
   final String stageName;
   final String reviewId;
@@ -967,7 +1016,8 @@ class _WorkspaceHeader extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final t = ref.watch(localeProvider.notifier).t;
     final width = MediaQuery.sizeOf(context).width;
     final isCompact = width < DashboardDesign.mobileBreakpoint;
 
@@ -1091,7 +1141,7 @@ class _WorkspaceHeader extends StatelessWidget {
                   const SizedBox(width: 8),
                   IconButton(
                     onPressed: () => GoRouter.of(context).go('/project/$reviewId'),
-                    tooltip: 'Back',
+                    tooltip: t('back_to_review'),
                     icon: const Icon(Icons.arrow_back_rounded, size: 20),
                     style: IconButton.styleFrom(
                       foregroundColor: DashboardDesign.text(context),
