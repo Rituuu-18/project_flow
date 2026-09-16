@@ -140,23 +140,14 @@ class GroqService {
 
     promptBuffer.writeln();
     promptBuffer.writeln(
-      'CRITICAL INSTRUCTIONS (FORMAL, SIMPLE, COMPACT):\n'
-      '- Provide a formal, simple, high-signal engineering analysis strictly tailored to this sub-step\'s exact context.\n'
-      '- DO NOT output conversational filler, pleasantries, preambles, or markdown tables.\n'
-      '- Structure your response under these exact 5 compact section headers:\n\n'
-      '### 1. GENERAL PROBLEM STATEMENT\n'
-      '[1 formal, clear paragraph (2-3 sentences): Identify the target user, their core operational need, why traditional/existing methods are inadequate or hazardous, and the operational constraints/impact that must be met.]\n\n'
-      '### 2. ENGINEERING-FOCUSED VERSION\n'
-      '[1 formal, concise engineering design statement (1-2 sentences): "Design/verify a [system/component] that [measurable functional criteria] under [operating load/environmental boundaries] in compliance with [applicable standards] within [weight/geometry limits]."]\n\n'
-      '### 3. KEY CHECKS\n'
-      '• **[Check Name]**: [1 concise, measurable verification criterion and standard]\n'
-      '• **[Check Name]**: [1 concise verification method or test check]\n\n'
-      '### 4. KEY RISKS\n'
-      '• **[Risk / Failure Mode]**: [1 critical technical risk or failure mode to prevent]\n'
-      '• **[Risk / Failure Mode]**: [1 specific safeguard, tolerance limit, or edge case]\n\n'
-      '### 5. NEXT ACTIONS\n'
-      '• **[Action Item]**: [1 immediate tactical engineering task to advance or close this item]\n'
-      '• **[Evidence Artifact]**: [1 specific test data, simulation, or calculation artifact to attach]\n',
+      'CRITICAL INSTRUCTIONS (PROBLEM STATEMENT ONLY):\n'
+      '- Focus exclusively on formulating the problem statement for this engineering item.\n'
+      '- Do NOT output checks, risks, next actions, bullet lists, pleasantries, preambles, or markdown tables.\n'
+      '- Structure your response under these exact 2 formal sections:\n\n'
+      '### General problem statement\n'
+      '[1 formal, clear paragraph (2-3 sentences): Identify the target user, their core operational need, why existing methods or products are deficient or hazardous, and the operational/environmental constraints that must be met.]\n\n'
+      '### Engineering-focused version\n'
+      '[1 formal, concise engineering objective statement (1-2 sentences): "Design a [system/component] that [quantifiable functional criteria] while [load, durability, or environmental constraints] in compliance with [applicable standards e.g. ANSI, ISO, OSHA] within [weight, geometry, or cost limits]."]\n',
     );
 
     final client = http.Client();
@@ -170,8 +161,8 @@ class GroqService {
               'role': 'system',
               'content':
                   'You are a senior engineering design review specialist. '
-                  'Provide formal, simple, high-signal technical problem statements and review notes tailored strictly to the provided project and sub-step context. '
-                  'Never output markdown tables, chit-chat, or filler.',
+                  'Generate formal, simple, well-structured engineering problem statements (General problem statement and Engineering-focused version) tailored strictly to the provided project and sub-step context. '
+                  'Do NOT output checks, risks, actions, or filler.',
             },
             {
               'role': 'user',
@@ -179,7 +170,7 @@ class GroqService {
             },
           ],
           'temperature': 0.2,
-          'max_tokens': 650,
+          'max_tokens': 400,
         };
 
         final response = await client

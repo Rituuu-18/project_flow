@@ -286,21 +286,17 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
 
   _SectionConfig _getSectionConfig(String rawTitle) {
     final upper = rawTitle.toUpperCase();
-    if (upper.contains('GENERAL PROBLEM') ||
+    if (upper.contains('GENERAL') ||
         (upper.contains('PROBLEM') && !upper.contains('ENGINEERING'))) {
       return const _SectionConfig(
-        cleanTitle: 'GENERAL PROBLEM STATEMENT',
+        cleanTitle: 'General problem statement',
         icon: Icons.lightbulb_outline_rounded,
         color: Color(0xFF0284C7), // Sky Blue
         isCallout: true,
       );
-    } else if (upper.contains('ENGINEERING') &&
-        (upper.contains('VERSION') ||
-            upper.contains('FOCUSED') ||
-            upper.contains('STATEMENT') ||
-            upper.contains('SPEC'))) {
+    } else if (upper.contains('ENGINEERING')) {
       return const _SectionConfig(
-        cleanTitle: 'ENGINEERING-FOCUSED VERSION',
+        cleanTitle: 'Engineering-focused version',
         icon: Icons.precision_manufacturing_outlined,
         color: Color(0xFF0D9488), // Teal
         isCallout: true,
@@ -1172,7 +1168,25 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
                     ),
                   ),
                 ),
-                if (hasBullets)
+                IconButton(
+                  tooltip: 'Copy statement',
+                  icon: const Icon(Icons.copy_rounded, size: 14),
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                  constraints:
+                      const BoxConstraints(minWidth: 26, minHeight: 26),
+                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                  onPressed: () {
+                    final text = sec.narrative ??
+                        (sec.bullets.map((b) => b.body).join('\n'));
+                    if (text.isNotEmpty) {
+                      Clipboard.setData(ClipboardData(text: text));
+                      AppMessenger.info(t('ai_copied_clipboard'));
+                    }
+                  },
+                ),
+                if (hasBullets) ...[
+                  const SizedBox(width: 4),
                   Container(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
@@ -1189,6 +1203,7 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
                       ),
                     ),
                   ),
+                ],
               ],
             ),
           ),
