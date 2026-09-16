@@ -47,6 +47,10 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
   late TextEditingController _priorityController;
   late TextEditingController _assigneeController;
   late TextEditingController _disciplineController;
+  final ScrollController _scrollController = ScrollController();
+  final GlobalKey _aiPanelKey = GlobalKey();
+  bool _isAIOpen = false;
+  String? _cachedAIAnalysis;
 
   @override
   void initState() {
@@ -68,6 +72,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
     _priorityController.dispose();
     _assigneeController.dispose();
     _disciplineController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -286,6 +291,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
             ),
             Expanded(
               child: SingleChildScrollView(
+                controller: _scrollController,
                 padding: EdgeInsets.all(
                   MediaQuery.sizeOf(context).width < 600 ? 18 : 28,
                 ),
@@ -373,6 +379,42 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
 
   void _openAIAnalysis() {
     if (_currentData == null) return;
+    setState(() {
+      _isAIOpen = true;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_aiPanelKey.currentContext != null) {
+        Scrollable.ensureVisible(
+          _aiPanelKey.currentContext!,
+          duration: const Duration(milliseconds: 380),
+          curve: Curves.easeOutCubic,
+          alignment: 0.15,
+        );
+      }
+    });
+  }
+
+  void _toggleAIAnalysis() {
+    if (_currentData == null) return;
+    setState(() {
+      _isAIOpen = !_isAIOpen;
+    });
+    if (_isAIOpen) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_aiPanelKey.currentContext != null) {
+          Scrollable.ensureVisible(
+            _aiPanelKey.currentContext!,
+            duration: const Duration(milliseconds: 380),
+            curve: Curves.easeOutCubic,
+            alignment: 0.15,
+          );
+        }
+      });
+    }
+  }
+
+  Widget _buildInlineAIPanel(BuildContext context) {
+    if (_currentData == null) return const SizedBox.shrink();
     final t = ref.read(localeProvider.notifier).t;
     final stageDesc = defaultStageContent[widget.stageName]?.description;
     final defaultInfo = getDefaultSubStepInfo(
@@ -418,8 +460,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
         ? _actionDescController.text.trim()
         : _currentData!.actionDescription;
 
-    AIAnalysisSheet.show(
-      context,
+    return AIAnalysisSheet(
       projectName: widget.projectName,
       projectOwner: currentReview?.owner,
       projectStatus: currentReview?.status.name,
@@ -437,6 +478,12 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
       engineeringComments: engineeringComments,
       actionDescription: actionDescription,
       existingNotes: _notesController.text,
+      initialRawAnalysis: _cachedAIAnalysis,
+      isInline: true,
+      onClose: () => setState(() => _isAIOpen = false),
+      onAnalysisCompleted: (result) {
+        _cachedAIAnalysis = result;
+      },
       onApplyNotes: (analysisText, append) {
         setState(() {
           if (append && _notesController.text.trim().isNotEmpty) {
@@ -445,6 +492,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
           } else {
             _notesController.text = analysisText;
           }
+          _isAIOpen = false;
         });
         _enqueueSave(silent: true);
         _addActivityLog(t('ai_notes_updated'));
@@ -497,7 +545,9 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        t('ai_analyze_button'),
+                        _isAIOpen
+                            ? t('ai_close_panel')
+                            : t('ai_analyze_button'),
                         style: const TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
@@ -542,16 +592,21 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
               Material(
                 color: Colors.transparent,
                 child: InkWell(
-                  onTap: _openAIAnalysis,
+                  onTap: _toggleAIAnalysis,
                   borderRadius: BorderRadius.circular(8),
-                  child: Container(
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
                     padding:
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
-                      color: DashboardDesign.primary.withValues(alpha: 0.1),
+                      color: _isAIOpen
+                          ? DashboardDesign.primary.withValues(alpha: 0.18)
+                          : DashboardDesign.primary.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: DashboardDesign.primary.withValues(alpha: 0.35),
+                        color: _isAIOpen
+                            ? DashboardDesign.primary
+                            : DashboardDesign.primary.withValues(alpha: 0.35),
                       ),
                     ),
                     child: Row(
@@ -564,19 +619,43 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                         ),
                         const SizedBox(width: 5),
                         Text(
-                          t('ai_analyze_button'),
-                          style: const TextStyle(
+                          _isAIOpen
+                              ? t('ai_close_panel')
+                              : t('ai_analyze_button'),
+                          style: TextStyle(
                             fontSize: 12,
-                            fontWeight: FontWeight.w600,
+                            fontWeight:
+                                _isAIOpen ? FontWeight.bold : FontWeight.w600,
                             color: DashboardDesign.primary,
                           ),
                         ),
+                        if (_isAIOpen) ...[
+                          const SizedBox(width: 4),
+                          const Icon(
+                            Icons.keyboard_arrow_up_rounded,
+                            size: 14,
+                            color: DashboardDesign.primary,
+                          ),
+                        ],
                       ],
                     ),
                   ),
                 ),
               ),
             ],
+          ),
+          AnimatedSize(
+            duration: const Duration(milliseconds: 320),
+            curve: Curves.easeOutCubic,
+            alignment: Alignment.topCenter,
+            clipBehavior: Clip.antiAlias,
+            child: _isAIOpen
+                ? Padding(
+                    key: _aiPanelKey,
+                    padding: const EdgeInsets.only(top: 10, bottom: 8),
+                    child: _buildInlineAIPanel(context),
+                  )
+                : const SizedBox.shrink(),
           ),
           const SizedBox(height: 8),
           TextField(

@@ -27,6 +27,9 @@ class AIAnalysisSheet extends ConsumerStatefulWidget {
   final String existingNotes;
   final void Function(String text, bool append) onApplyNotes;
   final String? initialRawAnalysis;
+  final VoidCallback? onClose;
+  final bool isInline;
+  final void Function(String rawAnalysis)? onAnalysisCompleted;
 
   const AIAnalysisSheet({
     super.key,
@@ -49,6 +52,9 @@ class AIAnalysisSheet extends ConsumerStatefulWidget {
     required this.existingNotes,
     required this.onApplyNotes,
     this.initialRawAnalysis,
+    this.onClose,
+    this.isInline = false,
+    this.onAnalysisCompleted,
   });
 
   static Future<void> show(
@@ -188,6 +194,7 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
         _parsedSections = _parseSections(result);
         _isLoading = false;
       });
+      widget.onAnalysisCompleted?.call(result);
     } on GroqException catch (e) {
       if (!mounted) return;
       setState(() {
@@ -395,12 +402,174 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
     final text = _generateNotesFormattedText();
     if (text.isEmpty) return;
     widget.onApplyNotes(text, append);
-    Navigator.of(context).pop();
+    if (widget.onClose != null) {
+      widget.onClose!();
+    } else {
+      Navigator.of(context).maybePop();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = DashboardDesign.isDark(context);
+    final isInline = widget.isInline;
+
+    final content = Column(
+      mainAxisSize: isInline ? MainAxisSize.min : MainAxisSize.max,
+      children: [
+        // Sheet drag bar (Compact - shown only in modal sheet mode)
+        if (!isInline)
+          Center(
+            child: Container(
+              width: 36,
+              height: 4,
+              margin: const EdgeInsets.symmetric(vertical: 10),
+              decoration: BoxDecoration(
+                color: isDark ? Colors.grey[700] : Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+
+        // Header (Compact & Minimal)
+        Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: isInline ? 14 : 16,
+            vertical: isInline ? 9 : 6,
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(7),
+                decoration: BoxDecoration(
+                  color: DashboardDesign.primary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.auto_awesome_rounded,
+                  color: DashboardDesign.primary,
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      t('ai_analysis_title'),
+                      style: TextStyle(
+                        fontSize: isInline ? 14 : 15,
+                        fontWeight: FontWeight.bold,
+                        color: DashboardDesign.text(context),
+                      ),
+                    ),
+                    const SizedBox(height: 1),
+                    Text(
+                      '${widget.stageName} • ${widget.checklistItem}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        color: DashboardDesign.mutedText(context),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (!_isLoading && _parsedSections.isNotEmpty) ...[
+                // Segmented view switcher (Cards vs Raw Notes)
+                Container(
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? const Color(0xFF1F2937)
+                        : const Color(0xFFF3F4F6),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  padding: const EdgeInsets.all(2.5),
+                  child: Row(
+                    children: [
+                      _ViewModeTab(
+                        label: 'Report',
+                        icon: Icons.dashboard_outlined,
+                        isSelected: _viewModeIndex == 0,
+                        onTap: () => setState(() => _viewModeIndex = 0),
+                      ),
+                      _ViewModeTab(
+                        label: 'Notes',
+                        icon: Icons.notes_rounded,
+                        isSelected: _viewModeIndex == 1,
+                        onTap: () => setState(() => _viewModeIndex = 1),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 6),
+              ],
+              IconButton(
+                tooltip: isInline ? t('ai_close_panel') : 'Close',
+                icon: Icon(
+                  Icons.close_rounded,
+                  size: isInline ? 18 : 20,
+                  color: DashboardDesign.mutedText(context),
+                ),
+                onPressed: () {
+                  if (widget.onClose != null) {
+                    widget.onClose!();
+                  } else {
+                    Navigator.of(context).maybePop();
+                  }
+                },
+              ),
+            ],
+          ),
+        ),
+        const Divider(height: 1),
+
+        // Context Meta Bar (Shown once analyzed)
+        if (_rawAnalysisResult != null) _buildContextBar(isDark),
+
+        // Main body content
+        if (isInline)
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 460),
+            child: _buildBody(isDark),
+          )
+        else
+          Expanded(
+            child: _buildBody(isDark),
+          ),
+
+        // Footer action bar
+        if (!_isLoading && _parsedSections.isNotEmpty)
+          _buildBottomActionBar(isDark),
+      ],
+    );
+
+    if (isInline) {
+      return Container(
+        decoration: BoxDecoration(
+          color: isDark
+              ? const Color(0xFF1E293B).withValues(alpha: 0.6)
+              : const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: DashboardDesign.primary
+                .withValues(alpha: isDark ? 0.35 : 0.22),
+            width: 1.2,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: DashboardDesign.primary.withValues(alpha: 0.04),
+              blurRadius: 14,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: content,
+      );
+    }
 
     return Container(
       decoration: BoxDecoration(
@@ -414,118 +583,7 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
           ),
         ],
       ),
-      child: Column(
-        children: [
-          // Sheet drag bar (Compact)
-          Center(
-            child: Container(
-              width: 36,
-              height: 4,
-              margin: const EdgeInsets.symmetric(vertical: 10),
-              decoration: BoxDecoration(
-                color: isDark ? Colors.grey[700] : Colors.grey[300],
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-
-          // Header (Compact & Minimal)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(7),
-                  decoration: BoxDecoration(
-                    color: DashboardDesign.primary.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(
-                    Icons.auto_awesome_rounded,
-                    color: DashboardDesign.primary,
-                    size: 18,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        t('ai_analysis_title'),
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: DashboardDesign.text(context),
-                        ),
-                      ),
-                      const SizedBox(height: 1),
-                      Text(
-                        '${widget.stageName} • ${widget.checklistItem}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 11.5,
-                          color: DashboardDesign.mutedText(context),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                if (!_isLoading && _parsedSections.isNotEmpty) ...[
-                  // Segmented view switcher (Cards vs Raw Notes)
-                  Container(
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF1F2937) : const Color(0xFFF3F4F6),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    padding: const EdgeInsets.all(2.5),
-                    child: Row(
-                      children: [
-                        _ViewModeTab(
-                          label: 'Report',
-                          icon: Icons.dashboard_outlined,
-                          isSelected: _viewModeIndex == 0,
-                          onTap: () => setState(() => _viewModeIndex = 0),
-                        ),
-                        _ViewModeTab(
-                          label: 'Notes',
-                          icon: Icons.notes_rounded,
-                          isSelected: _viewModeIndex == 1,
-                          onTap: () => setState(() => _viewModeIndex = 1),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                ],
-                IconButton(
-                  tooltip: 'Close',
-                  icon: Icon(
-                    Icons.close_rounded,
-                    size: 20,
-                    color: DashboardDesign.mutedText(context),
-                  ),
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
-              ],
-            ),
-          ),
-          const Divider(height: 1),
-
-          // Context Meta Bar (Shown once analyzed)
-          if (_rawAnalysisResult != null) _buildContextBar(isDark),
-
-          // Main body content
-          Expanded(
-            child: _buildBody(isDark),
-          ),
-
-          // Footer action bar
-          if (!_isLoading && _parsedSections.isNotEmpty)
-            _buildBottomActionBar(isDark),
-        ],
-      ),
+      child: content,
     );
   }
 

@@ -204,6 +204,7 @@ const Map<String, Map<String, String>> translations = {
     'ai_analysis_disclaimer':
         'AI-generated technical suggestions should be reviewed and verified by an engineer.',
     'ai_regenerate': 'Regenerate',
+    'ai_close_panel': 'Close AI Assistant',
   },
   'nl': {
     // Auth - Login
@@ -415,6 +416,7 @@ const Map<String, Map<String, String>> translations = {
     'ai_analysis_disclaimer':
         'Door AI gegenereerde suggesties moeten worden beoordeeld en geverifieerd door een ingenieur.',
     'ai_regenerate': 'Opnieuw genereren',
+    'ai_close_panel': 'AI-assistent sluiten',
   },
   'de': {
     // Auth - Login
@@ -621,5 +623,6 @@ const Map<String, Map<String, String>> translations = {
     'ai_analysis_disclaimer':
         'KI-generierte Vorschläge sollten von einem Ingenieur überprüft werden.',
     'ai_regenerate': 'Neu generieren',
+    'ai_close_panel': 'KI-Assistent schließen',
   },
 };
