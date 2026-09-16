@@ -144,10 +144,10 @@ class GroqService {
       '- Focus exclusively on formulating the problem statement for this engineering item.\n'
       '- Do NOT output checks, risks, next actions, bullet lists, pleasantries, preambles, or markdown tables.\n'
       '- Structure your response under these exact 2 formal sections:\n\n'
-      '### General problem statement\n'
-      '[1 formal, clear paragraph (2-3 sentences): Identify the target user, their core operational need, why existing methods or products are deficient or hazardous, and the operational/environmental constraints that must be met.]\n\n'
       '### Engineering-focused version\n'
-      '[1 formal, concise engineering objective statement (1-2 sentences): "Design a [system/component] that [quantifiable functional criteria] while [load, durability, or environmental constraints] in compliance with [applicable standards e.g. ANSI, ISO, OSHA] within [weight, geometry, or cost limits]."]\n',
+      '[1 formal, concise engineering objective statement (1-2 sentences): "Design a [system/component] that [quantifiable functional criteria] while [load, durability, or environmental constraints] in compliance with [applicable standards e.g. ANSI, ISO, OSHA] within [weight, geometry, or cost limits]."]\n\n'
+      '### General problem statement\n'
+      '[1 formal, clear paragraph (2-3 sentences): Identify the target user, their core operational need, why existing methods or products are deficient or hazardous, and the operational/environmental constraints that must be met.]\n',
     );
 
     final client = http.Client();
@@ -161,7 +161,7 @@ class GroqService {
               'role': 'system',
               'content':
                   'You are a senior engineering design review specialist. '
-                  'Generate formal, simple, well-structured engineering problem statements (General problem statement and Engineering-focused version) tailored strictly to the provided project and sub-step context. '
+                  'Generate formal, simple, well-structured engineering problem statements (Engineering-focused version and General problem statement) tailored strictly to the provided project and sub-step context. '
                   'Do NOT output checks, risks, actions, or filler.',
             },
             {

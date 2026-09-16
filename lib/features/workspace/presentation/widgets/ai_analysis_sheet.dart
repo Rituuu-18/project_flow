@@ -26,6 +26,7 @@ class AIAnalysisSheet extends ConsumerStatefulWidget {
   final String? actionDescription;
   final String existingNotes;
   final void Function(String text, bool append) onApplyNotes;
+  final String? initialRawAnalysis;
 
   const AIAnalysisSheet({
     super.key,
@@ -47,6 +48,7 @@ class AIAnalysisSheet extends ConsumerStatefulWidget {
     this.actionDescription,
     required this.existingNotes,
     required this.onApplyNotes,
+    this.initialRawAnalysis,
   });
 
   static Future<void> show(
@@ -116,6 +118,16 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
   String? _errorMessage;
   bool _isMissingKey = false;
   int _viewModeIndex = 0; // 0: Formatted Cards, 1: Notes Preview
+ 
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialRawAnalysis != null &&
+        widget.initialRawAnalysis!.isNotEmpty) {
+      _rawAnalysisResult = widget.initialRawAnalysis;
+      _parsedSections = _parseSections(widget.initialRawAnalysis!);
+    }
+  }
 
   String Function(String, [Map<String, String>?]) get t =>
       ref.read(localeProvider.notifier).t;
@@ -270,12 +282,21 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
 
     commitCurrentSection();
 
-    // Fallback: If no structured sections were detected, package as a single general section
+    // Ensure Engineering-focused section appears above General problem statement
+    sections.sort((a, b) {
+      final aIsEng = a.title.toLowerCase().contains('engineering');
+      final bIsEng = b.title.toLowerCase().contains('engineering');
+      if (aIsEng && !bIsEng) return -1;
+      if (!aIsEng && bIsEng) return 1;
+      return 0;
+    });
+
+    // Fallback: If no structured sections were detected, package as a single engineering section
     if (sections.isEmpty && text.trim().isNotEmpty) {
       sections.add(_AnalysisSection(
-        title: 'GENERAL PROBLEM STATEMENT',
-        icon: Icons.lightbulb_outline_rounded,
-        accentColor: DashboardDesign.primary,
+        title: 'Engineering-focused version',
+        icon: Icons.precision_manufacturing_outlined,
+        accentColor: const Color(0xFF0D9488),
         bullets: const [],
         narrative: text.trim(),
       ));
@@ -286,19 +307,19 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
 
   _SectionConfig _getSectionConfig(String rawTitle) {
     final upper = rawTitle.toUpperCase();
-    if (upper.contains('GENERAL') ||
+    if (upper.contains('ENGINEERING')) {
+      return const _SectionConfig(
+        cleanTitle: 'Engineering-focused version',
+        icon: Icons.precision_manufacturing_outlined,
+        color: Color(0xFF0D9488), // Teal
+        isCallout: true,
+      );
+    } else if (upper.contains('GENERAL') ||
         (upper.contains('PROBLEM') && !upper.contains('ENGINEERING'))) {
       return const _SectionConfig(
         cleanTitle: 'General problem statement',
         icon: Icons.lightbulb_outline_rounded,
         color: Color(0xFF0284C7), // Sky Blue
-        isCallout: true,
-      );
-    } else if (upper.contains('ENGINEERING')) {
-      return const _SectionConfig(
-        cleanTitle: 'Engineering-focused version',
-        icon: Icons.precision_manufacturing_outlined,
-        color: Color(0xFF0D9488), // Teal
         isCallout: true,
       );
     } else if (upper.contains('CHECK') || upper.contains('VERIFICATION')) {
@@ -334,31 +355,33 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
     );
   }
 
-  /// Formats the parsed sections into clean, human-readable plain text for the Notes field.
+  /// Extracts exclusively the engineering-focused statement for Notes insertion and clipboard.
   String _generateNotesFormattedText() {
     if (_parsedSections.isEmpty) {
-      return _rawAnalysisResult ?? '';
+      return _rawAnalysisResult?.trim() ?? '';
     }
 
-    final buffer = StringBuffer();
-    for (int i = 0; i < _parsedSections.length; i++) {
-      final sec = _parsedSections[i];
-      buffer.writeln(sec.title);
-      if (sec.narrative != null && sec.narrative!.isNotEmpty) {
-        buffer.writeln(sec.narrative);
-      }
-      for (final bullet in sec.bullets) {
-        if (bullet.prefix != null && bullet.prefix!.isNotEmpty) {
-          buffer.writeln('• ${bullet.prefix}: ${bullet.body}');
-        } else {
-          buffer.writeln('• ${bullet.body}');
-        }
-      }
-      if (i < _parsedSections.length - 1) {
-        buffer.writeln();
-      }
+    // Target the Engineering-focused version section exclusively
+    final enggSection = _parsedSections.firstWhere(
+      (sec) => sec.title.toLowerCase().contains('engineering'),
+      orElse: () => _parsedSections.first,
+    );
+
+    final narrative = enggSection.narrative?.trim();
+    if (narrative != null && narrative.isNotEmpty) {
+      return narrative;
     }
-    return buffer.toString().trim();
+
+    if (enggSection.bullets.isNotEmpty) {
+      return enggSection.bullets.map((b) {
+        if (b.prefix != null && b.prefix!.isNotEmpty) {
+          return '• ${b.prefix}: ${b.body}';
+        }
+        return '• ${b.body}';
+      }).join('\n').trim();
+    }
+
+    return _rawAnalysisResult?.trim() ?? '';
   }
 
   void _copyToClipboard() {
@@ -1309,7 +1332,7 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Preview of compact notes ready for insertion:',
+            'Preview of engineering statement ready for insertion:',
             style: TextStyle(
               fontSize: 11.5,
               fontWeight: FontWeight.w600,
