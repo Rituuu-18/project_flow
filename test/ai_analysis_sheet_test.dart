@@ -203,13 +203,13 @@ Design a ladder system that supports 150 kg working load while complying with EN
 
     await tester.pumpAndSettle();
 
-    // Both the engineering section header and the bottom action bar provide "Paste into Notes"
-    final pasteButtons = find.widgetWithText(ElevatedButton, 'Paste into Notes');
-    expect(pasteButtons, findsNWidgets(2));
-    // Verify General problem statement is marked as View Only
+    // Paste into Notes is provided only once in the lower action bar
+    final pasteButton = find.widgetWithText(ElevatedButton, 'Paste into Notes');
+    expect(pasteButton, findsOneWidget);
+    // Verify General problem statement is marked as View Only and has no paste button
     expect(find.text('View Only'), findsOneWidget);
 
-    await tester.tap(pasteButtons.first);
+    await tester.tap(pasteButton);
     await tester.pumpAndSettle();
 
     expect(appliedText, isNotNull);

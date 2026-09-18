@@ -468,11 +468,14 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       t('ai_analysis_title'),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: isInline ? 14 : 15,
+                        fontSize: isInline ? 13.5 : 15,
                         fontWeight: FontWeight.bold,
                         color: DashboardDesign.text(context),
                       ),
@@ -483,15 +486,15 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 11.5,
+                        fontSize: 11,
                         color: DashboardDesign.mutedText(context),
                       ),
                     ),
                   ],
                 ),
               ),
-              if (!_isLoading && _parsedSections.isNotEmpty) ...[
-                // Segmented view switcher (Cards vs Raw Notes)
+              if (!_isLoading && _parsedSections.isNotEmpty && MediaQuery.sizeOf(context).width >= 520 && !isInline) ...[
+                // Segmented view switcher (Only on wide desktop/modal screens)
                 Container(
                   decoration: BoxDecoration(
                     color: isDark
@@ -545,7 +548,7 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
         // Main body content
         if (isInline)
           ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 460),
+            constraints: const BoxConstraints(maxHeight: 520),
             child: _buildBody(isDark),
           )
         else
@@ -1213,7 +1216,6 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
   Widget _buildSectionCard(_AnalysisSection sec, bool isDark) {
     final hasNarrative = sec.narrative != null && sec.narrative!.isNotEmpty;
     final hasBullets = sec.bullets.isNotEmpty;
-    final isEngg = sec.title.toLowerCase().contains('engineering');
     final isGeneral = sec.title.toLowerCase().contains('general');
 
     return Container(
@@ -1289,49 +1291,6 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
                       ],
                     ],
                   ),
-                ),
-                if (isEngg) ...[
-                  ElevatedButton.icon(
-                    onPressed: () => _applyToNotes(append: false),
-                    icon: const Icon(Icons.paste_rounded, size: 12),
-                    label: Text(
-                      t('ai_paste_to_notes'),
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: sec.accentColor,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 3),
-                      minimumSize: const Size(0, 26),
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                ],
-                IconButton(
-                  tooltip: 'Copy statement',
-                  icon: const Icon(Icons.copy_rounded, size: 14),
-                  visualDensity: VisualDensity.compact,
-                  padding: EdgeInsets.zero,
-                  constraints:
-                      const BoxConstraints(minWidth: 26, minHeight: 26),
-                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                  onPressed: () {
-                    final text = sec.narrative ??
-                        (sec.bullets.map((b) => b.body).join('\n'));
-                    if (text.isNotEmpty) {
-                      Clipboard.setData(ClipboardData(text: text));
-                      AppMessenger.info(t('ai_copied_clipboard'));
-                    }
-                  },
                 ),
                 if (hasBullets) ...[
                   const SizedBox(width: 4),

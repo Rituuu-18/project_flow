@@ -170,7 +170,7 @@ class GroqService {
             },
           ],
           'temperature': 0.2,
-          'max_tokens': 400,
+          'max_tokens': 1200,
         };
 
         final response = await client

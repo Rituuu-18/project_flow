@@ -80,7 +80,10 @@ void main() {
         findsNothing,
       );
 
-      await tester.tap(find.text('Save Progress'));
+      // Direct Save Progress buttons exist (header and below text boxes)
+      expect(find.text('Save Progress'), findsNWidgets(3));
+
+      await tester.tap(find.text('Save Progress').first);
       await tester.pump();
 
       final saved =

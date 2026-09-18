@@ -628,6 +628,32 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
             style: TextStyle(color: DashboardDesign.text(context)),
             decoration: _boxDecoration(context, t('enter_notes')),
           ),
+          const SizedBox(height: 10),
+          Align(
+            alignment: Alignment.centerRight,
+            child: ElevatedButton.icon(
+              onPressed: _saveWithMessage,
+              icon: const Icon(Icons.check_rounded, size: 15),
+              label: Text(
+                t('save_progress'),
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.2,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: DashboardDesign.primary,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -742,6 +768,32 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
             controller: _actionDescController,
             style: TextStyle(color: DashboardDesign.text(context)),
             decoration: _boxDecoration(context, t('describe_action')),
+          ),
+          const SizedBox(height: 10),
+          Align(
+            alignment: Alignment.centerRight,
+            child: ElevatedButton.icon(
+              onPressed: _saveWithMessage,
+              icon: const Icon(Icons.check_rounded, size: 15),
+              label: Text(
+                t('save_progress'),
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.2,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: DashboardDesign.primary,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
           ),
         ],
       ),
