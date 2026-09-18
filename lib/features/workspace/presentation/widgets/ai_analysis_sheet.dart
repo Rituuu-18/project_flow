@@ -1504,53 +1504,70 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
       ),
       child: SafeArea(
         top: false,
-        child: Row(
-          children: [
-            IconButton(
-              tooltip: 'Copy',
-              icon: const Icon(Icons.copy_rounded, size: 18),
-              color: DashboardDesign.text(context),
-              onPressed: _copyToClipboard,
-            ),
-            IconButton(
-              tooltip: t('ai_regenerate'),
-              icon: const Icon(Icons.refresh_rounded, size: 18),
-              color: DashboardDesign.text(context),
-              onPressed: _startAnalysis,
-            ),
-            const Spacer(),
-            if (hasExistingNotes) ...[
-              OutlinedButton.icon(
-                onPressed: () => _applyToNotes(append: true),
-                icon: const Icon(Icons.playlist_add_rounded, size: 16),
-                label: Text(t('ai_append_to_notes')),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: DashboardDesign.primary,
-                  side: const BorderSide(color: DashboardDesign.primary),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isNarrow = constraints.maxWidth < 460;
+            return Row(
+              children: [
+                IconButton(
+                  tooltip: 'Copy',
+                  icon: const Icon(Icons.copy_rounded, size: 17),
+                  visualDensity: VisualDensity.compact,
+                  color: DashboardDesign.text(context),
+                  onPressed: _copyToClipboard,
+                ),
+                IconButton(
+                  tooltip: t('ai_regenerate'),
+                  icon: const Icon(Icons.refresh_rounded, size: 17),
+                  visualDensity: VisualDensity.compact,
+                  color: DashboardDesign.text(context),
+                  onPressed: _startAnalysis,
+                ),
+                const Spacer(),
+                if (hasExistingNotes) ...[
+                  OutlinedButton.icon(
+                    onPressed: () => _applyToNotes(append: true),
+                    icon: const Icon(Icons.playlist_add_rounded, size: 14),
+                    label: Text(
+                      isNarrow ? 'Append' : t('ai_append_to_notes'),
+                      style: const TextStyle(fontSize: 11.5),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: DashboardDesign.primary,
+                      side: const BorderSide(color: DashboardDesign.primary),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 5),
+                      visualDensity: VisualDensity.compact,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                ],
+                ElevatedButton.icon(
+                  onPressed: () => _applyToNotes(append: false),
+                  icon: const Icon(Icons.paste_rounded, size: 14),
+                  label: Text(
+                    isNarrow ? 'Paste to Notes' : t('ai_paste_to_notes'),
+                    style: const TextStyle(fontSize: 11.5),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: DashboardDesign.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 5),
+                    visualDensity: VisualDensity.compact,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-            ],
-            ElevatedButton.icon(
-              onPressed: () => _applyToNotes(append: false),
-              icon: const Icon(Icons.paste_rounded, size: 16),
-              label: Text(t('ai_paste_to_notes')),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: DashboardDesign.primary,
-                foregroundColor: Colors.white,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-            ),
-          ],
+              ],
+            );
+          },
         ),
       ),
     );
