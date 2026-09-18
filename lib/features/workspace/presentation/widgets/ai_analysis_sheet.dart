@@ -29,6 +29,7 @@ class AIAnalysisSheet extends ConsumerStatefulWidget {
   final String? initialRawAnalysis;
   final VoidCallback? onClose;
   final bool isInline;
+  final bool autoStart;
   final void Function(String rawAnalysis)? onAnalysisCompleted;
 
   const AIAnalysisSheet({
@@ -54,6 +55,7 @@ class AIAnalysisSheet extends ConsumerStatefulWidget {
     this.initialRawAnalysis,
     this.onClose,
     this.isInline = false,
+    this.autoStart = false,
     this.onAnalysisCompleted,
   });
 
@@ -132,6 +134,13 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
         widget.initialRawAnalysis!.isNotEmpty) {
       _rawAnalysisResult = widget.initialRawAnalysis;
       _parsedSections = _parseSections(widget.initialRawAnalysis!);
+    } else if (widget.autoStart) {
+      _isLoading = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _startAnalysis();
+        }
+      });
     }
   }
 
@@ -374,8 +383,12 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
       orElse: () => _parsedSections.first,
     );
 
-    final narrative = enggSection.narrative?.trim();
+    var narrative = enggSection.narrative?.trim();
     if (narrative != null && narrative.isNotEmpty) {
+      if ((narrative.startsWith('"') && narrative.endsWith('"')) ||
+          (narrative.startsWith("'") && narrative.endsWith("'"))) {
+        narrative = narrative.substring(1, narrative.length - 1).trim();
+      }
       return narrative;
     }
 
@@ -1200,6 +1213,8 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
   Widget _buildSectionCard(_AnalysisSection sec, bool isDark) {
     final hasNarrative = sec.narrative != null && sec.narrative!.isNotEmpty;
     final hasBullets = sec.bullets.isNotEmpty;
+    final isEngg = sec.title.toLowerCase().contains('engineering');
+    final isGeneral = sec.title.toLowerCase().contains('general');
 
     return Container(
       width: double.infinity,
@@ -1239,16 +1254,68 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
                 Icon(sec.icon, color: sec.accentColor, size: 15),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(
-                    sec.title,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.3,
-                      color: isDark ? Colors.white : const Color(0xFF0F172A),
-                    ),
+                  child: Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          sec.title,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.3,
+                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          ),
+                        ),
+                      ),
+                      if (isGeneral) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 1.5),
+                          decoration: BoxDecoration(
+                            color: (isDark ? Colors.white : Colors.black)
+                                .withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            'View Only',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: DashboardDesign.mutedText(context),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
+                if (isEngg) ...[
+                  ElevatedButton.icon(
+                    onPressed: () => _applyToNotes(append: false),
+                    icon: const Icon(Icons.paste_rounded, size: 12),
+                    label: Text(
+                      t('ai_paste_to_notes'),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: sec.accentColor,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 3),
+                      minimumSize: const Size(0, 26),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                ],
                 IconButton(
                   tooltip: 'Copy statement',
                   icon: const Icon(Icons.copy_rounded, size: 14),

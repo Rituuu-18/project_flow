@@ -65,6 +65,18 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
   }
 
   @override
+  void didUpdateWidget(covariant WorkspaceScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.workspaceId != widget.workspaceId ||
+        oldWidget.subStepName != widget.subStepName ||
+        oldWidget.stageName != widget.stageName) {
+      _cachedAIAnalysis = null;
+      _isAIOpen = false;
+      _initData();
+    }
+  }
+
+  @override
   void dispose() {
     _notesController.dispose();
     _engineeringCommentsController.dispose();
@@ -377,22 +389,6 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
     }
   }
 
-  void _openAIAnalysis() {
-    if (_currentData == null) return;
-    setState(() {
-      _isAIOpen = true;
-    });
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_aiPanelKey.currentContext != null) {
-        Scrollable.ensureVisible(
-          _aiPanelKey.currentContext!,
-          duration: const Duration(milliseconds: 380),
-          curve: Curves.easeOutCubic,
-          alignment: 0.15,
-        );
-      }
-    });
-  }
 
   void _toggleAIAnalysis() {
     if (_currentData == null) return;
@@ -461,6 +457,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
         : _currentData!.actionDescription;
 
     return AIAnalysisSheet(
+      key: ValueKey('ai_analysis_${widget.workspaceId}'),
       projectName: widget.projectName,
       projectOwner: currentReview?.owner,
       projectStatus: currentReview?.status.name,
@@ -480,6 +477,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
       existingNotes: _notesController.text,
       initialRawAnalysis: _cachedAIAnalysis,
       isInline: true,
+      autoStart: true,
       onClose: () => setState(() => _isAIOpen = false),
       onAnalysisCompleted: (result) {
         _cachedAIAnalysis = result;
@@ -488,7 +486,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
         setState(() {
           if (append && _notesController.text.trim().isNotEmpty) {
             _notesController.text =
-                '${_notesController.text.trim()}\n\n---\nAI Analysis:\n$analysisText';
+                '${_notesController.text.trim()}\n\n$analysisText';
           } else {
             _notesController.text = analysisText;
           }
@@ -509,53 +507,19 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  const Icon(
-                    Icons.lock_outline_rounded,
-                    size: 16,
-                    color: DashboardDesign.primary,
-                  ),
-                  const SizedBox(width: 7),
-                  Text(
-                    t('managed_by_admin'),
-                    style: TextStyle(
-                      color: DashboardDesign.mutedText(context),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
+              const Icon(
+                Icons.lock_outline_rounded,
+                size: 16,
+                color: DashboardDesign.primary,
               ),
-              InkWell(
-                onTap: _openAIAnalysis,
-                borderRadius: BorderRadius.circular(8),
-                child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.auto_awesome_rounded,
-                        size: 13,
-                        color: DashboardDesign.primary,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        _isAIOpen
-                            ? t('ai_close_panel')
-                            : t('ai_analyze_button'),
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: DashboardDesign.primary,
-                        ),
-                      ),
-                    ],
-                  ),
+              const SizedBox(width: 7),
+              Text(
+                t('managed_by_admin'),
+                style: TextStyle(
+                  color: DashboardDesign.mutedText(context),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],

@@ -104,10 +104,11 @@ void main() {
 
       // Initially, AI panel is closed and no AIAnalysisSheet is in the tree
       expect(find.byType(AIAnalysisSheet), findsNothing);
-      expect(find.text('AI Analyze'), findsNWidgets(2)); // Item details & Notes buttons
+      // AI Analyze button is only in the Notes section, not in Item Details
+      expect(find.text('AI Analyze'), findsOneWidget);
 
       // Tap the AI Analyze button in the Notes section
-      final aiButton = find.widgetWithText(InkWell, 'AI Analyze').last;
+      final aiButton = find.widgetWithText(InkWell, 'AI Analyze');
       await tester.tap(aiButton);
       await tester.pumpAndSettle();
 
@@ -123,9 +124,6 @@ void main() {
       // Verify toggle button updated to close label
       expect(find.text('Close AI Assistant'), findsWidgets);
 
-      // Verify Pre-Analysis view renders inside the inline panel
-      expect(find.text('Analyze with AI'), findsWidgets);
-
       // Tap "Close AI Assistant" to smoothly collapse the inline panel
       final closeButton = find.text('Close AI Assistant').last;
       await tester.tap(closeButton);
@@ -137,7 +135,7 @@ void main() {
   );
 
   testWidgets(
-    'tapping AI Analyze in Item Details expands inline AI panel',
+    'Item Details has no AI Analyze button and only Notes provides AI analysis',
     (tester) async {
       tester.view.physicalSize = const Size(1200, 1500);
       tester.view.devicePixelRatio = 1;
@@ -147,15 +145,16 @@ void main() {
       await tester.pumpWidget(createWidget());
       await tester.pumpAndSettle();
 
-      expect(find.byType(AIAnalysisSheet), findsNothing);
+      // Only one AI Analyze button exists in the entire workspace (in Notes)
+      expect(find.widgetWithText(InkWell, 'AI Analyze'), findsOneWidget);
 
-      // Tap the AI button in the Item Details card (the first one)
-      final aiItemDetailsButton =
-          find.widgetWithText(InkWell, 'AI Analyze').first;
-      await tester.tap(aiItemDetailsButton);
+      // Verify that Item Details has Managed by admin without any AI button
+      expect(find.text('Managed by admin'), findsOneWidget);
+
+      // Open from Notes and verify inline sheet expands
+      await tester.tap(find.widgetWithText(InkWell, 'AI Analyze'));
       await tester.pumpAndSettle();
 
-      // Inline AIAnalysisSheet is expanded
       expect(find.byType(AIAnalysisSheet), findsOneWidget);
 
       // Tapping the close icon on the AI panel collapses it

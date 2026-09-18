@@ -203,10 +203,13 @@ Design a ladder system that supports 150 kg working load while complying with EN
 
     await tester.pumpAndSettle();
 
-    // Tap "Paste into Notes"
-    final pasteButton = find.widgetWithText(ElevatedButton, 'Paste into Notes');
-    expect(pasteButton, findsOneWidget);
-    await tester.tap(pasteButton);
+    // Both the engineering section header and the bottom action bar provide "Paste into Notes"
+    final pasteButtons = find.widgetWithText(ElevatedButton, 'Paste into Notes');
+    expect(pasteButtons, findsNWidgets(2));
+    // Verify General problem statement is marked as View Only
+    expect(find.text('View Only'), findsOneWidget);
+
+    await tester.tap(pasteButtons.first);
     await tester.pumpAndSettle();
 
     expect(appliedText, isNotNull);
@@ -381,6 +384,37 @@ Design a ladder system that supports 150 kg working load while complying with EN
         find.text(
             'A maintenance technician needs a reliable climbing fixture for elevated industrial machinery.'),
         findsNothing);
+  });
+
+  testWidgets(
+      'AIAnalysisSheet with autoStart: true immediately starts analysis without showing pre-analysis view',
+      (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          home: Scaffold(
+            body: AIAnalysisSheet(
+              projectName: 'Pump Project Alpha',
+              stageName: 'Detailed Design',
+              checklistItem: 'Tolerance Stack',
+              itemDescription: 'Verify clearance fit for shaft assembly',
+              discipline: 'Mechanical Engineering',
+              existingNotes: '',
+              autoStart: true,
+              onApplyNotes: (text, append) {},
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    // Bypasses pre-analysis view directly
+    expect(find.text('CONTEXT PARAMETERS'), findsNothing);
+    // Since no Groq key is set in test environment, analysis immediately executed and entered key missing state with Retry
+    expect(find.byIcon(Icons.vpn_key_off_rounded), findsOneWidget);
+    expect(find.text('Retry'), findsOneWidget);
   });
 }
 
