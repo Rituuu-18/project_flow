@@ -82,6 +82,24 @@ void main() {
 
         // Default stages should round-trip via sub_steps name matching.
         expect(loaded.stages, isNotEmpty);
+        final preliminary = loaded.stages.firstWhere(
+          (stage) => stage.name == 'Preliminary Design',
+        );
+        expect(preliminary.subSteps, hasLength(15));
+        expect(
+          preliminary.subSteps.skip(1).take(3).map((item) => item.name),
+          [
+            'Perform engineering calculations from allocated requirements',
+            'Define systems, subsystems, and interfaces',
+            'Select and justify candidate standard components',
+          ],
+        );
+        expect(
+          preliminary.subSteps.skip(1).take(3).every(
+            (item) => item.status == StageStatus.notStarted,
+          ),
+          isTrue,
+        );
         final firstWorkspaceId = loaded.stages.first.subSteps.first.workspaceId;
 
         final workspace = WorkspaceData(

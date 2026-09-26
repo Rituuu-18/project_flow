@@ -132,17 +132,19 @@ Supabase PostgreSQL & Storage Buckets (Protected by Row Level Security)
 
 | Stage | Canonical Name | Sub-Steps | Stage Weight (%) |
 | :---: | :--- | :---: | :---: |
-| 1 | **Requirements** | 10 | 15.00% |
-| 2 | **Concept** | 10 | 8.00% |
-| 3 | **Preliminary Design** | 12 | 12.00% |
-| 4 | **Detailed Design** | 13 | 16.00% |
-| 5 | **Simulation (FEA, CFD...)** | 8 | 9.00% |
-| 6 | **Prototype** | 8 | 8.00% |
-| 7 | **Testing Validation** | 11 | 12.00% |
-| 8 | **Manufacturing Readiness** | 8 | 8.00% |
-| 9 | **Final Release** | 7 | 7.00% |
-| 10 | **Continuous Improvement** | 5 | 5.00% |
-| **Total** | | **92 Sub-Steps** | **100.00%** |
+| 1 | **Requirements** | 10 | 14.10% |
+| 2 | **Concept** | 10 | 7.52% |
+| 3 | **Preliminary Design** | 15 | 17.13% |
+| 4 | **Detailed Design** | 13 | 16.95% |
+| 5 | **Simulation (FEA, CFD...)** | 11 | 7.52% |
+| 6 | **Prototype** | 11 | 9.45% |
+| 7 | **Testing Validation** | 10 | 11.30% |
+| 8 | **Manufacturing Readiness** | 11 | 9.43% |
+| 9 | **Final Release** | 10 | 6.60% |
+| 10 | **Continuous Improvement** | 10 | 0.00% |
+| **Total** | | **111 Sub-Steps** | **100.00%** |
+
+Deploy `supabase/migrations/20260927000001_preliminary_design_substeps.sql` before the updated client. It adds the three new items and workspaces to saved reviews, then recalculates their readiness scores.
 
 ### 6. Publication-Grade PDF Report Engine (`services/pdf_report_service.dart`)
 - Generates vector-rendered technical documentation suitable for regulatory compliance and customer review meetings.

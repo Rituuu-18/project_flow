@@ -115,7 +115,7 @@ class SupabaseDesignReviewRepository implements DesignReviewRepository {
             'id': sub.id,
             'design_review_id': review.id,
             'name': sub.name,
-            'status': sub.status.jsonValue,
+            'status': sub.status.name,
             'workspace_id': sub.workspaceId,
           });
         }

@@ -4,6 +4,7 @@ import 'package:engineering_werk/core/database/supabase_storage.dart';
 import 'package:engineering_werk/features/reviews/domain/entities/design_review.dart';
 import 'package:engineering_werk/features/reviews/domain/entities/stage.dart';
 import 'package:engineering_werk/features/reviews/domain/entities/sub_step.dart';
+import 'package:engineering_werk/features/reviews/domain/utils/default_stages.dart';
 import 'package:engineering_werk/features/workspace/domain/entities/workspace_data.dart';
 import 'package:engineering_werk/services/pdf_report_service.dart';
 import 'package:engineering_werk/services/project_pdf_data.dart';
@@ -79,6 +80,7 @@ void main() {
               ),
             ],
           ),
+          getDefaultStages()[2],
         ],
       );
 
