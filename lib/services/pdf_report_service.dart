@@ -1686,8 +1686,7 @@ class PdfReportService {
         _buildFieldHeader('a. Description'),
         pw.SizedBox(height: 4),
         pw.Text(
-          // The bundled PDF Helvetica font cannot render em dashes.
-          textContent.replaceAll('—', ' - '),
+          textContent,
           style: pw.TextStyle(
             fontSize: 9.5,
             color: isNone ? PdfColor.fromHex('#64748B') : PdfColor.fromHex('#334155'),

@@ -64,25 +64,7 @@ void main() {
         isNot(contains('Assess feasibility (technical & schedule)')),
       );
       expect(stages[2].name, 'Preliminary Design');
-      expect(stages[2].subSteps, hasLength(15));
-      expect(
-        stages[2].subSteps.take(5).map((item) => item.name).toList(),
-        [
-          'Define PDR objectives and criteria',
-          'Perform engineering calculations from allocated requirements',
-          'Define systems, subsystems, and interfaces',
-          'Select and justify candidate standard components',
-          'Prepare design baseline and documentation',
-        ],
-      );
-      expect(
-        stages[2].subSteps.map((item) => item.workspaceId).toSet(),
-        hasLength(15),
-      );
-      expect(
-        stages[2].subSteps.every((item) => item.status == StageStatus.notStarted),
-        isTrue,
-      );
+      expect(stages[2].subSteps, hasLength(12));
       expect(stages[3].name, 'Detailed Design');
       expect(stages[3].subSteps, hasLength(13));
       expect(stages[4].name, 'Simulation (FEA,CFD...)');
@@ -104,27 +86,6 @@ void main() {
         ).description,
         contains('go/no-go criteria'),
       );
-    });
-
-    test('new PDR workspaces use the requested admin-owned descriptions', () {
-      const expected = {
-        'Perform engineering calculations from allocated requirements':
-            'Calculate loads, stresses, deflection, torque, power, thermal behavior, fatigue life, safety factors, flow, pressure, and other relevant engineering parameters for the selected concept. Trace all calculations back to the applicable project and subsystem requirements.',
-        'Define systems, subsystems, and interfaces':
-            'Decompose the product into systems and subsystems; allocate functions and requirements; define key physical, electrical, fluid, software, and user interfaces; and establish preliminary performance targets. This aligns directly with the purpose of the PDR and the allocated baseline.',
-        'Select and justify candidate standard components':
-            'Select preliminary standard components—such as bearings, bolts, fasteners, seals, springs, motors, sensors, gears, couplings, valves, and similar items—using engineering calculations, interface requirements, applicable standards, environmental conditions, supply risk, cost, and manufacturability as selection criteria. Record the alternatives considered and provide the rationale for the final selection.',
-      };
-
-      for (final entry in expected.entries) {
-        expect(
-          getDefaultSubStepInfo(
-            stageName: 'Preliminary Design',
-            subStepName: entry.key,
-          ).description,
-          entry.value,
-        );
-      }
     });
 
     test('upgrades the incomplete saved lifecycle', () {

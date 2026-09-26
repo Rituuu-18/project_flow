@@ -154,21 +154,6 @@ const Map<String, StageDefaultContent> defaultStageContent = {
             'Clarify that the PDR must confirm requirement allocation, architecture soundness, major risks, and mitigation plans. Set entry and exit criteria such as required maturity, analyses available, and documents ready before the meeting.',
         discipline: 'Systems Engineering',
       ),
-      'Perform engineering calculations from allocated requirements': SubStepDefaultInfo(
-        description:
-            'Calculate loads, stresses, deflection, torque, power, thermal behavior, fatigue life, safety factors, flow, pressure, and other relevant engineering parameters for the selected concept. Trace all calculations back to the applicable project and subsystem requirements.',
-        discipline: 'Design Engineering',
-      ),
-      'Define systems, subsystems, and interfaces': SubStepDefaultInfo(
-        description:
-            'Decompose the product into systems and subsystems; allocate functions and requirements; define key physical, electrical, fluid, software, and user interfaces; and establish preliminary performance targets. This aligns directly with the purpose of the PDR and the allocated baseline.',
-        discipline: 'Systems Engineering',
-      ),
-      'Select and justify candidate standard components': SubStepDefaultInfo(
-        description:
-            'Select preliminary standard components—such as bearings, bolts, fasteners, seals, springs, motors, sensors, gears, couplings, valves, and similar items—using engineering calculations, interface requirements, applicable standards, environmental conditions, supply risk, cost, and manufacturability as selection criteria. Record the alternatives considered and provide the rationale for the final selection.',
-        discipline: 'Design Engineering',
-      ),
       'Prepare design baseline and documentation': SubStepDefaultInfo(
         description:
             'Compile the preliminary design package with system architecture, block diagrams, major assemblies, interfaces, performance budgets, calculations, and simulations. Include the product tree, work breakdown, technical specifications, verification plan, configuration plan, risk plan, and quality plan.',

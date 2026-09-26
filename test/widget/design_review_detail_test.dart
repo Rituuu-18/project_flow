@@ -8,7 +8,6 @@ import 'package:engineering_werk/features/reviews/domain/entities/design_review.
 import 'package:engineering_werk/features/reviews/domain/entities/stage.dart';
 import 'package:engineering_werk/features/reviews/domain/entities/stakeholder.dart';
 import 'package:engineering_werk/features/reviews/domain/entities/sub_step.dart';
-import 'package:engineering_werk/features/reviews/domain/utils/default_stages.dart';
 import 'package:engineering_werk/features/reviews/presentation/providers/design_review_provider.dart';
 import 'package:engineering_werk/features/reviews/domain/repositories/design_review_repository.dart';
 import 'package:engineering_werk/core/utils/enums.dart';
@@ -176,43 +175,6 @@ void main() {
 
     expect(find.text('Requirements child item'), findsNothing);
     expect(find.text('Concept child item'), findsOneWidget);
-  });
-
-  testWidgets('Preliminary Design shows all 15 items in the requested order', (
-    WidgetTester tester,
-  ) async {
-    tester.view.physicalSize = const Size(1200, 1200);
-    tester.view.devicePixelRatio = 1.0;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
-
-    final preliminaryDesign = getDefaultStages()[2];
-    final review = DesignReview(
-      id: 'rev-pdr',
-      name: 'PDR Review',
-      owner: 'Admin',
-      discipline: 'Mechanical',
-      createdAt: DateTime.now(),
-      lastUpdated: DateTime.now(),
-      stages: [preliminaryDesign],
-    );
-
-    when(() => mockRepository.watchReviews())
-        .thenAnswer((_) => Stream.value([review]));
-    when(() => mockRepository.getAllReviews())
-        .thenAnswer((_) async => [review]);
-
-    await tester.pumpWidget(createTestWidget('rev-pdr'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Preliminary Design'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('0/15 complete'), findsOneWidget);
-    final names = preliminaryDesign.subSteps.map((item) => item.name).toList();
-    for (final name in names) {
-      expect(find.text(name), findsOneWidget);
-    }
-    expect(tester.takeException(), isNull);
   });
 
   testWidgets('Back to Dashboard works from a directly loaded project route', (

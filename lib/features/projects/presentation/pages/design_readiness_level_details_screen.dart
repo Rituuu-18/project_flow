@@ -18,19 +18,25 @@ class DesignReadinessLevelDetailsScreen extends ConsumerWidget {
   });
 
   double _getCompletedWeightForStage(Stage stage) {
+    final weights = drlSubStepWeights[stage.name];
+    if (weights == null) return 0.0;
     double completedWeight = 0.0;
-    for (final subStep in stage.subSteps) {
-      if (subStep.status == StageStatus.completed) {
-        completedWeight += drlWeightForSubStep(stage.name, subStep.name);
+    for (int i = 0; i < stage.subSteps.length; i++) {
+      if (i >= weights.length) break;
+      if (stage.subSteps[i].status == StageStatus.completed) {
+        completedWeight += weights[i];
       }
     }
     return completedWeight;
   }
 
   double _getMaxWeightForStage(Stage stage) {
+    final weights = drlSubStepWeights[stage.name];
+    if (weights == null) return 0.0;
     double maxWeight = 0.0;
-    for (final subStep in stage.subSteps) {
-      maxWeight += drlWeightForSubStep(stage.name, subStep.name);
+    for (int i = 0; i < stage.subSteps.length; i++) {
+      if (i >= weights.length) break;
+      maxWeight += weights[i];
     }
     return maxWeight;
   }

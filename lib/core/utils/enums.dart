@@ -14,18 +14,10 @@ extension StageStatusExtension on StageStatus {
 
   static StageStatus fromJson(String value) {
     switch (value) {
-      case 'Open':
-      case 'notStarted':
-        return StageStatus.notStarted;
-      case 'In Progress':
-      case 'inProgress':
-        return StageStatus.inProgress;
-      case 'Completed':
-      case 'completed':
-        return StageStatus.completed;
-      case 'Not Required':
-      case 'notRequired':
-        return StageStatus.notRequired;
+      case 'Open': return StageStatus.notStarted;
+      case 'In Progress': return StageStatus.inProgress;
+      case 'Completed': return StageStatus.completed;
+      case 'Not Required': return StageStatus.notRequired;
       default: return StageStatus.notStarted;
     }
   }
