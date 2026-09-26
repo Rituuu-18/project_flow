@@ -3,6 +3,7 @@ import 'package:engineering_werk/features/reviews/domain/entities/design_review.
 
 import 'package:engineering_werk/features/reviews/domain/entities/stage.dart';
 import 'package:engineering_werk/features/reviews/domain/utils/default_stages.dart';
+import 'package:engineering_werk/features/reviews/domain/utils/drl_weights.dart';
 import 'package:engineering_werk/core/utils/enums.dart';
 
 void main() {
@@ -50,8 +51,6 @@ void main() {
     });
   });
 
-
-
   group('Default review lifecycle', () {
     test('contains the complete PDF-backed canonical checklist', () {
       final stages = getDefaultStages();
@@ -64,7 +63,12 @@ void main() {
         isNot(contains('Assess feasibility (technical & schedule)')),
       );
       expect(stages[2].name, 'Preliminary Design');
-      expect(stages[2].subSteps, hasLength(12));
+      expect(stages[2].subSteps, hasLength(15));
+      expect(stages[2].subSteps.skip(1).take(3).map((item) => item.name), [
+        'Perform engineering calculations from allocated requirements',
+        'Define systems, subsystems, and interfaces',
+        'Select and justify candidate standard components',
+      ]);
       expect(stages[3].name, 'Detailed Design');
       expect(stages[3].subSteps, hasLength(13));
       expect(stages[4].name, 'Simulation (FEA,CFD...)');
@@ -111,5 +115,75 @@ void main() {
       expect(upgraded[9].name, 'Continuous Improvement');
       expect(upgraded[9].subSteps, hasLength(10));
     });
+
+    test(
+      'adds scoreable PDR items to saved reviews without losing existing work',
+      () {
+        final current = getDefaultStages();
+        final pdr = current[2];
+        final existingItem = pdr.subSteps[5].copyWith(
+          status: StageStatus.completed,
+        );
+        final oldPdr = pdr.copyWith(
+          subSteps: [
+            pdr.subSteps.first,
+            pdr.subSteps[4],
+            existingItem,
+            ...pdr.subSteps.skip(6),
+          ],
+        );
+        final saved = [...current]..[2] = oldPdr;
+
+        final upgraded = upgradeLegacyDefaultStages(
+          saved,
+          reviewId: 'review-1',
+        );
+        final items = upgraded[2].subSteps;
+
+        expect(items, hasLength(15));
+        expect(
+          items
+              .skip(1)
+              .take(3)
+              .every(
+                (item) =>
+                    item.status == StageStatus.notStarted &&
+                    item.workspaceId.isNotEmpty,
+              ),
+          isTrue,
+        );
+        expect(items[5], existingItem);
+        expect(upgraded[2].progress, 1 / 15);
+        expect(upgradeLegacyDefaultStages(upgraded), same(upgraded));
+        final reloaded = upgradeLegacyDefaultStages(
+          saved,
+          reviewId: 'review-1',
+        );
+        expect(
+          reloaded[2].subSteps.skip(1).take(3).map((item) => item.id),
+          items.skip(1).take(3).map((item) => item.id),
+        );
+        expect(
+          reloaded[2].subSteps.skip(1).take(3).map((item) => item.workspaceId),
+          items.skip(1).take(3).map((item) => item.workspaceId),
+        );
+
+        final weights = drlSubStepWeights['Preliminary Design']!;
+        expect(weights, hasLength(items.length));
+        expect(weights.skip(1).take(3).every((weight) => weight > 0), isTrue);
+        expect(weights.reduce((a, b) => a + b), closeTo(12.0, 0.0001));
+        expect(calculateDrl(upgraded), closeTo(weights[5], 0.0001));
+
+        final completedNewItem = upgraded[2].copyWith(
+          subSteps: [
+            items.first,
+            items[1].copyWith(status: StageStatus.completed),
+            ...items.skip(2),
+          ],
+        );
+        final scored = [...upgraded]..[2] = completedNewItem;
+        expect(calculateDrl(scored), closeTo(weights[1] + weights[5], 0.0001));
+      },
+    );
   });
 }

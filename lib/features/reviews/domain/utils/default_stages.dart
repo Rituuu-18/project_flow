@@ -154,6 +154,22 @@ const Map<String, StageDefaultContent> defaultStageContent = {
             'Clarify that the PDR must confirm requirement allocation, architecture soundness, major risks, and mitigation plans. Set entry and exit criteria such as required maturity, analyses available, and documents ready before the meeting.',
         discipline: 'Systems Engineering',
       ),
+      'Perform engineering calculations from allocated requirements':
+          SubStepDefaultInfo(
+            description:
+                'Calculate loads, stresses, deflection, torque, power, thermal behavior, fatigue life, safety factors, flow, pressure, or other relevant engineering parameters for the selected concept. Trace calculations back to the project and subsystem requirements.',
+            discipline: 'Design Engineering',
+          ),
+      'Define systems, subsystems, and interfaces': SubStepDefaultInfo(
+        description:
+            'Decompose the product into systems and subsystems; allocate functions and requirements; define key physical, electrical, fluid, software, and user interfaces; and establish preliminary performance targets. This aligns directly with the purpose of PDR and the allocated baseline.',
+        discipline: 'Systems Engineering',
+      ),
+      'Select and justify candidate standard components': SubStepDefaultInfo(
+        description:
+            'Select preliminary standard components—bearings, bolts, fasteners, seals, springs, motors, sensors, gears, couplings, valves, and similar items—using the engineering calculations, interface needs, standards, environmental conditions, supply risk, cost, and manufacturability as selection criteria. Record alternatives and the selection rationale.',
+        discipline: 'Component Engineering',
+      ),
       'Prepare design baseline and documentation': SubStepDefaultInfo(
         description:
             'Compile the preliminary design package with system architecture, block diagrams, major assemblies, interfaces, performance budgets, calculations, and simulations. Include the product tree, work breakdown, technical specifications, verification plan, configuration plan, risk plan, and quality plan.',
@@ -686,7 +702,7 @@ const Map<String, String> _stageNameMigrations = {
 /// Existing stage progress and matching substep workspaces are retained where
 /// the canonical PDF-backed checklist still contains the same substep name.
 /// Custom lifecycle definitions are left untouched.
-List<Stage> upgradeLegacyDefaultStages(List<Stage> stages) {
+List<Stage> upgradeLegacyDefaultStages(List<Stage> stages, {String? reviewId}) {
   if (stages.length != defaultStageChecklist.length) return stages;
 
   // ── Step 1: apply any pending name renames ────────────────────────────────
@@ -731,7 +747,14 @@ List<Stage> upgradeLegacyDefaultStages(List<Stage> stages) {
       for (final item in existingStage.subSteps) item.name: item,
     };
     final upgradedItems = defaultStageChecklist[canonicalName]!
-        .map((name) => existingItems[name] ?? _newSubStep(name))
+        .map(
+          (name) =>
+              existingItems[name] ??
+              _newSubStep(
+                name,
+                scope: reviewId == null ? null : '$reviewId/$canonicalName',
+              ),
+        )
         .toList();
     final progress = _calculateProgress(upgradedItems);
     final status = _statusForProgress(progress, upgradedItems);
@@ -763,8 +786,16 @@ List<Stage> upgradeLegacyDefaultStages(List<Stage> stages) {
   return changed ? upgradedStages : stages;
 }
 
-SubStep _newSubStep(String name) {
-  return SubStep(id: _uuid.v4(), name: name, workspaceId: _uuid.v4());
+SubStep _newSubStep(String name, {String? scope}) {
+  return SubStep(
+    id: scope == null
+        ? _uuid.v4()
+        : _uuid.v5(Namespace.url.value, '$scope/$name/substep'),
+    name: name,
+    workspaceId: scope == null
+        ? _uuid.v4()
+        : _uuid.v5(Namespace.url.value, '$scope/$name/workspace'),
+  );
 }
 
 double _calculateProgress(List<SubStep> subSteps) {

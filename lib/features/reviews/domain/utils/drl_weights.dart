@@ -40,20 +40,23 @@ const Map<String, List<double>> drlSubStepWeights = {
     0.00, // 10. Document outcomes and update roadmap
   ],
 
-  // Step 3 – Preliminary Design (12 substeps)
+  // Step 3 – Preliminary Design (15 substeps, 10 scoreable)
   'Preliminary Design': [
-    1.71, // 1. Define PDR objectives and criteria
-    0.00, // 2. Prepare design baseline and documentation
-    1.71, // 3. Verify requirements allocation and traceability
-    0.00, // 4. Review system architecture and functional design
-    1.71, // 5. Evaluate key technical aspects and analyses
-    1.71, // 6. Check interfaces and compatibility
-    1.71, // 7. Assess producibility, materials, and make-or-buy
-    0.00, // 8. Review verification and test strategy
-    1.71, // 9. Analyze project risks, schedule, and resources
-    0.00, // 10. Conduct the review meeting
-    1.74, // 11. Decide outcome and actions
-    0.00, // 12. Document and baseline the preliminary design
+    1.20, // 1. Define PDR objectives and criteria
+    1.20, // 2. Perform engineering calculations from allocated requirements
+    1.20, // 3. Define systems, subsystems, and interfaces
+    1.20, // 4. Select and justify candidate standard components
+    0.00, // 5. Prepare design baseline and documentation
+    1.20, // 6. Verify requirements allocation and traceability
+    0.00, // 7. Review system architecture and functional design
+    1.20, // 8. Evaluate key technical aspects and analyses
+    1.20, // 9. Check interfaces and compatibility
+    1.20, // 10. Assess producibility, materials, and make-or-buy
+    0.00, // 11. Review verification and test strategy
+    1.20, // 12. Analyze project risks, schedule, and resources
+    0.00, // 13. Conduct the review meeting
+    1.20, // 14. Decide outcome and actions
+    0.00, // 15. Document and baseline the preliminary design
   ],
 
   // Step 4 – Detailed Design (13 substeps)

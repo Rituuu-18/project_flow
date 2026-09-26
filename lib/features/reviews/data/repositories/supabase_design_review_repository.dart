@@ -9,6 +9,7 @@ import '../../domain/entities/stage.dart';
 import '../../domain/entities/sub_step.dart';
 import '../../domain/entities/stakeholder.dart';
 import '../../domain/utils/default_stages.dart';
+import '../../domain/utils/drl_weights.dart';
 
 /// Supabase-backed implementation of [DesignReviewRepository].
 class SupabaseDesignReviewRepository implements DesignReviewRepository {
@@ -289,20 +290,29 @@ class SupabaseDesignReviewRepository implements DesignReviewRepository {
       role: sh['role'] as String,
     )).toList() ?? [];
 
+    final stages = upgradeLegacyDefaultStages(
+      reconstructedStages,
+      reviewId: json['id'] as String,
+    );
+    final progress = calculateDrl(stages) / 100.0;
+    final savedStatus = ProjectStatus.values.firstWhere(
+      (e) => e.name == json['status'],
+      orElse: () => ProjectStatus.active,
+    );
+
     return DesignReview(
       id: json['id'] as String,
       name: json['name'] as String,
       owner: json['owner'] as String? ?? '',
       discipline: json['discipline'] as String? ?? '',
-      status: ProjectStatus.values.firstWhere(
-        (e) => e.name == json['status'],
-        orElse: () => ProjectStatus.active,
-      ),
+      status: savedStatus == ProjectStatus.completed && progress < 1.0
+          ? ProjectStatus.active
+          : savedStatus,
       createdAt: json['created_at'] != null ? DateTime.parse(json['created_at'] as String) : DateTime.now(),
       lastUpdated: json['last_updated'] != null ? DateTime.parse(json['last_updated'] as String) : DateTime.now(),
       imageUrl: json['image_url'] as String?,
-      progress: (json['progress'] as num?)?.toDouble() ?? 0.0,
-      stages: reconstructedStages,
+      progress: progress,
+      stages: stages,
       stakeholders: stakeholders,
     );
   }
