@@ -189,12 +189,17 @@ const Map<String, Map<String, String>> translations = {
     'ai_analyze_button': 'AI Analyze',
     'analyze_with_ai': 'Analyze with AI',
     'ai_review_subtitle':
-        'Generate one engineering statement for this project and checklist item.',
+        'Generate an engineering report with headings and tables for this project and checklist item.',
     'context_parameters': 'Context Parameters',
     'ready_to_analyze': 'Ready to Analyze',
     'project_label': 'Project',
     'no_description_provided': 'No checklist description provided',
-    'ai_generating': 'Generating problem statement with Groq...',
+    'ai_generating': 'Preparing engineering report...',
+    'ai_table_scroll_hint': 'Scroll sideways to view all columns',
+    'ai_report_notes_preview':
+        'Preview of engineering report ready for insertion:',
+    'ai_invalid_report':
+        'The AI report is incomplete or could not be read. Regenerate the analysis.',
     'ai_paste_to_notes': 'Paste into Notes',
     'ai_append_to_notes': 'Append to Notes',
     'ai_copied_clipboard': 'Analysis copied to clipboard',
@@ -402,12 +407,17 @@ const Map<String, Map<String, String>> translations = {
     'ai_analyze_button': 'AI Analyseren',
     'analyze_with_ai': 'Analyseren met AI',
     'ai_review_subtitle':
-        'Genereer één technische probleemstelling voor dit project en checklist-item.',
+        'Genereer een technisch rapport met koppen en tabellen voor dit project en checklist-item.',
     'context_parameters': 'Contextparameters',
     'ready_to_analyze': 'Klaar voor analyse',
     'project_label': 'Project',
     'no_description_provided': 'Geen checklistbeschrijving opgegeven',
-    'ai_generating': 'Probleemstelling genereren met Groq...',
+    'ai_generating': 'Technisch rapport voorbereiden...',
+    'ai_table_scroll_hint': 'Scroll zijwaarts om alle kolommen te bekijken',
+    'ai_report_notes_preview':
+        'Voorbeeld van het technische rapport om in te voegen:',
+    'ai_invalid_report':
+        'Het AI-rapport is onvolledig of kon niet worden gelezen. Genereer de analyse opnieuw.',
     'ai_paste_to_notes': 'Plakken in notities',
     'ai_append_to_notes': 'Toevoegen aan notities',
     'ai_copied_clipboard': 'Analyse gekopieerd naar klembord',
@@ -610,12 +620,17 @@ const Map<String, Map<String, String>> translations = {
     'ai_analyze_button': 'KI Analyseren',
     'analyze_with_ai': 'Mit KI analysieren',
     'ai_review_subtitle':
-        'Erstelle eine technische Problemstellung für dieses Projekt und Checklisten-Element.',
+        'Erstelle einen technischen Bericht mit Überschriften und Tabellen für dieses Projekt und Checklisten-Element.',
     'context_parameters': 'Kontextparameter',
     'ready_to_analyze': 'Bereit zur Analyse',
     'project_label': 'Projekt',
     'no_description_provided': 'Keine Checklistenbeschreibung angegeben',
-    'ai_generating': 'Erstelle Problemstellung mit Groq...',
+    'ai_generating': 'Technischen Bericht vorbereiten...',
+    'ai_table_scroll_hint': 'Seitlich scrollen, um alle Spalten zu sehen',
+    'ai_report_notes_preview':
+        'Vorschau des technischen Berichts zum Einfügen:',
+    'ai_invalid_report':
+        'Der KI-Bericht ist unvollständig oder konnte nicht gelesen werden. Erstelle die Analyse erneut.',
     'ai_paste_to_notes': 'In Notizen einfügen',
     'ai_append_to_notes': 'An Notizen anhängen',
     'ai_copied_clipboard': 'Analyse in die Zwischenablage kopiert',

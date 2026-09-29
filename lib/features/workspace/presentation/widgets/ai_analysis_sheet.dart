@@ -6,6 +6,8 @@ import '../../../../core/localization/locale_provider.dart';
 import '../../../../core/utils/app_messenger.dart';
 import '../../../../services/groq_service.dart';
 import '../../../dashboard/presentation/theme/dashboard_design.dart';
+import '../../domain/entities/engineering_report.dart';
+import 'engineering_report_view.dart';
 
 class AIAnalysisSheet extends ConsumerStatefulWidget {
   final String projectName;
@@ -41,23 +43,20 @@ class AIAnalysisSheet extends ConsumerStatefulWidget {
 
 class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
   bool _isLoading = false;
-  String? _rawAnalysisResult;
-  List<_AnalysisSection> _parsedSections = [];
+  EngineeringReport? _report;
   String? _errorMessage;
   bool _isMissingKey = false;
-  int _viewModeIndex = 0; // 0: Formatted Cards, 1: Notes Preview
+  int _viewModeIndex = 0; // 0: Report, 1: Notes Preview
 
   @override
   void initState() {
     super.initState();
     if (widget.initialRawAnalysis != null &&
         widget.initialRawAnalysis!.isNotEmpty) {
-      final statement = GroqService.engineeringStatementFrom(
-        widget.initialRawAnalysis!,
-      );
-      if (statement.isNotEmpty) {
-        _rawAnalysisResult = statement;
-        _parsedSections = _parseSections(statement);
+      try {
+        _report = EngineeringReport.fromResponse(widget.initialRawAnalysis!);
+      } on FormatException {
+        _errorMessage = t('ai_invalid_report');
       }
     } else if (widget.autoStart) {
       _isLoading = true;
@@ -101,13 +100,21 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
       );
 
       if (!mounted) return;
-      final statement = GroqService.engineeringStatementFrom(result);
+      final report = EngineeringReport.fromResponse(
+        result,
+        requireTables: true,
+      );
       setState(() {
-        _rawAnalysisResult = statement;
-        _parsedSections = _parseSections(statement);
+        _report = report;
         _isLoading = false;
       });
-      widget.onAnalysisCompleted?.call(statement);
+      widget.onAnalysisCompleted?.call(result);
+    } on FormatException {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _errorMessage = t('ai_invalid_report');
+      });
     } on GroqException catch (e) {
       if (!mounted) return;
       setState(() {
@@ -124,27 +131,7 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
     }
   }
 
-  List<_AnalysisSection> _parseSections(String text) {
-    final statement = GroqService.engineeringStatementFrom(text);
-    if (statement.isEmpty) return [];
-    return [
-      _AnalysisSection(
-        title: 'Engineering-focused version',
-        icon: Icons.precision_manufacturing_outlined,
-        accentColor: const Color(0xFF0D9488),
-        narrative: statement,
-      ),
-    ];
-  }
-
-  String _generateNotesFormattedText() {
-    var statement = _parsedSections.firstOrNull?.narrative.trim() ?? '';
-    if ((statement.startsWith('"') && statement.endsWith('"')) ||
-        (statement.startsWith("'") && statement.endsWith("'"))) {
-      statement = statement.substring(1, statement.length - 1).trim();
-    }
-    return statement;
-  }
+  String _generateNotesFormattedText() => _report?.toNotesText() ?? '';
 
   void _copyToClipboard() {
     final text = _generateNotesFormattedText();
@@ -236,7 +223,8 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
                 ),
               ),
               if (!_isLoading &&
-                  _parsedSections.isNotEmpty &&
+                  _report != null &&
+                  _errorMessage == null &&
                   MediaQuery.sizeOf(context).width >= 520 &&
                   !isInline) ...[
                 // Segmented view switcher (Only on wide desktop/modal screens)
@@ -288,7 +276,7 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
         const Divider(height: 1),
 
         // Context Meta Bar (Shown once analyzed)
-        if (_rawAnalysisResult != null) _buildContextBar(isDark),
+        if (_report != null) _buildContextBar(isDark),
 
         // Main body content
         if (isInline)
@@ -300,7 +288,7 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
           Expanded(child: _buildBody(isDark)),
 
         // Footer action bar
-        if (!_isLoading && _parsedSections.isNotEmpty)
+        if (!_isLoading && _report != null && _errorMessage == null)
           _buildBottomActionBar(isDark),
       ],
     );
@@ -501,7 +489,7 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
       );
     }
 
-    if (_rawAnalysisResult == null) {
+    if (_report == null) {
       return _buildPreAnalysisView(isDark);
     }
 
@@ -510,8 +498,8 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
       return _buildNotesPreviewMode(isDark);
     }
 
-    // Default: Formatted Engineering Report Mode
-    return _buildFormattedCardsMode(isDark);
+    // Engineering report with section headings and tables.
+    return _buildReportMode(isDark);
   }
 
   Widget _buildPreAnalysisView(bool isDark) {
@@ -846,14 +834,16 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
     );
   }
 
-  Widget _buildFormattedCardsMode(bool isDark) {
+  Widget _buildReportMode(bool isDark) {
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Structured Section Cards (Compact & High Signal)
-          ..._parsedSections.map((sec) => _buildSectionCard(sec, isDark)),
+          EngineeringReportView(
+            report: _report!,
+            horizontalScrollHint: t('ai_table_scroll_hint'),
+          ),
           const SizedBox(height: 6),
           // Footnote disclaimer
           Center(
@@ -883,67 +873,6 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
     );
   }
 
-  Widget _buildSectionCard(_AnalysisSection sec, bool isDark) {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 9),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-            decoration: BoxDecoration(
-              color: sec.accentColor.withValues(alpha: isDark ? 0.12 : 0.07),
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(9),
-              ),
-              border: Border(
-                bottom: BorderSide(
-                  color: sec.accentColor.withValues(alpha: 0.18),
-                ),
-              ),
-            ),
-            child: Row(
-              children: [
-                Icon(sec.icon, color: sec.accentColor, size: 15),
-                const SizedBox(width: 8),
-                Text(
-                  sec.title,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
-            child: SelectableText(
-              sec.narrative,
-              style: TextStyle(
-                fontSize: 13,
-                height: 1.52,
-                color: isDark
-                    ? const Color(0xFFE2E8F0)
-                    : const Color(0xFF1E293B),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildNotesPreviewMode(bool isDark) {
     final formattedNotes = _generateNotesFormattedText();
 
@@ -953,7 +882,9 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Preview of engineering statement ready for insertion:',
+            _report!.hasTables
+                ? t('ai_report_notes_preview')
+                : 'Preview of engineering statement ready for insertion:',
             style: TextStyle(
               fontSize: 11.5,
               fontWeight: FontWeight.w600,
@@ -1001,7 +932,8 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
         child: LayoutBuilder(
           builder: (context, constraints) {
             final isNarrow = constraints.maxWidth < 460;
-            return Row(
+            final utilityActions = Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 IconButton(
                   tooltip: 'Copy',
@@ -1017,52 +949,76 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
                   color: DashboardDesign.text(context),
                   onPressed: _startAnalysis,
                 ),
+              ],
+            );
+            final appendButton = OutlinedButton.icon(
+              onPressed: () => _applyToNotes(append: true),
+              icon: const Icon(Icons.playlist_add_rounded, size: 14),
+              label: Text(
+                t('ai_append_to_notes'),
+                style: const TextStyle(fontSize: 11.5),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: DashboardDesign.primary,
+                side: const BorderSide(color: DashboardDesign.primary),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                visualDensity: VisualDensity.compact,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            );
+            final pasteButton = ElevatedButton.icon(
+              onPressed: () => _applyToNotes(append: false),
+              icon: const Icon(Icons.paste_rounded, size: 14),
+              label: Text(
+                t('ai_paste_to_notes'),
+                style: const TextStyle(fontSize: 11.5),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: DashboardDesign.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
+                visualDensity: VisualDensity.compact,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            );
+            if (isNarrow) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      utilityActions,
+                      if (hasExistingNotes)
+                        Expanded(
+                          child: Align(
+                            alignment: Alignment.centerRight,
+                            child: appendButton,
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  pasteButton,
+                ],
+              );
+            }
+            return Row(
+              children: [
+                utilityActions,
                 const Spacer(),
                 if (hasExistingNotes) ...[
-                  OutlinedButton.icon(
-                    onPressed: () => _applyToNotes(append: true),
-                    icon: const Icon(Icons.playlist_add_rounded, size: 14),
-                    label: Text(
-                      isNarrow ? 'Append' : t('ai_append_to_notes'),
-                      style: const TextStyle(fontSize: 11.5),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: DashboardDesign.primary,
-                      side: const BorderSide(color: DashboardDesign.primary),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 5,
-                      ),
-                      visualDensity: VisualDensity.compact,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  ),
+                  appendButton,
                   const SizedBox(width: 6),
                 ],
-                ElevatedButton.icon(
-                  onPressed: () => _applyToNotes(append: false),
-                  icon: const Icon(Icons.paste_rounded, size: 14),
-                  label: Text(
-                    isNarrow ? 'Paste to Notes' : t('ai_paste_to_notes'),
-                    style: const TextStyle(fontSize: 11.5),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: DashboardDesign.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 5,
-                    ),
-                    visualDensity: VisualDensity.compact,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                ),
+                pasteButton,
               ],
             );
           },
@@ -1070,20 +1026,6 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
       ),
     );
   }
-}
-
-class _AnalysisSection {
-  final String title;
-  final IconData icon;
-  final Color accentColor;
-  final String narrative;
-
-  const _AnalysisSection({
-    required this.title,
-    required this.icon,
-    required this.accentColor,
-    required this.narrative,
-  });
 }
 
 class _ViewModeTab extends StatelessWidget {
