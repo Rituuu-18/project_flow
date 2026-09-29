@@ -77,17 +77,21 @@ class EngineeringReport {
     'sections': sections.map((section) => section.toJson()).toList(),
   };
 
-  String toNotesText() {
-    if (!hasTables) {
-      var text = summary.trim();
-      if (text.length >= 2 &&
-          ((text.startsWith('"') && text.endsWith('"')) ||
-              (text.startsWith("'") && text.endsWith("'")))) {
-        text = text.substring(1, text.length - 1).trim();
-      }
-      return text;
+  String toFocusedText() {
+    var text = summary.trim();
+    if (text.length >= 2 &&
+        ((text.startsWith('"') && text.endsWith('"')) ||
+            (text.startsWith("'") && text.endsWith("'")))) {
+      text = text.substring(1, text.length - 1).trim();
     }
-    final output = StringBuffer('# $title\n\n$summary');
+    return text;
+  }
+
+  String toNotesText() {
+    if (!hasTables) return toFocusedText();
+    final output = StringBuffer(
+      '# $title\n\n## Engineering-focused version\n\n${toFocusedText()}',
+    );
     for (final section in sections) {
       output.write('\n\n## ${section.heading}\n\n');
       output.writeln(_markdownRow(section.columns));

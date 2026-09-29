@@ -1,7 +1,7 @@
 const engineeringReportFixture = {
   'title': 'Woodchipper rotor calculations',
   'summary':
-      'Prepare the rotor load cases and sizing calculations from allocated requirements. Operating values, geometry, and acceptance criteria remain to be confirmed.',
+      'Calculate governing cutting loads, rotor torque, and shaft deflection for the woodchipper rotor assembly, tracing each load case to allocated requirements. Verify rotor and knife-retention integrity against agreed stress, deflection, and life criteria. Confirm operating duty, geometry, and acceptance limits before numerical sizing or component decisions.',
   'sections': [
     {
       'heading': 'Required inputs',

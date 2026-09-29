@@ -113,8 +113,8 @@ Supabase PostgreSQL & Storage Buckets (Protected by Row Level Security)
 
 ### 4. On-Demand AI Engineering Analysis
 - **Request Context**: Uses the checklist item, the review name shown as the project name, and the checklist description. Missing context produces an error rather than a generic substitute.
-- **Engineering Output**: Generates a validated report with a technical title, scope summary, and section tables. System definition, engineering calculations, and standard component selection each use an appropriate report layout. Missing inputs are marked for confirmation; numerical results, compliance, and citations must not be invented. Older two-section responses display only their engineering section.
-- **Interaction**: Opening the inline AI panel starts analysis; Regenerate requests another report. Tables wrap their contents and scroll horizontally in narrow panels. Copy and Paste into Notes preserve every heading and table as Markdown text.
+- **Engineering Output**: Shows an engineering-focused summary at the top, followed by a technical report title and section tables. The summary is requested as two to four concise sentences ready to paste into notes. System definition, engineering calculations, and standard component selection each use an appropriate report layout. Missing inputs are marked for confirmation; numerical results, compliance, and citations must not be invented. Older two-section responses display only their engineering section.
+- **Interaction**: Opening the inline AI panel starts analysis; Regenerate requests another report. The top summary has dedicated Copy, Paste, and Append actions. The footer actions copy or insert the full report, including the summary and every table as Markdown text. Tables wrap their contents and scroll horizontally in narrow panels.
 - **Model Selection**: Uses `openai/gpt-oss-120b` first, with configured fallback models when a candidate is unavailable.
 
 ### 5. Design Readiness Level (DRL) Engine (`/project/:id/drl`)

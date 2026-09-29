@@ -49,6 +49,13 @@ void main() {
     (tester) async {
       await pumpReport(tester);
       expect(find.text('Woodchipper rotor calculations'), findsOneWidget);
+      expect(find.text('Engineering-focused version'), findsOneWidget);
+      expect(
+        tester.getTopLeft(find.text('Engineering-focused version')).dy,
+        lessThan(
+          tester.getTopLeft(find.text('Woodchipper rotor calculations')).dy,
+        ),
+      );
       expect(find.text('Required inputs'), findsOneWidget);
       expect(find.text('Calculation sequence'), findsOneWidget);
       expect(find.text('Traceability and acceptance'), findsOneWidget);
@@ -108,7 +115,7 @@ void main() {
       ),
     );
     await pumpReport(tester, onApply: (text, _) => appliedText = text);
-    await tester.tap(find.byTooltip('Copy'));
+    await tester.tap(find.byTooltip('Copy full report'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Notes'));
     await tester.pumpAndSettle();
@@ -116,7 +123,7 @@ void main() {
       find.text('Preview of engineering report ready for insertion:'),
       findsOneWidget,
     );
-    await tester.tap(find.widgetWithText(ElevatedButton, 'Paste into Notes'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Paste full report'));
     await tester.pumpAndSettle();
     final expected = EngineeringReport.fromResponse(
       jsonEncode(engineeringReportFixture),
@@ -131,6 +138,58 @@ void main() {
       ),
     );
   });
+
+  testWidgets('top copy action copies only the engineering-focused summary', (
+    tester,
+  ) async {
+    String? copiedText;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'Clipboard.setData') {
+          copiedText = (call.arguments as Map)['text'] as String;
+        }
+        return null;
+      },
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      ),
+    );
+    await pumpReport(tester, width: 390);
+    await tester.tap(find.widgetWithText(TextButton, 'Copy summary'));
+    await tester.pumpAndSettle();
+    expect(copiedText, engineeringReportFixture['summary']);
+    expect(copiedText, isNot(contains('|')));
+  });
+
+  for (final append in [false, true]) {
+    testWidgets('top summary action preserves the append flag: $append', (
+      tester,
+    ) async {
+      String? appliedText;
+      bool? appliedAppend;
+      await pumpReport(
+        tester,
+        width: 390,
+        onApply: (text, shouldAppend) {
+          appliedText = text;
+          appliedAppend = shouldAppend;
+        },
+      );
+      await tester.ensureVisible(
+        find.text(append ? 'Append summary' : 'Paste summary'),
+      );
+      await tester.tap(find.text(append ? 'Append summary' : 'Paste summary'));
+      await tester.pumpAndSettle();
+      expect(appliedText, engineeringReportFixture['summary']);
+      expect(appliedAppend, append);
+      expect(appliedText, isNot(contains('Required inputs')));
+      expect(tester.takeException(), isNull);
+    });
+  }
 
   testWidgets(
     'malformed cached report shows a recovery action without raw JSON',

@@ -133,15 +133,19 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
 
   String _generateNotesFormattedText() => _report?.toNotesText() ?? '';
 
-  void _copyToClipboard() {
-    final text = _generateNotesFormattedText();
+  void _copyToClipboard({bool summaryOnly = false}) {
+    final text = summaryOnly
+        ? _report?.toFocusedText() ?? ''
+        : _generateNotesFormattedText();
     if (text.isEmpty) return;
     Clipboard.setData(ClipboardData(text: text));
     AppMessenger.info(t('ai_copied_clipboard'));
   }
 
-  void _applyToNotes({required bool append}) {
-    final text = _generateNotesFormattedText();
+  void _applyToNotes({required bool append, bool summaryOnly = false}) {
+    final text = summaryOnly
+        ? _report?.toFocusedText() ?? ''
+        : _generateNotesFormattedText();
     if (text.isEmpty) return;
     widget.onApplyNotes(text, append);
     if (widget.onClose != null) {
@@ -843,6 +847,31 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
           EngineeringReportView(
             report: _report!,
             horizontalScrollHint: t('ai_table_scroll_hint'),
+            focusedHeading: t('ai_engineering_focused_version'),
+            summaryActions: Wrap(
+              spacing: 8,
+              runSpacing: 6,
+              children: [
+                TextButton.icon(
+                  onPressed: () => _copyToClipboard(summaryOnly: true),
+                  icon: const Icon(Icons.copy_rounded, size: 16),
+                  label: Text(t('ai_copy_summary')),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () =>
+                      _applyToNotes(append: false, summaryOnly: true),
+                  icon: const Icon(Icons.paste_rounded, size: 16),
+                  label: Text(t('ai_paste_summary')),
+                ),
+                if (widget.existingNotes.trim().isNotEmpty)
+                  TextButton.icon(
+                    onPressed: () =>
+                        _applyToNotes(append: true, summaryOnly: true),
+                    icon: const Icon(Icons.playlist_add_rounded, size: 16),
+                    label: Text(t('ai_append_summary')),
+                  ),
+              ],
+            ),
           ),
           const SizedBox(height: 6),
           // Footnote disclaimer
@@ -920,6 +949,7 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
 
   Widget _buildBottomActionBar(bool isDark) {
     final hasExistingNotes = widget.existingNotes.trim().isNotEmpty;
+    final hasTables = _report!.hasTables;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -931,12 +961,12 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
         top: false,
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final isNarrow = constraints.maxWidth < 460;
+            final isNarrow = constraints.maxWidth < (hasTables ? 620 : 460);
             final utilityActions = Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 IconButton(
-                  tooltip: 'Copy',
+                  tooltip: hasTables ? t('ai_copy_full_report') : 'Copy',
                   icon: const Icon(Icons.copy_rounded, size: 17),
                   visualDensity: VisualDensity.compact,
                   color: DashboardDesign.text(context),
@@ -955,7 +985,9 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
               onPressed: () => _applyToNotes(append: true),
               icon: const Icon(Icons.playlist_add_rounded, size: 14),
               label: Text(
-                t('ai_append_to_notes'),
+                hasTables
+                    ? t('ai_append_full_report')
+                    : t('ai_append_to_notes'),
                 style: const TextStyle(fontSize: 11.5),
               ),
               style: OutlinedButton.styleFrom(
@@ -972,7 +1004,7 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
               onPressed: () => _applyToNotes(append: false),
               icon: const Icon(Icons.paste_rounded, size: 14),
               label: Text(
-                t('ai_paste_to_notes'),
+                hasTables ? t('ai_paste_full_report') : t('ai_paste_to_notes'),
                 style: const TextStyle(fontSize: 11.5),
               ),
               style: ElevatedButton.styleFrom(

@@ -18,6 +18,9 @@ void main() {
     final notes = report.toNotesText();
     expect(notes, startsWith('# Woodchipper rotor calculations'));
     expect(notes, contains('## Required inputs'));
+    expect(notes, contains('## Engineering-focused version'));
+    expect(report.toFocusedText(), engineeringReportFixture['summary']);
+    expect(report.toFocusedText(), isNot(contains('## Required inputs')));
     expect(notes, contains('## Calculation sequence'));
     expect(notes, contains('## Traceability and acceptance'));
     expect(

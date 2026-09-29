@@ -196,6 +196,13 @@ const Map<String, Map<String, String>> translations = {
     'no_description_provided': 'No checklist description provided',
     'ai_generating': 'Preparing engineering report...',
     'ai_table_scroll_hint': 'Scroll sideways to view all columns',
+    'ai_engineering_focused_version': 'Engineering-focused version',
+    'ai_copy_summary': 'Copy summary',
+    'ai_paste_summary': 'Paste summary',
+    'ai_append_summary': 'Append summary',
+    'ai_copy_full_report': 'Copy full report',
+    'ai_paste_full_report': 'Paste full report',
+    'ai_append_full_report': 'Append full report',
     'ai_report_notes_preview':
         'Preview of engineering report ready for insertion:',
     'ai_invalid_report':
@@ -414,6 +421,13 @@ const Map<String, Map<String, String>> translations = {
     'no_description_provided': 'Geen checklistbeschrijving opgegeven',
     'ai_generating': 'Technisch rapport voorbereiden...',
     'ai_table_scroll_hint': 'Scroll zijwaarts om alle kolommen te bekijken',
+    'ai_engineering_focused_version': 'Technische versie',
+    'ai_copy_summary': 'Samenvatting kopiëren',
+    'ai_paste_summary': 'Samenvatting plakken',
+    'ai_append_summary': 'Samenvatting toevoegen',
+    'ai_copy_full_report': 'Volledig rapport kopiëren',
+    'ai_paste_full_report': 'Volledig rapport plakken',
+    'ai_append_full_report': 'Volledig rapport toevoegen',
     'ai_report_notes_preview':
         'Voorbeeld van het technische rapport om in te voegen:',
     'ai_invalid_report':
@@ -627,6 +641,13 @@ const Map<String, Map<String, String>> translations = {
     'no_description_provided': 'Keine Checklistenbeschreibung angegeben',
     'ai_generating': 'Technischen Bericht vorbereiten...',
     'ai_table_scroll_hint': 'Seitlich scrollen, um alle Spalten zu sehen',
+    'ai_engineering_focused_version': 'Technische Version',
+    'ai_copy_summary': 'Zusammenfassung kopieren',
+    'ai_paste_summary': 'Zusammenfassung einfügen',
+    'ai_append_summary': 'Zusammenfassung anhängen',
+    'ai_copy_full_report': 'Vollständigen Bericht kopieren',
+    'ai_paste_full_report': 'Vollständigen Bericht einfügen',
+    'ai_append_full_report': 'Vollständigen Bericht anhängen',
     'ai_report_notes_preview':
         'Vorschau des technischen Berichts zum Einfügen:',
     'ai_invalid_report':
