@@ -120,6 +120,9 @@ void main() {
       final inlineSheet =
           tester.widget<AIAnalysisSheet>(find.byType(AIAnalysisSheet));
       expect(inlineSheet.isInline, isTrue);
+      expect(inlineSheet.projectName, 'Pump Housing');
+      expect(inlineSheet.checklistItem, isNotEmpty);
+      expect(inlineSheet.itemDescription, isNotEmpty);
 
       // Verify no modal bottom sheet route was pushed (ModalBarrier count stays at 1 for root route)
       expect(find.byType(ModalBarrier), findsOneWidget);

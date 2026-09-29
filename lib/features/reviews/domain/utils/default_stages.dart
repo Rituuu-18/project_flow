@@ -154,17 +154,17 @@ const Map<String, StageDefaultContent> defaultStageContent = {
             'Clarify that the PDR must confirm requirement allocation, architecture soundness, major risks, and mitigation plans. Set entry and exit criteria such as required maturity, analyses available, and documents ready before the meeting.',
         discipline: 'Systems Engineering',
       ),
+      'Define systems, subsystems, and interfaces': SubStepDefaultInfo(
+        description:
+            'Decompose the product into systems and subsystems; allocate functions and requirements; define key physical, electrical, fluid, software, and user interfaces; and establish preliminary performance targets. This aligns directly with the purpose of PDR and the allocated baseline.',
+        discipline: 'Systems Engineering',
+      ),
       'Perform engineering calculations from allocated requirements':
           SubStepDefaultInfo(
             description:
                 'Calculate loads, stresses, deflection, torque, power, thermal behavior, fatigue life, safety factors, flow, pressure, or other relevant engineering parameters for the selected concept. Trace calculations back to the project and subsystem requirements.',
             discipline: 'Design Engineering',
           ),
-      'Define systems, subsystems, and interfaces': SubStepDefaultInfo(
-        description:
-            'Decompose the product into systems and subsystems; allocate functions and requirements; define key physical, electrical, fluid, software, and user interfaces; and establish preliminary performance targets. This aligns directly with the purpose of PDR and the allocated baseline.',
-        discipline: 'Systems Engineering',
-      ),
       'Select and justify candidate standard components': SubStepDefaultInfo(
         description:
             'Select preliminary standard components—bearings, bolts, fasteners, seals, springs, motors, sensors, gears, couplings, valves, and similar items—using the engineering calculations, interface needs, standards, environmental conditions, supply risk, cost, and manufacturability as selection criteria. Record alternatives and the selection rationale.',

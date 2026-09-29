@@ -412,7 +412,6 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
   Widget _buildInlineAIPanel(BuildContext context) {
     if (_currentData == null) return const SizedBox.shrink();
     final t = ref.read(localeProvider.notifier).t;
-    final stageDesc = defaultStageContent[widget.stageName]?.description;
     final defaultInfo = getDefaultSubStepInfo(
       stageName: widget.stageName,
       subStepName: widget.subStepName,
@@ -420,11 +419,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
     final rawItemDesc = _currentData!.itemDescription.trim();
     final effectiveDescription = rawItemDesc.isNotEmpty
         ? rawItemDesc
-        : (defaultInfo.description.trim().isNotEmpty
-            ? defaultInfo.description.trim()
-            : (_currentData!.problemStatement.trim().isNotEmpty
-                ? _currentData!.problemStatement.trim()
-                : (stageDesc ?? '')));
+        : defaultInfo.description.trim();
 
     final checklist = _currentData!.checklistItem.isEmpty
         ? widget.subStepName
@@ -435,45 +430,12 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
         ?.where((r) => r.id == widget.reviewId)
         .firstOrNull;
 
-    final discipline = _disciplineController.text.trim().isNotEmpty
-        ? _disciplineController.text.trim()
-        : _currentData!.discipline;
-
-    final priority = _priorityController.text.trim().isNotEmpty
-        ? _priorityController.text.trim()
-        : _currentData!.priority;
-
-    final assignee = _assigneeController.text.trim().isNotEmpty
-        ? _assigneeController.text.trim()
-        : _currentData!.assignee;
-
-    final engineeringComments =
-        _engineeringCommentsController.text.trim().isNotEmpty
-            ? _engineeringCommentsController.text.trim()
-            : _currentData!.engineeringComments;
-
-    final actionDescription = _actionDescController.text.trim().isNotEmpty
-        ? _actionDescController.text.trim()
-        : _currentData!.actionDescription;
-
     return AIAnalysisSheet(
       key: ValueKey('ai_analysis_${widget.workspaceId}'),
-      projectName: widget.projectName,
-      projectOwner: currentReview?.owner,
-      projectStatus: currentReview?.status.name,
+      projectName: currentReview?.name ?? widget.projectName,
       stageName: widget.stageName,
-      stageDescription: stageDesc,
-      subStepName: widget.subStepName,
       checklistItem: checklist,
       itemDescription: effectiveDescription,
-      discipline: discipline,
-      priority: priority,
-      assignee: assignee,
-      problemStatement: _currentData!.problemStatement,
-      scopeIn: _currentData!.scopeIn,
-      scopeOut: _currentData!.scopeOut,
-      engineeringComments: engineeringComments,
-      actionDescription: actionDescription,
       existingNotes: _notesController.text,
       initialRawAnalysis: _cachedAIAnalysis,
       isInline: true,

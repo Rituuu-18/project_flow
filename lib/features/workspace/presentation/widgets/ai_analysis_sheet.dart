@@ -9,21 +9,9 @@ import '../../../dashboard/presentation/theme/dashboard_design.dart';
 
 class AIAnalysisSheet extends ConsumerStatefulWidget {
   final String projectName;
-  final String? projectOwner;
-  final String? projectStatus;
   final String stageName;
-  final String? stageDescription;
-  final String? subStepName;
   final String checklistItem;
   final String itemDescription;
-  final String discipline;
-  final String? priority;
-  final String? assignee;
-  final String? problemStatement;
-  final List<String>? scopeIn;
-  final List<String>? scopeOut;
-  final String? engineeringComments;
-  final String? actionDescription;
   final String existingNotes;
   final void Function(String text, bool append) onApplyNotes;
   final String? initialRawAnalysis;
@@ -35,21 +23,9 @@ class AIAnalysisSheet extends ConsumerStatefulWidget {
   const AIAnalysisSheet({
     super.key,
     required this.projectName,
-    this.projectOwner,
-    this.projectStatus,
     required this.stageName,
-    this.stageDescription,
-    this.subStepName,
     required this.checklistItem,
     required this.itemDescription,
-    required this.discipline,
-    this.priority,
-    this.assignee,
-    this.problemStatement,
-    this.scopeIn,
-    this.scopeOut,
-    this.engineeringComments,
-    this.actionDescription,
     required this.existingNotes,
     required this.onApplyNotes,
     this.initialRawAnalysis,
@@ -58,62 +34,6 @@ class AIAnalysisSheet extends ConsumerStatefulWidget {
     this.autoStart = false,
     this.onAnalysisCompleted,
   });
-
-  static Future<void> show(
-    BuildContext context, {
-    required String projectName,
-    String? projectOwner,
-    String? projectStatus,
-    required String stageName,
-    String? stageDescription,
-    String? subStepName,
-    required String checklistItem,
-    required String itemDescription,
-    required String discipline,
-    String? priority,
-    String? assignee,
-    String? problemStatement,
-    List<String>? scopeIn,
-    List<String>? scopeOut,
-    String? engineeringComments,
-    String? actionDescription,
-    required String existingNotes,
-    required void Function(String text, bool append) onApplyNotes,
-  }) {
-    return showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(ctx).viewInsets.bottom,
-        ),
-        child: FractionallySizedBox(
-          heightFactor: 0.78,
-          child: AIAnalysisSheet(
-            projectName: projectName,
-            projectOwner: projectOwner,
-            projectStatus: projectStatus,
-            stageName: stageName,
-            stageDescription: stageDescription,
-            subStepName: subStepName,
-            checklistItem: checklistItem,
-            itemDescription: itemDescription,
-            discipline: discipline,
-            priority: priority,
-            assignee: assignee,
-            problemStatement: problemStatement,
-            scopeIn: scopeIn,
-            scopeOut: scopeOut,
-            engineeringComments: engineeringComments,
-            actionDescription: actionDescription,
-            existingNotes: existingNotes,
-            onApplyNotes: onApplyNotes,
-          ),
-        ),
-      ),
-    );
-  }
 
   @override
   ConsumerState<AIAnalysisSheet> createState() => _AIAnalysisSheetState();
@@ -126,14 +46,19 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
   String? _errorMessage;
   bool _isMissingKey = false;
   int _viewModeIndex = 0; // 0: Formatted Cards, 1: Notes Preview
- 
+
   @override
   void initState() {
     super.initState();
     if (widget.initialRawAnalysis != null &&
         widget.initialRawAnalysis!.isNotEmpty) {
-      _rawAnalysisResult = widget.initialRawAnalysis;
-      _parsedSections = _parseSections(widget.initialRawAnalysis!);
+      final statement = GroqService.engineeringStatementFrom(
+        widget.initialRawAnalysis!,
+      );
+      if (statement.isNotEmpty) {
+        _rawAnalysisResult = statement;
+        _parsedSections = _parseSections(statement);
+      }
     } else if (widget.autoStart) {
       _isLoading = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -150,14 +75,6 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
   String get _effectiveDescription {
     if (widget.itemDescription.trim().isNotEmpty) {
       return widget.itemDescription.trim();
-    }
-    if (widget.problemStatement != null &&
-        widget.problemStatement!.trim().isNotEmpty) {
-      return widget.problemStatement!.trim();
-    }
-    if (widget.stageDescription != null &&
-        widget.stageDescription!.trim().isNotEmpty) {
-      return widget.stageDescription!.trim();
     }
     return t('no_description_provided');
   }
@@ -178,32 +95,19 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
 
     try {
       final result = await GroqService.analyzeSubStep(
-        projectName: _effectiveProjectName,
-        projectOwner: widget.projectOwner,
-        projectStatus: widget.projectStatus,
-        stageName: widget.stageName,
-        stageDescription: widget.stageDescription,
-        subStepName: widget.subStepName,
+        projectName: widget.projectName,
         checklistItem: widget.checklistItem,
-        itemDescription: _effectiveDescription,
-        discipline: widget.discipline,
-        priority: widget.priority,
-        assignee: widget.assignee,
-        problemStatement: widget.problemStatement,
-        scopeIn: widget.scopeIn,
-        scopeOut: widget.scopeOut,
-        engineeringComments: widget.engineeringComments,
-        actionDescription: widget.actionDescription,
-        existingNotes: widget.existingNotes,
+        itemDescription: widget.itemDescription,
       );
 
       if (!mounted) return;
+      final statement = GroqService.engineeringStatementFrom(result);
       setState(() {
-        _rawAnalysisResult = result;
-        _parsedSections = _parseSections(result);
+        _rawAnalysisResult = statement;
+        _parsedSections = _parseSections(statement);
         _isLoading = false;
       });
-      widget.onAnalysisCompleted?.call(result);
+      widget.onAnalysisCompleted?.call(statement);
     } on GroqException catch (e) {
       if (!mounted) return;
       setState(() {
@@ -220,188 +124,26 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
     }
   }
 
-  /// Parses the raw AI response into cleanly structured sections with narrative and bullets.
   List<_AnalysisSection> _parseSections(String text) {
-    final sections = <_AnalysisSection>[];
-    final lines = text.split('\n');
-
-    String currentTitle = '';
-    final currentBullets = <_AnalysisBullet>[];
-    final currentNarrative = StringBuffer();
-
-    void commitCurrentSection() {
-      final narrativeText = currentNarrative.toString().trim();
-      if (currentTitle.isNotEmpty &&
-          (currentBullets.isNotEmpty || narrativeText.isNotEmpty)) {
-        final config = _getSectionConfig(currentTitle);
-        sections.add(_AnalysisSection(
-          title: config.cleanTitle,
-          icon: config.icon,
-          accentColor: config.color,
-          bullets: List.from(currentBullets),
-          narrative: narrativeText.isNotEmpty ? narrativeText : null,
-        ));
-      }
-      currentBullets.clear();
-      currentNarrative.clear();
-    }
-
-    for (final rawLine in lines) {
-      final line = rawLine.trim();
-      if (line.isEmpty) continue;
-
-      // Check if line is a section header (e.g., "### 1. GENERAL PROBLEM STATEMENT")
-      final isHeader = line.startsWith('#') ||
-          (line.toUpperCase() == line &&
-              line.length > 5 &&
-              !line.startsWith('•') &&
-              !line.startsWith('-') &&
-              !line.startsWith('>'));
-
-      if (isHeader) {
-        commitCurrentSection();
-        // Clean title
-        var cleaned = line.replaceAll(RegExp(r'^[#\s\d\.\-:]+'), '').trim();
-        cleaned = cleaned.replaceAll('###', '').replaceAll('##', '').trim();
-        currentTitle = cleaned;
-      } else if (line.startsWith('•') ||
-          line.startsWith('-') ||
-          line.startsWith('*')) {
-        // Bullet item
-        var bulletText = line.replaceFirst(RegExp(r'^[•\-\*]\s*'), '').trim();
-        // Extract bold title prefix if present: **Title**: Body
-        final boldMatch =
-            RegExp(r'^\*\*(.+?)\*\*(?:\s*[:\-–]\s*|\s+)(.*)$').firstMatch(bulletText);
-        if (boldMatch != null) {
-          final prefix = boldMatch.group(1)?.trim();
-          final body = boldMatch.group(2)?.trim() ?? '';
-          currentBullets.add(_AnalysisBullet(prefix: prefix, body: body));
-        } else {
-          currentBullets.add(_AnalysisBullet(prefix: null, body: bulletText));
-        }
-      } else if (currentBullets.isNotEmpty) {
-        // Continuation line of previous bullet
-        final last = currentBullets.removeLast();
-        currentBullets.add(_AnalysisBullet(
-          prefix: last.prefix,
-          body: '${last.body} $line',
-        ));
-      } else if (currentTitle.isNotEmpty) {
-        // Narrative paragraph under this section
-        final cleanText = line.replaceFirst(RegExp(r'^>\s*'), '').trim();
-        if (cleanText.isNotEmpty) {
-          if (currentNarrative.isNotEmpty) currentNarrative.write(' ');
-          currentNarrative.write(cleanText);
-        }
-      }
-    }
-
-    commitCurrentSection();
-
-    // Ensure Engineering-focused section appears above General problem statement
-    sections.sort((a, b) {
-      final aIsEng = a.title.toLowerCase().contains('engineering');
-      final bIsEng = b.title.toLowerCase().contains('engineering');
-      if (aIsEng && !bIsEng) return -1;
-      if (!aIsEng && bIsEng) return 1;
-      return 0;
-    });
-
-    // Fallback: If no structured sections were detected, package as a single engineering section
-    if (sections.isEmpty && text.trim().isNotEmpty) {
-      sections.add(_AnalysisSection(
+    final statement = GroqService.engineeringStatementFrom(text);
+    if (statement.isEmpty) return [];
+    return [
+      _AnalysisSection(
         title: 'Engineering-focused version',
         icon: Icons.precision_manufacturing_outlined,
         accentColor: const Color(0xFF0D9488),
-        bullets: const [],
-        narrative: text.trim(),
-      ));
-    }
-
-    return sections;
+        narrative: statement,
+      ),
+    ];
   }
 
-  _SectionConfig _getSectionConfig(String rawTitle) {
-    final upper = rawTitle.toUpperCase();
-    if (upper.contains('ENGINEERING')) {
-      return const _SectionConfig(
-        cleanTitle: 'Engineering-focused version',
-        icon: Icons.precision_manufacturing_outlined,
-        color: Color(0xFF0D9488), // Teal
-        isCallout: true,
-      );
-    } else if (upper.contains('GENERAL') ||
-        (upper.contains('PROBLEM') && !upper.contains('ENGINEERING'))) {
-      return const _SectionConfig(
-        cleanTitle: 'General problem statement',
-        icon: Icons.lightbulb_outline_rounded,
-        color: Color(0xFF0284C7), // Sky Blue
-        isCallout: true,
-      );
-    } else if (upper.contains('CHECK') || upper.contains('VERIFICATION')) {
-      return const _SectionConfig(
-        cleanTitle: 'KEY CHECKS',
-        icon: Icons.verified_outlined,
-        color: Color(0xFF2563EB), // Royal Blue
-      );
-    } else if (upper.contains('RISK') || upper.contains('FAILURE')) {
-      return const _SectionConfig(
-        cleanTitle: 'KEY RISKS',
-        icon: Icons.warning_amber_rounded,
-        color: Color(0xFFD97706), // Amber
-      );
-    } else if (upper.contains('ACTION') || upper.contains('STEP')) {
-      return const _SectionConfig(
-        cleanTitle: 'NEXT ACTIONS',
-        icon: Icons.task_alt_rounded,
-        color: Color(0xFF7C3AED), // Purple
-      );
-    } else if (upper.contains('EVIDENCE') || upper.contains('ARTIFACT')) {
-      return const _SectionConfig(
-        cleanTitle: 'RECOMMENDED EVIDENCE',
-        icon: Icons.folder_shared_outlined,
-        color: Color(0xFF059669), // Emerald
-      );
-    }
-
-    return _SectionConfig(
-      cleanTitle: rawTitle,
-      icon: Icons.checklist_rounded,
-      color: DashboardDesign.primary,
-    );
-  }
-
-  /// Extracts exclusively the engineering-focused statement for Notes insertion and clipboard.
   String _generateNotesFormattedText() {
-    if (_parsedSections.isEmpty) {
-      return _rawAnalysisResult?.trim() ?? '';
+    var statement = _parsedSections.firstOrNull?.narrative.trim() ?? '';
+    if ((statement.startsWith('"') && statement.endsWith('"')) ||
+        (statement.startsWith("'") && statement.endsWith("'"))) {
+      statement = statement.substring(1, statement.length - 1).trim();
     }
-
-    // Target the Engineering-focused version section exclusively
-    final enggSection = _parsedSections.firstWhere(
-      (sec) => sec.title.toLowerCase().contains('engineering'),
-      orElse: () => _parsedSections.first,
-    );
-
-    var narrative = enggSection.narrative?.trim();
-    if (narrative != null && narrative.isNotEmpty) {
-      if ((narrative.startsWith('"') && narrative.endsWith('"')) ||
-          (narrative.startsWith("'") && narrative.endsWith("'"))) {
-        narrative = narrative.substring(1, narrative.length - 1).trim();
-      }
-      return narrative;
-    }
-
-    if (enggSection.bullets.isNotEmpty) {
-      return enggSection.bullets.map((b) {
-        if (b.prefix != null && b.prefix!.isNotEmpty) {
-          return '• ${b.prefix}: ${b.body}';
-        }
-        return '• ${b.body}';
-      }).join('\n').trim();
-    }
-
-    return _rawAnalysisResult?.trim() ?? '';
+    return statement;
   }
 
   void _copyToClipboard() {
@@ -493,7 +235,10 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
                   ],
                 ),
               ),
-              if (!_isLoading && _parsedSections.isNotEmpty && MediaQuery.sizeOf(context).width >= 520 && !isInline) ...[
+              if (!_isLoading &&
+                  _parsedSections.isNotEmpty &&
+                  MediaQuery.sizeOf(context).width >= 520 &&
+                  !isInline) ...[
                 // Segmented view switcher (Only on wide desktop/modal screens)
                 Container(
                   decoration: BoxDecoration(
@@ -552,9 +297,7 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
             child: _buildBody(isDark),
           )
         else
-          Expanded(
-            child: _buildBody(isDark),
-          ),
+          Expanded(child: _buildBody(isDark)),
 
         // Footer action bar
         if (!_isLoading && _parsedSections.isNotEmpty)
@@ -570,8 +313,9 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
               : const Color(0xFFF8FAFC),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: DashboardDesign.primary
-                .withValues(alpha: isDark ? 0.35 : 0.22),
+            color: DashboardDesign.primary.withValues(
+              alpha: isDark ? 0.35 : 0.22,
+            ),
             width: 1.2,
           ),
           boxShadow: [
@@ -603,20 +347,6 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
     );
   }
 
-  Color _getPriorityColor(String priority) {
-    switch (priority.toLowerCase()) {
-      case 'high':
-      case 'critical':
-        return Colors.redAccent;
-      case 'medium':
-        return Colors.amber.shade700;
-      case 'low':
-        return Colors.blueAccent;
-      default:
-        return DashboardDesign.primary;
-    }
-  }
-
   Widget _buildContextBar(bool isDark) {
     return Container(
       width: double.infinity,
@@ -642,45 +372,10 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
             ),
             const SizedBox(width: 6),
             _buildMetaBadge(
-              icon: Icons.layers_outlined,
-              text: widget.stageName,
+              icon: Icons.check_circle_outline_rounded,
+              text: widget.checklistItem,
               isDark: isDark,
             ),
-            if (widget.discipline.trim().isNotEmpty) ...[
-              const SizedBox(width: 6),
-              _buildMetaBadge(
-                icon: Icons.engineering_outlined,
-                text: widget.discipline.trim(),
-                isDark: isDark,
-              ),
-            ],
-            if (widget.priority != null && widget.priority!.trim().isNotEmpty) ...[
-              const SizedBox(width: 6),
-              _buildMetaBadge(
-                icon: Icons.flag_outlined,
-                text: widget.priority!.trim(),
-                badgeColor: _getPriorityColor(widget.priority!.trim()),
-                isDark: isDark,
-              ),
-            ],
-            if (widget.assignee != null && widget.assignee!.trim().isNotEmpty) ...[
-              const SizedBox(width: 6),
-              _buildMetaBadge(
-                icon: Icons.person_outline_rounded,
-                text: widget.assignee!.trim(),
-                isDark: isDark,
-              ),
-            ],
-            if (widget.problemStatement != null &&
-                widget.problemStatement!.trim().isNotEmpty) ...[
-              const SizedBox(width: 6),
-              _buildMetaBadge(
-                icon: Icons.task_alt_rounded,
-                text: 'Scope Included',
-                badgeColor: const Color(0xFF059669),
-                isDark: isDark,
-              ),
-            ],
           ],
         ),
       ),
@@ -690,14 +385,10 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
   Widget _buildMetaBadge({
     required IconData icon,
     required String text,
-    Color? badgeColor,
     required bool isDark,
   }) {
-    final color = badgeColor ??
-        (isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569));
-    final bg = badgeColor != null
-        ? badgeColor.withValues(alpha: isDark ? 0.16 : 0.1)
-        : (isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0));
+    final color = isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569);
+    final bg = isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
@@ -753,7 +444,7 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Analyzing ${widget.checklistItem} (${widget.discipline})',
+                'Analyzing ${widget.checklistItem} for $_effectiveProjectName',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 12,
@@ -839,7 +530,9 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
                   width: 52,
                   height: 52,
                   decoration: BoxDecoration(
-                    color: DashboardDesign.primary.withValues(alpha: isDark ? 0.16 : 0.1),
+                    color: DashboardDesign.primary.withValues(
+                      alpha: isDark ? 0.16 : 0.1,
+                    ),
                     shape: BoxShape.circle,
                     border: Border.all(
                       color: DashboardDesign.primary.withValues(alpha: 0.3),
@@ -879,17 +572,21 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
               ),
               const SizedBox(height: 20),
 
-              // Context Parameters Card (Highlighting Project Name & Description)
+              // The three fields used by the AI request.
               Container(
                 decoration: BoxDecoration(
                   color: isDark ? const Color(0xFF1E293B) : Colors.white,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                    color: isDark
+                        ? const Color(0xFF334155)
+                        : const Color(0xFFE2E8F0),
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.03),
+                      color: Colors.black.withValues(
+                        alpha: isDark ? 0.15 : 0.03,
+                      ),
                       blurRadius: 6,
                       offset: const Offset(0, 2),
                     ),
@@ -900,13 +597,17 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
                   children: [
                     // Card Header
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 9,
+                      ),
                       decoration: BoxDecoration(
                         color: isDark
                             ? const Color(0xFF0F172A).withValues(alpha: 0.5)
                             : const Color(0xFFF8FAFC),
-                        borderRadius:
-                            const BorderRadius.vertical(top: Radius.circular(11)),
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(11),
+                        ),
                         border: Border(
                           bottom: BorderSide(
                             color: isDark
@@ -943,7 +644,20 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // 1. Project Name (Highlight)
+                          _buildContextParamRow(
+                            icon: Icons.check_circle_outline_rounded,
+                            iconColor: DashboardDesign.primary,
+                            label: t('checklist_item'),
+                            value: widget.checklistItem,
+                            isDark: isDark,
+                            isBold: true,
+                          ),
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 10),
+                            child: Divider(height: 1),
+                          ),
+
+                          // Project name from the review.
                           _buildContextParamRow(
                             icon: Icons.folder_open_rounded,
                             iconColor: const Color(0xFF3B82F6),
@@ -957,60 +671,16 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
                             child: Divider(height: 1),
                           ),
 
-                          // 2. Description & Scope (Highlight)
+                          // Canonical checklist description.
                           _buildContextParamRow(
                             icon: Icons.description_outlined,
                             iconColor: const Color(0xFF10B981),
-                            label: t('description_label'),
+                            label: t('checklist_description'),
                             value: _effectiveDescription,
                             isDark: isDark,
                             isMutedIfEmpty:
-                                _effectiveDescription == t('no_description_provided'),
-                          ),
-
-                          const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 10),
-                            child: Divider(height: 1),
-                          ),
-
-                          // Secondary Badges Row
-                          Wrap(
-                            spacing: 6,
-                            runSpacing: 6,
-                            children: [
-                              _buildMetaBadge(
-                                icon: Icons.layers_outlined,
-                                text: widget.stageName,
-                                isDark: isDark,
-                              ),
-                              _buildMetaBadge(
-                                icon: Icons.check_circle_outline_rounded,
-                                text: widget.checklistItem,
-                                isDark: isDark,
-                              ),
-                              if (widget.discipline.trim().isNotEmpty)
-                                _buildMetaBadge(
-                                  icon: Icons.engineering_outlined,
-                                  text: widget.discipline.trim(),
-                                  isDark: isDark,
-                                ),
-                              if (widget.priority != null &&
-                                  widget.priority!.trim().isNotEmpty)
-                                _buildMetaBadge(
-                                  icon: Icons.flag_outlined,
-                                  text: widget.priority!.trim(),
-                                  badgeColor:
-                                      _getPriorityColor(widget.priority!.trim()),
-                                  isDark: isDark,
-                                ),
-                              if (widget.assignee != null &&
-                                  widget.assignee!.trim().isNotEmpty)
-                                _buildMetaBadge(
-                                  icon: Icons.person_outline_rounded,
-                                  text: widget.assignee!.trim(),
-                                  isDark: isDark,
-                                ),
-                            ],
+                                _effectiveDescription ==
+                                t('no_description_provided'),
                           ),
                         ],
                       ),
@@ -1102,7 +772,9 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: isBold ? FontWeight.w600 : FontWeight.w400,
-                  fontStyle: isMutedIfEmpty ? FontStyle.italic : FontStyle.normal,
+                  fontStyle: isMutedIfEmpty
+                      ? FontStyle.italic
+                      : FontStyle.normal,
                   color: isMutedIfEmpty
                       ? DashboardDesign.mutedText(context)
                       : DashboardDesign.text(context),
@@ -1181,9 +853,7 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Structured Section Cards (Compact & High Signal)
-          ..._parsedSections.map(
-            (sec) => _buildSectionCard(sec, isDark),
-          ),
+          ..._parsedSections.map((sec) => _buildSectionCard(sec, isDark)),
           const SizedBox(height: 6),
           // Footnote disclaimer
           Center(
@@ -1214,10 +884,6 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
   }
 
   Widget _buildSectionCard(_AnalysisSection sec, bool isDark) {
-    final hasNarrative = sec.narrative != null && sec.narrative!.isNotEmpty;
-    final hasBullets = sec.bullets.isNotEmpty;
-    final isGeneral = sec.title.toLowerCase().contains('general');
-
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 9),
@@ -1227,24 +893,18 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
         border: Border.all(
           color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.02),
-            blurRadius: 4,
-            offset: const Offset(0, 1),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Section header banner (Compact)
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
             decoration: BoxDecoration(
               color: sec.accentColor.withValues(alpha: isDark ? 0.12 : 0.07),
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(9)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(9),
+              ),
               border: Border(
                 bottom: BorderSide(
                   color: sec.accentColor.withValues(alpha: 0.18),
@@ -1255,151 +915,28 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
               children: [
                 Icon(sec.icon, color: sec.accentColor, size: 15),
                 const SizedBox(width: 8),
-                Expanded(
-                  child: Row(
-                    children: [
-                      Flexible(
-                        child: Text(
-                          sec.title,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.3,
-                            color: isDark ? Colors.white : const Color(0xFF0F172A),
-                          ),
-                        ),
-                      ),
-                      if (isGeneral) ...[
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 1.5),
-                          decoration: BoxDecoration(
-                            color: (isDark ? Colors.white : Colors.black)
-                                .withValues(alpha: 0.08),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            'View Only',
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                              color: DashboardDesign.mutedText(context),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
+                Text(
+                  sec.title,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? Colors.white : const Color(0xFF0F172A),
                   ),
                 ),
-                if (hasBullets) ...[
-                  const SizedBox(width: 4),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
-                    decoration: BoxDecoration(
-                      color: sec.accentColor.withValues(alpha: 0.16),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      '${sec.bullets.length}',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: sec.accentColor,
-                      ),
-                    ),
-                  ),
-                ],
               ],
             ),
           ),
-
-          // Narrative callout block (formal statement with vertical accent bar)
-          if (hasNarrative)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(14, 10, 14, 8),
-              child: Container(
-                padding:
-                    const EdgeInsets.only(left: 12, top: 2, bottom: 2, right: 6),
-                decoration: BoxDecoration(
-                  border: Border(
-                    left: BorderSide(
-                      color: isDark
-                          ? const Color(0xFF94A3B8)
-                          : const Color(0xFF475569),
-                      width: 3.5,
-                    ),
-                  ),
-                ),
-                child: Text(
-                  sec.narrative!,
-                  style: TextStyle(
-                    fontSize: 13,
-                    height: 1.52,
-                    color: isDark
-                        ? const Color(0xFFE2E8F0)
-                        : const Color(0xFF1E293B),
-                  ),
-                ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+            child: SelectableText(
+              sec.narrative,
+              style: TextStyle(
+                fontSize: 13,
+                height: 1.52,
+                color: isDark
+                    ? const Color(0xFFE2E8F0)
+                    : const Color(0xFF1E293B),
               ),
-            ),
-
-          // Bullet items (Compact & high density)
-          if (hasBullets)
-            Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: Column(
-              children: sec.bullets.asMap().entries.map((entry) {
-                final idx = entry.key;
-                final bullet = entry.value;
-                final isLast = idx == sec.bullets.length - 1;
-
-                return Padding(
-                  padding: EdgeInsets.only(bottom: isLast ? 0 : 7),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        width: 5,
-                        height: 5,
-                        margin: const EdgeInsets.only(top: 6, right: 8),
-                        decoration: BoxDecoration(
-                          color: sec.accentColor,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      Expanded(
-                        child: RichText(
-                          text: TextSpan(
-                            style: TextStyle(
-                              fontSize: 12.5,
-                              height: 1.38,
-                              color: isDark
-                                  ? const Color(0xFFCBD5E1)
-                                  : const Color(0xFF334155),
-                            ),
-                            children: [
-                              if (bullet.prefix != null) ...[
-                                TextSpan(
-                                  text: '${bullet.prefix}: ',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    color: isDark
-                                        ? Colors.white
-                                        : const Color(0xFF0F172A),
-                                  ),
-                                ),
-                              ],
-                              TextSpan(text: bullet.body),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }).toList(),
             ),
           ),
         ],
@@ -1431,7 +968,9 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
               color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                color: isDark
+                    ? const Color(0xFF334155)
+                    : const Color(0xFFE2E8F0),
               ),
             ),
             child: SelectableText(
@@ -1455,11 +994,7 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
-        border: Border(
-          top: BorderSide(
-            color: DashboardDesign.border(context),
-          ),
-        ),
+        border: Border(top: BorderSide(color: DashboardDesign.border(context))),
       ),
       child: SafeArea(
         top: false,
@@ -1495,7 +1030,9 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
                       foregroundColor: DashboardDesign.primary,
                       side: const BorderSide(color: DashboardDesign.primary),
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 5),
+                        horizontal: 8,
+                        vertical: 5,
+                      ),
                       visualDensity: VisualDensity.compact,
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       shape: RoundedRectangleBorder(
@@ -1516,7 +1053,9 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
                     backgroundColor: DashboardDesign.primary,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 5),
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
                     visualDensity: VisualDensity.compact,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     shape: RoundedRectangleBorder(
@@ -1537,36 +1076,13 @@ class _AnalysisSection {
   final String title;
   final IconData icon;
   final Color accentColor;
-  final List<_AnalysisBullet> bullets;
-  final String? narrative;
+  final String narrative;
 
   const _AnalysisSection({
     required this.title,
     required this.icon,
     required this.accentColor,
-    required this.bullets,
-    this.narrative,
-  });
-}
-
-class _AnalysisBullet {
-  final String? prefix;
-  final String body;
-
-  const _AnalysisBullet({this.prefix, required this.body});
-}
-
-class _SectionConfig {
-  final String cleanTitle;
-  final IconData icon;
-  final Color color;
-  final bool isCallout;
-
-  const _SectionConfig({
-    required this.cleanTitle,
-    required this.icon,
-    required this.color,
-    this.isCallout = false,
+    required this.narrative,
   });
 }
 

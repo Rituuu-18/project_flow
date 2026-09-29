@@ -43,8 +43,8 @@ const Map<String, List<double>> drlSubStepWeights = {
   // Step 3 – Preliminary Design (15 substeps, 10 scoreable)
   'Preliminary Design': [
     1.20, // 1. Define PDR objectives and criteria
-    1.20, // 2. Perform engineering calculations from allocated requirements
-    1.20, // 3. Define systems, subsystems, and interfaces
+    1.20, // 2. Define systems, subsystems, and interfaces
+    1.20, // 3. Perform engineering calculations from allocated requirements
     1.20, // 4. Select and justify candidate standard components
     0.00, // 5. Prepare design baseline and documentation
     1.20, // 6. Verify requirements allocation and traceability

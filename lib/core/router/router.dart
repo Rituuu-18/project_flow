@@ -85,8 +85,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) {
           final id = state.pathParameters['id']!;
           final reviewId = state.uri.queryParameters['reviewId'] ?? '';
-          final projectName =
-              state.uri.queryParameters['projectName'] ?? 'Project';
+          final projectName = state.uri.queryParameters['projectName'] ?? '';
           final stageName = state.uri.queryParameters['stageName'] ?? 'Stage';
           final subStepName =
               state.uri.queryParameters['subStepName'] ?? 'Workspace';

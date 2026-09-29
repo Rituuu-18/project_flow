@@ -65,8 +65,8 @@ void main() {
       expect(stages[2].name, 'Preliminary Design');
       expect(stages[2].subSteps, hasLength(15));
       expect(stages[2].subSteps.skip(1).take(3).map((item) => item.name), [
-        'Perform engineering calculations from allocated requirements',
         'Define systems, subsystems, and interfaces',
+        'Perform engineering calculations from allocated requirements',
         'Select and justify candidate standard components',
       ]);
       expect(stages[3].name, 'Detailed Design');

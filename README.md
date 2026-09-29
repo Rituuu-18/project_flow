@@ -112,18 +112,10 @@ Supabase PostgreSQL & Storage Buckets (Protected by Row Level Security)
 - **Activity Log**: Timestamped audit trail tracking status transitions, assignees, and uploaded files.
 
 ### 4. On-Demand AI Engineering Analysis
-- **Explicit Trigger**: Opening the AI Analysis modal does not invoke external APIs automatically. An explicit **"Analyze with AI"** trigger prevents accidental token usage.
-- **Pre-Analysis Context Verification**: Explicitly presents the evaluation context before running the analysis:
-  - **Project Name** with fallback logic.
-  - **Description & Scope** cascading across: Item Description → Problem Statement → Default Stage Guidelines → Standard Verification Criteria.
-  - **Metadata Badges**: Stage name, checklist item, discipline, priority (with dynamic color indicators), and assignee.
-- **Multi-Tier Model Resilience**:
-  - Primary model: `llama-3.3-70b-versatile` (deep technical evaluation).
-  - Automatic fallback: `llama-3.1-8b-instant` (triggered if rate-limited on HTTP 429 or service unavailable on HTTP 503).
-- **Dual Presentation Modes**:
-  - **Formatted Cards**: Compact sections highlighting `KEY CHECKS`, `KEY RISKS`, `NEXT ACTIONS`, and `EVIDENCE REQUIREMENTS`.
-  - **Notes Preview**: Pre-formatted Markdown ready for immediate insertion.
-- **Workspace Integration**: One-click actions to either overwrite or append AI findings directly into the workspace notes editor.
+- **Request Context**: Uses the checklist item, the review name shown as the project name, and the checklist description. Missing context produces an error rather than a generic substitute.
+- **Engineering Output**: Requests one concise engineering-focused statement without invented measurements or standards. Older two-section responses display only their engineering section.
+- **Interaction**: Opening the inline AI panel starts analysis; Regenerate requests another response. The statement can be previewed, copied, or inserted into workspace notes.
+- **Model Selection**: Uses `openai/gpt-oss-120b` first, with configured fallback models when a candidate is unavailable.
 
 ### 5. Design Readiness Level (DRL) Engine (`/project/:id/drl`)
 - **Mathematical Model**: Allocates 100.00% total weight across all 10 engineering lifecycle stages.
