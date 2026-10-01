@@ -863,6 +863,12 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
                   icon: const Icon(Icons.paste_rounded, size: 16),
                   label: Text(t('ai_paste_summary')),
                 ),
+                ElevatedButton.icon(
+                  key: const ValueKey('ai_paste_all_text'),
+                  onPressed: () => _applyToNotes(append: false),
+                  icon: const Icon(Icons.paste_rounded, size: 16),
+                  label: Text(t('ai_paste_full_report')),
+                ),
                 if (widget.existingNotes.trim().isNotEmpty)
                   TextButton.icon(
                     onPressed: () =>

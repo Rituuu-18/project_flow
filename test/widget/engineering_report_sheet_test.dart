@@ -123,7 +123,7 @@ void main() {
       find.text('Preview of engineering report ready for insertion:'),
       findsOneWidget,
     );
-    await tester.tap(find.widgetWithText(ElevatedButton, 'Paste full report'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Paste all text'));
     await tester.pumpAndSettle();
     final expected = EngineeringReport.fromResponse(
       jsonEncode(engineeringReportFixture),
@@ -138,6 +138,44 @@ void main() {
       ),
     );
   });
+
+  for (final width in [390.0, 1100.0]) {
+    testWidgets(
+      'top Paste all text includes the summary and all tables at $width',
+      (tester) async {
+        String? appliedText;
+        bool? wasAppended;
+        await pumpReport(
+          tester,
+          width: width,
+          onApply: (text, append) {
+            appliedText = text;
+            wasAppended = append;
+          },
+        );
+        final pasteAll = find.byKey(const ValueKey('ai_paste_all_text'));
+        await tester.ensureVisible(pasteAll);
+        await tester.tap(pasteAll);
+        await tester.pumpAndSettle();
+        expect(wasAppended, isFalse);
+        expect(
+          appliedText,
+          contains(engineeringReportFixture['summary'] as String),
+        );
+        expect(appliedText, contains('## Engineering-focused version'));
+        expect(appliedText, contains('## Required inputs'));
+        expect(appliedText, contains('## Calculation sequence'));
+        expect(appliedText, contains('## Traceability and acceptance'));
+        expect(
+          appliedText,
+          contains(
+            '| Check | Preliminary calculation | Result or design decision |',
+          ),
+        );
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
 
   testWidgets('top copy action copies only the engineering-focused summary', (
     tester,
