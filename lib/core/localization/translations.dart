@@ -202,6 +202,8 @@ const Map<String, Map<String, String>> translations = {
     'ai_append_summary': 'Append summary',
     'ai_copy_full_report': 'Copy full report',
     'ai_paste_full_report': 'Paste all text',
+    'notes_formatted_view': 'Formatted view',
+    'notes_edit_text': 'Edit text',
     'ai_append_full_report': 'Append full report',
     'ai_report_notes_preview':
         'Preview of engineering report ready for insertion:',
@@ -427,6 +429,8 @@ const Map<String, Map<String, String>> translations = {
     'ai_append_summary': 'Samenvatting toevoegen',
     'ai_copy_full_report': 'Volledig rapport kopiëren',
     'ai_paste_full_report': 'Alle tekst plakken',
+    'notes_formatted_view': 'Opgemaakte weergave',
+    'notes_edit_text': 'Tekst bewerken',
     'ai_append_full_report': 'Volledig rapport toevoegen',
     'ai_report_notes_preview':
         'Voorbeeld van het technische rapport om in te voegen:',
@@ -647,6 +651,8 @@ const Map<String, Map<String, String>> translations = {
     'ai_append_summary': 'Zusammenfassung anhängen',
     'ai_copy_full_report': 'Vollständigen Bericht kopieren',
     'ai_paste_full_report': 'Gesamten Text einfügen',
+    'notes_formatted_view': 'Formatierte Ansicht',
+    'notes_edit_text': 'Text bearbeiten',
     'ai_append_full_report': 'Vollständigen Bericht anhängen',
     'ai_report_notes_preview':
         'Vorschau des technischen Berichts zum Einfügen:',

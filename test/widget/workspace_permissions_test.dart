@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:engineering_werk/features/workspace/domain/entities/engineering_report.dart';
 import 'package:engineering_werk/features/reviews/domain/entities/design_review.dart';
 import 'package:engineering_werk/features/reviews/presentation/providers/design_review_provider.dart';
 import 'package:engineering_werk/features/workspace/domain/entities/workspace_data.dart';
@@ -9,6 +12,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+
+import '../fixtures/engineering_report_fixture.dart';
 
 class MockWorkspaceRepository extends Mock implements WorkspaceRepository {}
 
@@ -55,6 +60,37 @@ void main() {
     );
   }
 
+  testWidgets('pasted AI tables save and reopen as formatted Notes', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 1500);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    when(() => repository.saveWorkspace(any())).thenAnswer((invocation) async {
+      workspace = invocation.positionalArguments.first as WorkspaceData;
+    });
+    await tester.pumpWidget(createWidget());
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(InkWell, 'AI Analyze'));
+    await tester.pumpAndSettle();
+    final sheet = tester.widget<AIAnalysisSheet>(find.byType(AIAnalysisSheet));
+    final notes = EngineeringReport.fromResponse(
+      jsonEncode(engineeringReportFixture),
+    ).toNotesText();
+    sheet.onApplyNotes(notes, false);
+    await tester.pumpAndSettle();
+    expect(find.byType(Table), findsNWidgets(3));
+    expect(workspace.notes, notes);
+    expect(find.text('Engineering-focused version'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpWidget(createWidget());
+    await tester.pumpAndSettle();
+    expect(find.byType(Table), findsNWidgets(3));
+    expect(find.text('Calculation sequence'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets(
     'workspace hides stakeholders section and locks admin-owned item details',
     (tester) async {
@@ -67,10 +103,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Stakeholders'), findsNothing);
-      expect(
-        find.textContaining('No stakeholders yet'),
-        findsOneWidget,
-      );
+      expect(find.textContaining('No stakeholders yet'), findsOneWidget);
       expect(find.text('Managed by admin'), findsOneWidget);
       expect(find.byIcon(Icons.arrow_back_rounded), findsOneWidget);
       expect(find.text('Admin checklist item'), findsOneWidget);
@@ -117,8 +150,9 @@ void main() {
 
       // Inline AIAnalysisSheet is now rendered directly in the page with isInline: true
       expect(find.byType(AIAnalysisSheet), findsOneWidget);
-      final inlineSheet =
-          tester.widget<AIAnalysisSheet>(find.byType(AIAnalysisSheet));
+      final inlineSheet = tester.widget<AIAnalysisSheet>(
+        find.byType(AIAnalysisSheet),
+      );
       expect(inlineSheet.isInline, isTrue);
       expect(inlineSheet.projectName, 'Pump Housing');
       expect(inlineSheet.checklistItem, isNotEmpty);

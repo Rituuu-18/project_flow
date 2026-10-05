@@ -15,6 +15,7 @@ import 'package:engineering_werk/core/localization/locale_provider.dart';
 import 'package:engineering_werk/features/workspace/presentation/providers/workspace_provider.dart';
 import 'package:engineering_werk/features/reviews/presentation/providers/design_review_provider.dart';
 import '../widgets/ai_analysis_sheet.dart';
+import '../widgets/workspace_notes_editor.dart';
 
 class WorkspaceScreen extends ConsumerStatefulWidget {
   final String workspaceId;
@@ -51,6 +52,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
   final GlobalKey _aiPanelKey = GlobalKey();
   bool _isAIOpen = false;
   String? _cachedAIAnalysis;
+  int _notesFormattedRevision = 0;
 
   @override
   void initState() {
@@ -452,6 +454,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
           } else {
             _notesController.text = analysisText;
           }
+          _notesFormattedRevision++;
           _isAIOpen = false;
         });
         _enqueueSave(silent: true);
@@ -584,10 +587,9 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                 : const SizedBox.shrink(),
           ),
           const SizedBox(height: 8),
-          TextField(
+          WorkspaceNotesEditor(
             controller: _notesController,
-            maxLines: 4,
-            style: TextStyle(color: DashboardDesign.text(context)),
+            formattedRevision: _notesFormattedRevision,
             decoration: _boxDecoration(context, t('enter_notes')),
           ),
           const SizedBox(height: 10),

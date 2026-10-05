@@ -7,7 +7,9 @@ import '../../../../core/utils/app_messenger.dart';
 import '../../../../services/groq_service.dart';
 import '../../../dashboard/presentation/theme/dashboard_design.dart';
 import '../../domain/entities/engineering_report.dart';
+import '../../domain/entities/notes_document.dart';
 import 'engineering_report_view.dart';
+import 'notes_document_view.dart';
 
 class AIAnalysisSheet extends ConsumerStatefulWidget {
   final String projectName;
@@ -939,13 +941,9 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
                     : const Color(0xFFE2E8F0),
               ),
             ),
-            child: SelectableText(
-              formattedNotes,
-              style: TextStyle(
-                fontSize: 12.5,
-                height: 1.45,
-                color: isDark ? Colors.grey[200] : const Color(0xFF1E293B),
-              ),
+            child: NotesDocumentView(
+              document: NotesDocument.parse(formattedNotes),
+              horizontalScrollHint: t('ai_table_scroll_hint'),
             ),
           ),
         ],

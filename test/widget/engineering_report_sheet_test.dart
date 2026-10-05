@@ -123,6 +123,7 @@ void main() {
       find.text('Preview of engineering report ready for insertion:'),
       findsOneWidget,
     );
+    expect(find.byType(Table), findsNWidgets(3));
     await tester.tap(find.widgetWithText(ElevatedButton, 'Paste all text'));
     await tester.pumpAndSettle();
     final expected = EngineeringReport.fromResponse(
