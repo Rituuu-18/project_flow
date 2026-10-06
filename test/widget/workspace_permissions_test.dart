@@ -82,7 +82,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(Table), findsNWidgets(3));
     expect(workspace.notes, notes);
-    expect(find.text('Engineering-focused version'), findsOneWidget);
+    expect(find.text('Woodchipper rotor calculations'), findsOneWidget);
+    expect(find.text('Engineering-focused version'), findsNothing);
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pumpWidget(createWidget());
     await tester.pumpAndSettle();

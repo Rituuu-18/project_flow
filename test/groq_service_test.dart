@@ -190,6 +190,8 @@ Verify mounting loads and bolt selection for the pump housing.
         final payload = jsonDecode(request.body) as Map<String, dynamic>;
         final messages = payload['messages'] as List;
         expect(messages[0]['content'], contains('Calculation sequence'));
+        expect(messages[0]['content'], isNot(contains('"summary":')));
+        expect(messages[0]['content'], contains('Do not add a summary'));
         expect(
           messages[1]['content'],
           contains('Project name: Woodchipper rotor'),

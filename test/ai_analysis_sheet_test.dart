@@ -165,7 +165,8 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      expect(find.text('Engineering-focused version'), findsOneWidget);
+      expect(find.text('Engineering report'), findsOneWidget);
+      expect(find.text('Engineering-focused version'), findsNothing);
       expect(find.text('General problem statement'), findsNothing);
       expect(find.textContaining('maintenance technician'), findsNothing);
     },

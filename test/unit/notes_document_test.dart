@@ -7,7 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import '../fixtures/engineering_report_fixture.dart';
 
 void main() {
-  test('AI report notes render every column, row, heading, and summary', () {
+  test('AI report notes render every column, row, and heading', () {
     final report = EngineeringReport.fromResponse(
       jsonEncode(engineeringReportFixture),
     );
@@ -20,18 +20,17 @@ void main() {
     }
     expect(
       document.blocks.whereType<NotesHeading>().map((block) => block.text),
-      contains('Engineering-focused version'),
+      [
+        'Woodchipper rotor calculations',
+        ...report.sections.map((section) => section.heading),
+      ],
     );
-    expect(
-      document.blocks.whereType<NotesParagraph>().first.text,
-      report.summary,
-    );
+    expect(document.blocks.whereType<NotesParagraph>(), isEmpty);
   });
 
   test('escaped pipes and backslashes survive table serialization', () {
     const report = EngineeringReport(
       title: 'Report',
-      summary: 'Summary',
       sections: [
         EngineeringReportSection(
           heading: 'Inputs',
@@ -61,6 +60,26 @@ void main() {
     expect(
       document.blocks.whereType<NotesParagraph>().map((block) => block.text),
       contains('Follow-up'),
+    );
+  });
+
+  test('existing saved summary notes are preserved with their tables', () {
+    final report = EngineeringReport.fromResponse(
+      jsonEncode(engineeringReportFixture),
+    );
+    final savedNotes = report.toNotesText().replaceFirst(
+      '\n\n## Required inputs',
+      '\n\n## Engineering-focused version\n\nPreviously saved objective.\n\n## Required inputs',
+    );
+    final document = NotesDocument.parse(savedNotes);
+    expect(document.blocks.whereType<NotesTable>(), hasLength(3));
+    expect(
+      document.blocks.whereType<NotesHeading>().map((block) => block.text),
+      contains('Engineering-focused version'),
+    );
+    expect(
+      document.blocks.whereType<NotesParagraph>().single.text,
+      'Previously saved objective.',
     );
   });
 

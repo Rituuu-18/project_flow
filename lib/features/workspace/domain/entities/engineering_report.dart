@@ -3,14 +3,14 @@ import 'dart:convert';
 /// The same report is used for rendering, caching, and copying into notes.
 class EngineeringReport {
   final String title;
-  final String summary;
+  final String _legacyText;
   final List<EngineeringReportSection> sections;
 
   const EngineeringReport({
     required this.title,
-    required this.summary,
+    String legacyText = '',
     required this.sections,
-  });
+  }) : _legacyText = legacyText;
 
   bool get hasTables => sections.isNotEmpty;
 
@@ -34,7 +34,7 @@ class EngineeringReport {
         throw const FormatException('Expected an engineering report object.');
       }
       final title = _requiredText(decoded['title'], 180);
-      final summary = _requiredText(decoded['summary'], 2000);
+      // Older cached reports may include a summary; only retain the tables.
       final rawSections = decoded['sections'];
       if (rawSections is! List ||
           rawSections.length < 2 ||
@@ -50,11 +50,7 @@ class EngineeringReport {
             return EngineeringReportSection.fromJson(raw);
           })
           .toList(growable: false);
-      return EngineeringReport(
-        title: title,
-        summary: summary,
-        sections: sections,
-      );
+      return EngineeringReport(title: title, sections: sections);
     }
     if (requireTables) {
       throw const FormatException('The AI response did not contain tables.');
@@ -65,20 +61,19 @@ class EngineeringReport {
       throw const FormatException('No engineering content was returned.');
     }
     return EngineeringReport(
-      title: 'Engineering-focused version',
-      summary: legacyText,
+      title: 'Engineering report',
+      legacyText: legacyText,
       sections: const [],
     );
   }
 
   Map<String, dynamic> toJson() => {
     'title': title,
-    'summary': summary,
     'sections': sections.map((section) => section.toJson()).toList(),
   };
 
-  String toFocusedText() {
-    var text = summary.trim();
+  String _legacyNotesText() {
+    var text = _legacyText.trim();
     if (text.length >= 2 &&
         ((text.startsWith('"') && text.endsWith('"')) ||
             (text.startsWith("'") && text.endsWith("'")))) {
@@ -88,10 +83,8 @@ class EngineeringReport {
   }
 
   String toNotesText() {
-    if (!hasTables) return toFocusedText();
-    final output = StringBuffer(
-      '# $title\n\n## Engineering-focused version\n\n${toFocusedText()}',
-    );
+    if (!hasTables) return _legacyNotesText();
+    final output = StringBuffer('# $title');
     for (final section in sections) {
       output.write('\n\n## ${section.heading}\n\n');
       output.writeln(_markdownRow(section.columns));

@@ -18,9 +18,7 @@ void main() {
     final notes = report.toNotesText();
     expect(notes, startsWith('# Woodchipper rotor calculations'));
     expect(notes, contains('## Required inputs'));
-    expect(notes, contains('## Engineering-focused version'));
-    expect(report.toFocusedText(), engineeringReportFixture['summary']);
-    expect(report.toFocusedText(), isNot(contains('## Required inputs')));
+    expect(notes, isNot(contains('Engineering-focused version')));
     expect(notes, contains('## Calculation sequence'));
     expect(notes, contains('## Traceability and acceptance'));
     expect(
@@ -31,10 +29,26 @@ void main() {
     );
   });
 
+  test('older cached summaries are ignored without losing table content', () {
+    final report = EngineeringReport.fromResponse(
+      jsonEncode({
+        ...engineeringReportFixture,
+        'summary': 'Obsolete objective.',
+      }),
+      requireTables: true,
+    );
+    final current = EngineeringReport.fromResponse(
+      jsonEncode(engineeringReportFixture),
+      requireTables: true,
+    );
+    expect(report.toJson(), engineeringReportFixture);
+    expect(report.toNotesText(), current.toNotesText());
+    expect(report.toNotesText(), isNot(contains('Obsolete objective.')));
+  });
+
   test('table serialization escapes pipes and flattens cell line breaks', () {
     const report = EngineeringReport(
       title: 'Engineering review',
-      summary: 'Review allocated requirements.',
       sections: [
         EngineeringReportSection(
           heading: 'Inputs',

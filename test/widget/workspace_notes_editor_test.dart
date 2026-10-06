@@ -59,7 +59,8 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byType(Table), findsNWidgets(3));
       expect(find.text('Existing team note'), findsOneWidget);
-      expect(find.text('Engineering-focused version'), findsOneWidget);
+      expect(find.text('Woodchipper rotor calculations'), findsOneWidget);
+      expect(find.text('Engineering-focused version'), findsNothing);
       await tester.tap(find.text('Edit text'));
       await tester.pumpAndSettle();
       expect(find.byType(Table), findsNothing);

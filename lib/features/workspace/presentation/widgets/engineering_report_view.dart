@@ -8,15 +8,11 @@ import '../../../dashboard/presentation/theme/dashboard_design.dart';
 class EngineeringReportView extends StatelessWidget {
   final EngineeringReport report;
   final String horizontalScrollHint;
-  final String focusedHeading;
-  final Widget? summaryActions;
 
   const EngineeringReportView({
     super.key,
     required this.report,
     required this.horizontalScrollHint,
-    this.focusedHeading = 'Engineering-focused version',
-    this.summaryActions,
   });
 
   @override
@@ -25,41 +21,6 @@ class EngineeringReportView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (report.hasTables) ...[
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: DashboardDesign.isDark(context)
-                    ? const Color(0xFF1E293B)
-                    : const Color(0xFFF8FAFC),
-                border: Border.all(color: DashboardDesign.border(context)),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Semantics(
-                    header: true,
-                    child: Text(
-                      focusedHeading,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: DashboardDesign.text(context),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  _summary(context),
-                  if (summaryActions != null) ...[
-                    const SizedBox(height: 12),
-                    summaryActions!,
-                  ],
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-          ],
           Semantics(
             header: true,
             child: Text(
@@ -74,7 +35,7 @@ class EngineeringReportView extends StatelessWidget {
           ),
           if (!report.hasTables) ...[
             const SizedBox(height: 8),
-            _summary(context),
+            _legacyContent(context),
           ],
           for (final section in report.sections) ...[
             const SizedBox(height: 24),
@@ -100,8 +61,8 @@ class EngineeringReportView extends StatelessWidget {
     );
   }
 
-  Widget _summary(BuildContext context) => Text(
-    report.toFocusedText(),
+  Widget _legacyContent(BuildContext context) => Text(
+    report.toNotesText(),
     style: TextStyle(
       fontSize: 13,
       height: 1.55,

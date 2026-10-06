@@ -135,19 +135,15 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
 
   String _generateNotesFormattedText() => _report?.toNotesText() ?? '';
 
-  void _copyToClipboard({bool summaryOnly = false}) {
-    final text = summaryOnly
-        ? _report?.toFocusedText() ?? ''
-        : _generateNotesFormattedText();
+  void _copyToClipboard() {
+    final text = _generateNotesFormattedText();
     if (text.isEmpty) return;
     Clipboard.setData(ClipboardData(text: text));
     AppMessenger.info(t('ai_copied_clipboard'));
   }
 
-  void _applyToNotes({required bool append, bool summaryOnly = false}) {
-    final text = summaryOnly
-        ? _report?.toFocusedText() ?? ''
-        : _generateNotesFormattedText();
+  void _applyToNotes({required bool append}) {
+    final text = _generateNotesFormattedText();
     if (text.isEmpty) return;
     widget.onApplyNotes(text, append);
     if (widget.onClose != null) {
@@ -849,37 +845,6 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
           EngineeringReportView(
             report: _report!,
             horizontalScrollHint: t('ai_table_scroll_hint'),
-            focusedHeading: t('ai_engineering_focused_version'),
-            summaryActions: Wrap(
-              spacing: 8,
-              runSpacing: 6,
-              children: [
-                TextButton.icon(
-                  onPressed: () => _copyToClipboard(summaryOnly: true),
-                  icon: const Icon(Icons.copy_rounded, size: 16),
-                  label: Text(t('ai_copy_summary')),
-                ),
-                OutlinedButton.icon(
-                  onPressed: () =>
-                      _applyToNotes(append: false, summaryOnly: true),
-                  icon: const Icon(Icons.paste_rounded, size: 16),
-                  label: Text(t('ai_paste_summary')),
-                ),
-                ElevatedButton.icon(
-                  key: const ValueKey('ai_paste_all_text'),
-                  onPressed: () => _applyToNotes(append: false),
-                  icon: const Icon(Icons.paste_rounded, size: 16),
-                  label: Text(t('ai_paste_full_report')),
-                ),
-                if (widget.existingNotes.trim().isNotEmpty)
-                  TextButton.icon(
-                    onPressed: () =>
-                        _applyToNotes(append: true, summaryOnly: true),
-                    icon: const Icon(Icons.playlist_add_rounded, size: 16),
-                    label: Text(t('ai_append_summary')),
-                  ),
-              ],
-            ),
           ),
           const SizedBox(height: 6),
           // Footnote disclaimer
@@ -1005,6 +970,7 @@ class _AIAnalysisSheetState extends ConsumerState<AIAnalysisSheet> {
               ),
             );
             final pasteButton = ElevatedButton.icon(
+              key: const ValueKey('ai_paste_all_text'),
               onPressed: () => _applyToNotes(append: false),
               icon: const Icon(Icons.paste_rounded, size: 14),
               label: Text(

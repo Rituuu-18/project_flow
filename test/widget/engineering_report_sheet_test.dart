@@ -49,13 +49,10 @@ void main() {
     (tester) async {
       await pumpReport(tester);
       expect(find.text('Woodchipper rotor calculations'), findsOneWidget);
-      expect(find.text('Engineering-focused version'), findsOneWidget);
-      expect(
-        tester.getTopLeft(find.text('Engineering-focused version')).dy,
-        lessThan(
-          tester.getTopLeft(find.text('Woodchipper rotor calculations')).dy,
-        ),
-      );
+      expect(find.text('Engineering-focused version'), findsNothing);
+      expect(find.text('Copy summary'), findsNothing);
+      expect(find.text('Paste summary'), findsNothing);
+      expect(find.text('Append summary'), findsNothing);
       expect(find.text('Required inputs'), findsOneWidget);
       expect(find.text('Calculation sequence'), findsOneWidget);
       expect(find.text('Traceability and acceptance'), findsOneWidget);
@@ -94,55 +91,67 @@ void main() {
     });
   }
 
-  testWidgets('copy and notes preserve every report section and table column', (
-    tester,
-  ) async {
-    String? appliedText;
-    String? copiedText;
-    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
-      SystemChannels.platform,
-      (call) async {
-        if (call.method == 'Clipboard.setData') {
-          copiedText = (call.arguments as Map)['text'] as String;
-        }
-        return null;
-      },
-    );
-    addTearDown(
-      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+  testWidgets(
+    'old cached report copies and pastes every table without its obsolete summary',
+    (tester) async {
+      String? appliedText;
+      String? copiedText;
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
         SystemChannels.platform,
-        null,
-      ),
-    );
-    await pumpReport(tester, onApply: (text, _) => appliedText = text);
-    await tester.tap(find.byTooltip('Copy full report'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Notes'));
-    await tester.pumpAndSettle();
-    expect(
-      find.text('Preview of engineering report ready for insertion:'),
-      findsOneWidget,
-    );
-    expect(find.byType(Table), findsNWidgets(3));
-    await tester.tap(find.widgetWithText(ElevatedButton, 'Paste all text'));
-    await tester.pumpAndSettle();
-    final expected = EngineeringReport.fromResponse(
-      jsonEncode(engineeringReportFixture),
-    ).toNotesText();
-    expect(copiedText, expected);
-    expect(appliedText, expected);
-    expect(appliedText, contains('## Calculation sequence'));
-    expect(
-      appliedText,
-      contains(
-        '| Check | Preliminary calculation | Result or design decision |',
-      ),
-    );
-  });
+        (call) async {
+          if (call.method == 'Clipboard.setData') {
+            copiedText = (call.arguments as Map)['text'] as String;
+          }
+          return null;
+        },
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        ),
+      );
+      await pumpReport(
+        tester,
+        raw: jsonEncode({
+          ...engineeringReportFixture,
+          'summary': 'Obsolete objective.',
+        }),
+        onApply: (text, _) => appliedText = text,
+      );
+      expect(find.text('Obsolete objective.'), findsNothing);
+      await tester.tap(find.byTooltip('Copy full report'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Notes'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('Preview of engineering report ready for insertion:'),
+        findsOneWidget,
+      );
+      expect(find.byType(Table), findsNWidgets(3));
+      expect(find.text('Engineering-focused version'), findsNothing);
+      expect(find.text('Obsolete objective.'), findsNothing);
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Paste all text'));
+      await tester.pumpAndSettle();
+      final expected = EngineeringReport.fromResponse(
+        jsonEncode(engineeringReportFixture),
+      ).toNotesText();
+      expect(copiedText, expected);
+      expect(appliedText, expected);
+      expect(copiedText, isNot(contains('Obsolete objective.')));
+      expect(appliedText, contains('## Calculation sequence'));
+      expect(
+        appliedText,
+        contains(
+          '| Check | Preliminary calculation | Result or design decision |',
+        ),
+      );
+    },
+  );
 
   for (final width in [390.0, 1100.0]) {
     testWidgets(
-      'top Paste all text includes the summary and all tables at $width',
+      'Paste all text includes every table without a summary at $width',
       (tester) async {
         String? appliedText;
         bool? wasAppended;
@@ -159,11 +168,7 @@ void main() {
         await tester.tap(pasteAll);
         await tester.pumpAndSettle();
         expect(wasAppended, isFalse);
-        expect(
-          appliedText,
-          contains(engineeringReportFixture['summary'] as String),
-        );
-        expect(appliedText, contains('## Engineering-focused version'));
+        expect(appliedText, isNot(contains('Engineering-focused version')));
         expect(appliedText, contains('## Required inputs'));
         expect(appliedText, contains('## Calculation sequence'));
         expect(appliedText, contains('## Traceability and acceptance'));
@@ -178,34 +183,8 @@ void main() {
     );
   }
 
-  testWidgets('top copy action copies only the engineering-focused summary', (
-    tester,
-  ) async {
-    String? copiedText;
-    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
-      SystemChannels.platform,
-      (call) async {
-        if (call.method == 'Clipboard.setData') {
-          copiedText = (call.arguments as Map)['text'] as String;
-        }
-        return null;
-      },
-    );
-    addTearDown(
-      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
-        SystemChannels.platform,
-        null,
-      ),
-    );
-    await pumpReport(tester, width: 390);
-    await tester.tap(find.widgetWithText(TextButton, 'Copy summary'));
-    await tester.pumpAndSettle();
-    expect(copiedText, engineeringReportFixture['summary']);
-    expect(copiedText, isNot(contains('|')));
-  });
-
   for (final append in [false, true]) {
-    testWidgets('top summary action preserves the append flag: $append', (
+    testWidgets('full report action preserves the append flag: $append', (
       tester,
     ) async {
       String? appliedText;
@@ -219,13 +198,21 @@ void main() {
         },
       );
       await tester.ensureVisible(
-        find.text(append ? 'Append summary' : 'Paste summary'),
+        find.text(append ? 'Append full report' : 'Paste all text'),
       );
-      await tester.tap(find.text(append ? 'Append summary' : 'Paste summary'));
+      await tester.tap(
+        find.text(append ? 'Append full report' : 'Paste all text'),
+      );
       await tester.pumpAndSettle();
-      expect(appliedText, engineeringReportFixture['summary']);
+      expect(
+        appliedText,
+        EngineeringReport.fromResponse(
+          jsonEncode(engineeringReportFixture),
+        ).toNotesText(),
+      );
       expect(appliedAppend, append);
-      expect(appliedText, isNot(contains('Required inputs')));
+      expect(appliedText, contains('Required inputs'));
+      expect(appliedText, isNot(contains('Engineering-focused version')));
       expect(tester.takeException(), isNull);
     });
   }
