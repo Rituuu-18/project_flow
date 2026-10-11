@@ -8,11 +8,8 @@ import '../core/database/supabase_storage.dart';
 import '../features/reviews/domain/entities/design_review.dart';
 import '../features/reviews/domain/entities/stage.dart';
 import '../features/reviews/domain/entities/sub_step.dart';
-import '../features/reviews/domain/entities/stakeholder.dart';
-import '../features/reviews/domain/utils/default_stages.dart';
 import '../features/reviews/domain/utils/drl_weights.dart';
 import '../features/workspace/domain/entities/workspace_data.dart';
-import '../core/utils/enums.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart' show debugPrint;
@@ -20,6 +17,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../features/reviews/domain/repositories/design_review_repository.dart';
 import '../features/workspace/domain/repositories/workspace_repository.dart';
 import 'project_pdf_data.dart';
+import 'pdf_workspace_section.dart';
 
 class PdfReportService {
   static Future<ProjectPdfData> loadFreshProjectPdfData(
@@ -1054,8 +1052,8 @@ class PdfReportService {
         orElse: () => WorkspaceData(id: subStepEntity.workspaceId, checklistItem: name),
       );
 
-      widgets.add(
-        _buildSubStepCard(
+      widgets.addAll(
+        PdfWorkspaceSection.build(
           subStepNumber: i + 1,
           subStepName: name,
           wsData: wsData,
@@ -1113,8 +1111,8 @@ class PdfReportService {
         orElse: () => WorkspaceData(id: subStepEntity.workspaceId, checklistItem: name),
       );
 
-      widgets.add(
-        _buildSubStepCard(
+      widgets.addAll(
+        PdfWorkspaceSection.build(
           subStepNumber: i + 1,
           subStepName: name,
           wsData: wsData,
@@ -1172,8 +1170,8 @@ class PdfReportService {
         orElse: () => WorkspaceData(id: subStepEntity.workspaceId, checklistItem: name),
       );
 
-      widgets.add(
-        _buildSubStepCard(
+      widgets.addAll(
+        PdfWorkspaceSection.build(
           subStepNumber: i + 1,
           subStepName: name,
           wsData: wsData,
@@ -1231,8 +1229,8 @@ class PdfReportService {
         orElse: () => WorkspaceData(id: subStepEntity.workspaceId, checklistItem: name),
       );
 
-      widgets.add(
-        _buildSubStepCard(
+      widgets.addAll(
+        PdfWorkspaceSection.build(
           subStepNumber: i + 1,
           subStepName: name,
           wsData: wsData,
@@ -1290,8 +1288,8 @@ class PdfReportService {
         orElse: () => WorkspaceData(id: subStepEntity.workspaceId, checklistItem: name),
       );
 
-      widgets.add(
-        _buildSubStepCard(
+      widgets.addAll(
+        PdfWorkspaceSection.build(
           subStepNumber: i + 1,
           subStepName: name,
           wsData: wsData,
@@ -1346,8 +1344,8 @@ class PdfReportService {
         orElse: () => WorkspaceData(id: subStepEntity.workspaceId, checklistItem: name),
       );
 
-      widgets.add(
-        _buildSubStepCard(
+      widgets.addAll(
+        PdfWorkspaceSection.build(
           subStepNumber: i + 1,
           subStepName: name,
           wsData: wsData,
@@ -1405,8 +1403,8 @@ class PdfReportService {
         orElse: () => WorkspaceData(id: subStepEntity.workspaceId, checklistItem: name),
       );
 
-      widgets.add(
-        _buildSubStepCard(
+      widgets.addAll(
+        PdfWorkspaceSection.build(
           subStepNumber: i + 1,
           subStepName: name,
           wsData: wsData,
@@ -1461,8 +1459,8 @@ class PdfReportService {
         orElse: () => WorkspaceData(id: subStepEntity.workspaceId, checklistItem: name),
       );
 
-      widgets.add(
-        _buildSubStepCard(
+      widgets.addAll(
+        PdfWorkspaceSection.build(
           subStepNumber: i + 1,
           subStepName: name,
           wsData: wsData,
@@ -1517,8 +1515,8 @@ class PdfReportService {
         orElse: () => WorkspaceData(id: subStepEntity.workspaceId, checklistItem: name),
       );
 
-      widgets.add(
-        _buildSubStepCard(
+      widgets.addAll(
+        PdfWorkspaceSection.build(
           subStepNumber: i + 1,
           subStepName: name,
           wsData: wsData,
@@ -1573,8 +1571,8 @@ class PdfReportService {
         orElse: () => WorkspaceData(id: subStepEntity.workspaceId, checklistItem: name),
       );
 
-      widgets.add(
-        _buildSubStepCard(
+      widgets.addAll(
+        PdfWorkspaceSection.build(
           subStepNumber: i + 1,
           subStepName: name,
           wsData: wsData,
@@ -1592,490 +1590,4 @@ class PdfReportService {
     return widgets;
   }
 
-  static pw.Widget _buildSubStepCard({
-    required int subStepNumber,
-    required String subStepName,
-    required WorkspaceData wsData,
-    required Map<String, Uint8List> workspaceImages,
-    required Map<String, String> workspaceAttachmentUrls,
-    required List<Stakeholder> projectStakeholders,
-  }) {
-    return pw.Container(
-      decoration: pw.BoxDecoration(
-        color: PdfColor.fromHex('#FFFFFF'),
-        border: pw.Border.all(
-          color: PdfColor.fromHex('#E2E8F0'),
-          width: 1,
-        ),
-        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(8)),
-      ),
-      child: pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          // Substep Header Bar
-          pw.Container(
-            width: double.infinity,
-            padding: const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: pw.BoxDecoration(
-              color: PdfColor.fromHex('#F1F5F9'),
-              borderRadius: const pw.BorderRadius.only(
-                topLeft: pw.Radius.circular(7),
-                topRight: pw.Radius.circular(7),
-              ),
-            ),
-            child: pw.Text(
-              '$subStepNumber. $subStepName',
-              style: pw.TextStyle(
-                fontSize: 11,
-                fontWeight: pw.FontWeight.bold,
-                color: PdfColor.fromHex('#0F172A'),
-              ),
-            ),
-          ),
-          pw.Padding(
-            padding: const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
-              children: [
-                _buildFieldDescription(subStepName, wsData),
-                pw.SizedBox(height: 7),
-                _buildFieldNotes(wsData),
-                pw.SizedBox(height: 7),
-                _buildFieldEvidence(wsData, workspaceImages, workspaceAttachmentUrls),
-                pw.SizedBox(height: 7),
-                _buildFieldActionDescription(wsData),
-                pw.SizedBox(height: 7),
-                _buildFieldResponsiblePerson(subStepName, wsData, projectStakeholders),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  static pw.Widget _buildFieldHeader(String title) {
-    return pw.Text(
-      title,
-      style: pw.TextStyle(
-        fontSize: 10,
-        fontWeight: pw.FontWeight.bold,
-        color: PdfColor.fromHex('#005CFF'),
-      ),
-    );
-  }
-
-  // a. Description
-  static pw.Widget _buildFieldDescription(String subStepName, WorkspaceData wsData) {
-    String desc = wsData.itemDescription.trim();
-    if (desc.isEmpty) {
-      for (final stageContent in defaultStageContent.values) {
-        final defaultInfo = stageContent.subSteps[subStepName];
-        if (defaultInfo != null) {
-          desc = defaultInfo.description.trim();
-          break;
-        }
-      }
-    }
-    final isNone = desc.isEmpty;
-    final textContent = isNone ? 'No description provided.' : desc;
-
-    return pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
-      children: [
-        _buildFieldHeader('a. Description'),
-        pw.SizedBox(height: 4),
-        pw.Text(
-          textContent,
-          style: pw.TextStyle(
-            fontSize: 9.5,
-            color: isNone ? PdfColor.fromHex('#64748B') : PdfColor.fromHex('#334155'),
-            fontStyle: isNone ? pw.FontStyle.italic : pw.FontStyle.normal,
-            height: 1.3,
-          ),
-        ),
-      ],
-    );
-  }
-
-  // b. Notes
-  static pw.Widget _buildFieldNotes(WorkspaceData wsData) {
-    final noteItems = <pw.Widget>[];
-
-    if (wsData.notes.trim().isNotEmpty) {
-      noteItems.add(
-        pw.Text(
-          wsData.notes.trim(),
-          style: pw.TextStyle(
-            fontSize: 9.5,
-            color: PdfColor.fromHex('#334155'),
-            height: 1.3,
-          ),
-        ),
-      );
-    }
-
-    if (wsData.engineeringComments.trim().isNotEmpty) {
-      if (noteItems.isNotEmpty) noteItems.add(pw.SizedBox(height: 4));
-      noteItems.add(
-        pw.Text(
-          'Engineering Comments: ${wsData.engineeringComments.trim()}',
-          style: pw.TextStyle(
-            fontSize: 9.5,
-            color: PdfColor.fromHex('#334155'),
-            height: 1.3,
-          ),
-        ),
-      );
-    }
-
-    for (final comment in wsData.comments) {
-      if (noteItems.isNotEmpty) noteItems.add(pw.SizedBox(height: 4));
-      final authorStr = comment.author.trim().isEmpty ? 'Author' : comment.author.trim();
-      final dateStr = DateFormat('dd MMM yyyy HH:mm').format(comment.createdAt);
-      noteItems.add(
-        pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.start,
-          children: [
-            pw.Text(
-              comment.content.trim(),
-              style: pw.TextStyle(
-                fontSize: 9.5,
-                color: PdfColor.fromHex('#334155'),
-                height: 1.3,
-              ),
-            ),
-            pw.SizedBox(height: 2),
-            pw.Text(
-              '- $authorStr on $dateStr',
-              style: pw.TextStyle(
-                fontSize: 8.5,
-                color: PdfColor.fromHex('#64748B'),
-                fontStyle: pw.FontStyle.italic,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
-      children: [
-        _buildFieldHeader('b. Notes'),
-        pw.SizedBox(height: 4),
-        if (noteItems.isEmpty)
-          pw.Text(
-            'No notes available.',
-            style: pw.TextStyle(
-              fontSize: 9.5,
-              color: PdfColor.fromHex('#64748B'),
-              fontStyle: pw.FontStyle.italic,
-            ),
-          )
-        else
-          pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: noteItems,
-          ),
-      ],
-    );
-  }
-
-  // c. Evidence
-  static pw.Widget _buildFieldEvidence(
-    WorkspaceData wsData,
-    Map<String, Uint8List> workspaceImages,
-    Map<String, String> workspaceAttachmentUrls,
-  ) {
-    final allEvidenceRefs = {
-      ...wsData.attachments,
-      ...wsData.images,
-      ...wsData.documents,
-    }.toList();
-
-    if (allEvidenceRefs.isEmpty) {
-      return pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          _buildFieldHeader('c. Evidence'),
-          pw.SizedBox(height: 4),
-          pw.Text(
-            'No evidence uploaded.',
-            style: pw.TextStyle(
-              fontSize: 9.5,
-              color: PdfColor.fromHex('#64748B'),
-              fontStyle: pw.FontStyle.italic,
-            ),
-          ),
-        ],
-      );
-    }
-
-    final items = <pw.Widget>[];
-
-    for (final ref in allEvidenceRefs) {
-      final fileName = SupabaseStorage.attachmentDisplayName(ref);
-      final bytes = workspaceImages[ref];
-      final lower = ref.toLowerCase();
-      final isImageFile = lower.endsWith('.png') ||
-          lower.endsWith('.jpg') ||
-          lower.endsWith('.jpeg') ||
-          lower.endsWith('.webp') ||
-          lower.endsWith('.gif');
-      final rawUrl = workspaceAttachmentUrls[ref];
-      final url = (rawUrl != null &&
-              (rawUrl.startsWith('http://') || rawUrl.startsWith('https://')))
-          ? rawUrl
-          : null;
-
-      if (bytes != null && bytes.isNotEmpty && isImageFile) {
-        final widget = pw.Container(
-          margin: const pw.EdgeInsets.symmetric(vertical: 4),
-          padding: const pw.EdgeInsets.all(6),
-          decoration: pw.BoxDecoration(
-            color: PdfColor.fromHex('#F8FAFC'),
-            border: pw.Border.all(color: PdfColor.fromHex('#E2E8F0')),
-            borderRadius: const pw.BorderRadius.all(pw.Radius.circular(6)),
-          ),
-          child: pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Center(
-                child: pw.Image(
-                  pw.MemoryImage(bytes),
-                  height: 95,
-                  fit: pw.BoxFit.contain,
-                ),
-              ),
-              pw.SizedBox(height: 4),
-              pw.Text(
-                'Image: $fileName',
-                style: pw.TextStyle(
-                  fontSize: 8.5,
-                  color: url != null
-                      ? PdfColor.fromHex('#2563EB')
-                      : PdfColor.fromHex('#475569'),
-                  decoration: url != null
-                      ? pw.TextDecoration.underline
-                      : pw.TextDecoration.none,
-                  fontWeight: pw.FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-        );
-
-        items.add(
-          url != null ? pw.UrlLink(destination: url, child: widget) : widget,
-        );
-      } else {
-        final typeLabel = _getFileTypeLabel(fileName);
-
-        final widget = pw.Container(
-          margin: const pw.EdgeInsets.only(top: 3, bottom: 3),
-          padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          decoration: pw.BoxDecoration(
-            color: PdfColor.fromHex('#F8FAFC'),
-            border: pw.Border.all(color: PdfColor.fromHex('#E2E8F0')),
-            borderRadius: const pw.BorderRadius.all(pw.Radius.circular(6)),
-          ),
-          child: pw.Row(
-            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-            children: [
-              pw.Expanded(
-                child: pw.Text(
-                  fileName,
-                  style: pw.TextStyle(
-                    fontSize: 9,
-                    fontWeight: pw.FontWeight.bold,
-                    color: url != null
-                        ? PdfColor.fromHex('#2563EB')
-                        : PdfColor.fromHex('#0F172A'),
-                    decoration: url != null
-                        ? pw.TextDecoration.underline
-                        : pw.TextDecoration.none,
-                  ),
-                ),
-              ),
-              pw.SizedBox(width: 8),
-              pw.Text(
-                url != null ? typeLabel : 'File unavailable',
-                style: pw.TextStyle(
-                  fontSize: 8.5,
-                  color: url != null
-                      ? PdfColor.fromHex('#005CFF')
-                      : PdfColor.fromHex('#EF4444'),
-                  fontWeight: pw.FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-        );
-
-        items.add(
-          url != null ? pw.UrlLink(destination: url, child: widget) : widget,
-        );
-      }
-    }
-
-    return pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
-      children: [
-        _buildFieldHeader('c. Evidence'),
-        pw.SizedBox(height: 4),
-        pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.start,
-          children: items,
-        ),
-      ],
-    );
-  }
-
-  static String _getFileTypeLabel(String filename) {
-    final ext = filename.split('.').last.toLowerCase();
-    return switch (ext) {
-      'pdf' => 'PDF Document',
-      'dwg' || 'dxf' || 'step' || 'stp' || 'iges' || 'igs' || 'sldprt' => 'CAD File (.${ext.toUpperCase()})',
-      'doc' || 'docx' => 'Word Document',
-      'xls' || 'xlsx' || 'csv' => 'Excel Spreadsheet',
-      'ppt' || 'pptx' => 'Presentation',
-      'png' || 'jpg' || 'jpeg' || 'webp' || 'gif' => 'Image (${ext.toUpperCase()})',
-      _ => 'Document (.$ext)',
-    };
-  }
-
-  // d. Action Description
-  static pw.Widget _buildFieldActionDescription(WorkspaceData wsData) {
-    final actionText = wsData.actionDescription.trim();
-    if (actionText.isEmpty) {
-      return pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          _buildFieldHeader('d. Action Description'),
-          pw.SizedBox(height: 4),
-          pw.Text(
-            'No actions recorded.',
-            style: pw.TextStyle(
-              fontSize: 9.5,
-              color: PdfColor.fromHex('#64748B'),
-              fontStyle: pw.FontStyle.italic,
-            ),
-          ),
-        ],
-      );
-    }
-
-    final metaDetails = <String>[];
-    if (wsData.priority.trim().isNotEmpty) {
-      metaDetails.add('Priority: ${wsData.priority.trim()}');
-    }
-    if (wsData.assignee.trim().isNotEmpty) {
-      metaDetails.add('Assigned: ${wsData.assignee.trim()}');
-    }
-    if (wsData.dueDate != null) {
-      metaDetails.add('Due: ${DateFormat('dd MMM yyyy').format(wsData.dueDate!)}');
-    }
-    if (wsData.approvalStatus != ApprovalStatus.pending) {
-      metaDetails.add('Status: ${wsData.approvalStatus.name}');
-    }
-
-    return pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
-      children: [
-        _buildFieldHeader('d. Action Description'),
-        pw.SizedBox(height: 4),
-        pw.Text(
-          actionText,
-          style: pw.TextStyle(
-            fontSize: 9.5,
-            color: PdfColor.fromHex('#334155'),
-            height: 1.3,
-          ),
-        ),
-        if (metaDetails.isNotEmpty) ...[
-          pw.SizedBox(height: 3),
-          pw.Text(
-            metaDetails.join(' | '),
-            style: pw.TextStyle(
-              fontSize: 8.5,
-              color: PdfColor.fromHex('#64748B'),
-              fontWeight: pw.FontWeight.bold,
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-
-  // e. Responsible Person & Discipline
-  static pw.Widget _buildFieldResponsiblePerson(
-    String subStepName,
-    WorkspaceData wsData,
-    List<Stakeholder> projectStakeholders,
-  ) {
-    String person = wsData.assignee.trim();
-    String discipline = wsData.discipline.trim();
-
-    if (person.isEmpty) {
-      final defaultInfo = defaultStageContent['Requirements']?.subSteps[subStepName];
-      final targetDiscipline = discipline.isNotEmpty
-          ? discipline
-          : (defaultInfo?.discipline ?? '');
-
-      final matched = projectStakeholders.firstWhere(
-        (s) => s.role.trim().toLowerCase() == targetDiscipline.toLowerCase() && s.name.trim().isNotEmpty,
-        orElse: () => const Stakeholder(id: '', name: '', role: ''),
-      );
-
-      if (matched.name.trim().isNotEmpty) {
-        person = matched.name.trim();
-        discipline = matched.role.trim();
-      }
-    }
-
-    if (person.isEmpty) {
-      return pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          _buildFieldHeader('e. Responsible Person'),
-          pw.SizedBox(height: 4),
-          pw.Text(
-            'No responsible person assigned.',
-            style: pw.TextStyle(
-              fontSize: 9.5,
-              color: PdfColor.fromHex('#64748B'),
-              fontStyle: pw.FontStyle.italic,
-            ),
-          ),
-        ],
-      );
-    }
-
-    final finalDiscipline = discipline.isEmpty ? 'General Engineering' : discipline;
-
-    return pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
-      children: [
-        _buildFieldHeader('e. Responsible Person'),
-        pw.SizedBox(height: 4),
-        pw.Text(
-          'Responsible Person: $person',
-          style: pw.TextStyle(
-            fontSize: 9.5,
-            fontWeight: pw.FontWeight.bold,
-            color: PdfColor.fromHex('#0F172A'),
-          ),
-        ),
-        pw.SizedBox(height: 1),
-        pw.Text(
-          'Discipline: $finalDiscipline',
-          style: pw.TextStyle(
-            fontSize: 9.5,
-            color: PdfColor.fromHex('#475569'),
-          ),
-        ),
-      ],
-    );
-  }
 }
