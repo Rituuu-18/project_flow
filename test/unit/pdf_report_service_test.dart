@@ -8,11 +8,160 @@ import 'package:engineering_werk/features/reviews/domain/entities/stage.dart';
 import 'package:engineering_werk/features/reviews/domain/entities/sub_step.dart';
 import 'package:engineering_werk/features/workspace/domain/entities/workspace_data.dart';
 import 'package:engineering_werk/features/workspace/domain/entities/comment.dart';
+import 'package:engineering_werk/features/workspace/domain/entities/engineering_report.dart';
 import 'package:engineering_werk/services/pdf_report_service.dart';
 import 'package:engineering_werk/services/project_pdf_data.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../fixtures/engineering_report_fixture.dart';
+
 void main() {
+  group('PdfReportService formatted analysis', () {
+    final report = EngineeringReport.fromResponse(
+      jsonEncode(engineeringReportFixture),
+    );
+    final notes = report.toNotesText();
+
+    for (final field in ['notes', 'engineering comments', 'comment']) {
+      test(
+        'exports $field as headings and tables, without Markdown syntax',
+        () async {
+          final data = _paginationData(
+            WorkspaceData(
+              id: 'ws-long',
+              notes: field == 'notes' ? notes : '',
+              engineeringComments: field == 'engineering comments' ? notes : '',
+              comments: field == 'comment'
+                  ? [
+                      Comment(
+                        id: 'review-comment',
+                        author: 'Reviewer',
+                        content: notes,
+                        createdAt: DateTime(2026, 10, 12),
+                      ),
+                    ]
+                  : [],
+            ),
+          );
+          final bytes = await PdfReportService.generateReport(data);
+          final content = _pdfContent(bytes);
+          expect(content, contains(report.title));
+          for (final section in report.sections) {
+            expect(content, contains(section.heading));
+            for (final column in section.columns) {
+              expect(content, contains(column));
+            }
+            for (final row in section.rows) {
+              expect(content, contains(row.first));
+            }
+          }
+          expect(content, isNot(contains('|')));
+          expect(content, isNot(contains('---')));
+          expect(content, isNot(contains('##')));
+
+          final output = Platform.environment['PDF_TABLE_PREVIEW_OUTPUT'];
+          if (field == 'notes' && output != null) {
+            final sample = ProjectPdfData(
+              review: data.review.copyWith(name: 'Woodchipper rotor design'),
+              workspaces: data.workspaces,
+              logoBytes: await File('assets/ed-logo.png').readAsBytes(),
+              workspaceImages: data.workspaceImages,
+              workspaceAttachmentUrls: data.workspaceAttachmentUrls,
+            );
+            await File(
+              output,
+            ).writeAsBytes(await PdfReportService.generateReport(sample));
+          }
+        },
+      );
+    }
+
+    test('keeps every row and repeats table headers across pages', () async {
+      final rows = List.generate(
+        140,
+        (i) =>
+            '| CHECK${i}END | Verify the assembly and record the governing load case before release. | ACCEPT${i}END |',
+      );
+      final text =
+          '# Load case register\n\n## Design verification\n\n'
+          '| Check reference | Required evidence | Acceptance criterion |\n'
+          '| --- | --- | --- |\n${rows.join('\n')}';
+      final bytes = await PdfReportService.generateReport(
+        _paginationData(WorkspaceData(id: 'ws-long', notes: text)),
+      );
+      final content = _pdfContent(bytes);
+      for (var i = 0; i < rows.length; i++) {
+        expect(
+          content.contains('CHECK${i}END'),
+          isTrue,
+          reason: 'Missing row $i',
+        );
+        expect(
+          content.contains('ACCEPT${i}END'),
+          isTrue,
+          reason: 'Missing acceptance $i',
+        );
+      }
+      expect('Check reference'.allMatches(content).length, greaterThan(1));
+    });
+
+    test('exports a table spanning more than 20 pages', () async {
+      final rows = List.generate(
+        600,
+        (i) =>
+            '| REGISTER${i}END | Verify the governing load case, document the calculation assumptions, and record the supporting test evidence. | ACCEPT${i}END |',
+      );
+      final text =
+          '| Check reference | Required evidence | Acceptance criterion |\n'
+          '| --- | --- | --- |\n${rows.join('\n')}';
+      final bytes = await PdfReportService.generateReport(
+        _paginationData(WorkspaceData(id: 'ws-long', notes: text)),
+      );
+      final content = _pdfContent(bytes);
+      expect(content, contains('REGISTER599END'));
+      expect(content, contains('ACCEPT599END'));
+      expect('Check reference'.allMatches(content).length, greaterThan(20));
+    });
+
+    test('splits a cell taller than a page into continuation rows', () async {
+      final detail = List.generate(
+        800,
+        (i) => 'DETAIL${i}END confirm the load case.',
+      ).join(' ');
+      final text =
+          '| Check | Evidence | Decision |\n| --- | --- | --- |\n'
+          '| Tall cell | $detail | FINALDECISION |\n'
+          '| NEXTROW | Finish review | DONE |';
+      final bytes = await PdfReportService.generateReport(
+        _paginationData(WorkspaceData(id: 'ws-long', notes: text)),
+      );
+      final content = _pdfContent(bytes);
+      for (var i = 0; i < 800; i++) {
+        expect(
+          content.contains('DETAIL${i}END'),
+          isTrue,
+          reason: 'Missing detail $i',
+        );
+      }
+      expect(content, contains('FINALDECISION'));
+      expect(content, contains('NEXTROW'));
+    });
+
+    test('preserves malformed tables and escaped pipes', () async {
+      const text =
+          'Team observation\n\n'
+          '| Item | Value |\n| --- | --- |\n| Only one cell |\n\n'
+          '| Item | Value |\n| --- | --- |\n'
+          r'| Seal | Water \| dust; C:\\drawings\\seal |';
+      final bytes = await PdfReportService.generateReport(
+        _paginationData(const WorkspaceData(id: 'ws-long', notes: text)),
+      );
+      final content = _pdfContent(bytes);
+      expect(content, contains('Only one cell'));
+      expect(content, contains('Water | dust;'));
+      expect(content, contains('Team observation'));
+    });
+  });
   group('PdfReportService pagination', () {
     final longText = List.generate(
       350,

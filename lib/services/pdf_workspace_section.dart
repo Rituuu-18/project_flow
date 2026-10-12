@@ -10,6 +10,7 @@ import '../core/utils/enums.dart';
 import '../features/reviews/domain/entities/stakeholder.dart';
 import '../features/reviews/domain/utils/default_stages.dart';
 import '../features/workspace/domain/entities/workspace_data.dart';
+import 'pdf_notes_document.dart';
 
 /// Returns page-level blocks so a workspace never has to fit on one page.
 class PdfWorkspaceSection {
@@ -146,12 +147,12 @@ class PdfWorkspaceSection {
 
   static List<pw.Widget> _notes(WorkspaceData ws) {
     final items = <pw.Widget>[];
-    if (ws.notes.trim().isNotEmpty) items.addAll(_text(ws.notes));
+    if (ws.notes.trim().isNotEmpty) items.addAll(_formattedNotes(ws.notes));
     if (ws.engineeringComments.trim().isNotEmpty) {
       if (items.isNotEmpty) items.add(pw.SizedBox(height: 4));
-      items.addAll(
-        _text('Engineering Comments: ${ws.engineeringComments.trim()}'),
-      );
+      items.addAll(_text('Engineering Comments', bold: true));
+      items.add(pw.SizedBox(height: 4));
+      items.addAll(_formattedNotes(ws.engineeringComments));
     }
     for (final comment in ws.comments) {
       if (items.isNotEmpty) items.add(pw.SizedBox(height: 4));
@@ -159,7 +160,7 @@ class PdfWorkspaceSection {
           ? 'Author'
           : comment.author.trim();
       final date = DateFormat('dd MMM yyyy HH:mm').format(comment.createdAt);
-      items.addAll(_text(comment.content));
+      items.addAll(_formattedNotes(comment.content));
       items.add(pw.SizedBox(height: 2));
       items.addAll(_text('- $author on $date', muted: true, fontSize: 8.5));
     }
@@ -171,6 +172,9 @@ class PdfWorkspaceSection {
         ...items,
     ];
   }
+
+  static List<pw.Widget> _formattedNotes(String text) =>
+      PdfNotesDocument.build(text, paragraphBuilder: (text) => _text(text));
 
   static List<pw.Widget> _evidence(
     WorkspaceData ws,

@@ -121,6 +121,7 @@ class PdfReportService {
     final workspaces = pdfData.workspaces;
     final logoBytes = pdfData.logoBytes;
     final workspaceImages = pdfData.workspaceImages;
+    final contentPageLimit = _contentPageLimit(workspaces);
 
     final pdf = pw.Document(
       title: 'Design Review Project Report - ${review.name}',
@@ -203,6 +204,7 @@ class PdfReportService {
     // ==========================================
     pdf.addPage(
       pw.MultiPage(
+        maxPages: contentPageLimit,
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.symmetric(horizontal: 40, vertical: 34),
         header: (context) => _buildHeader(logoBytes),
@@ -227,6 +229,7 @@ class PdfReportService {
     // ==========================================
     pdf.addPage(
       pw.MultiPage(
+        maxPages: contentPageLimit,
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.symmetric(horizontal: 40, vertical: 34),
         header: (context) => _buildHeader(logoBytes),
@@ -251,6 +254,7 @@ class PdfReportService {
     // ==========================================
     pdf.addPage(
       pw.MultiPage(
+        maxPages: contentPageLimit,
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.symmetric(horizontal: 40, vertical: 34),
         header: (context) => _buildHeader(logoBytes),
@@ -275,6 +279,7 @@ class PdfReportService {
     // ==========================================
     pdf.addPage(
       pw.MultiPage(
+        maxPages: contentPageLimit,
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.symmetric(horizontal: 40, vertical: 34),
         header: (context) => _buildHeader(logoBytes),
@@ -299,6 +304,7 @@ class PdfReportService {
     // ==========================================
     pdf.addPage(
       pw.MultiPage(
+        maxPages: contentPageLimit,
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.symmetric(horizontal: 40, vertical: 34),
         header: (context) => _buildHeader(logoBytes),
@@ -323,6 +329,7 @@ class PdfReportService {
     // ==========================================
     pdf.addPage(
       pw.MultiPage(
+        maxPages: contentPageLimit,
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.symmetric(horizontal: 40, vertical: 34),
         header: (context) => _buildHeader(logoBytes),
@@ -347,6 +354,7 @@ class PdfReportService {
     // ==========================================
     pdf.addPage(
       pw.MultiPage(
+        maxPages: contentPageLimit,
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.symmetric(horizontal: 40, vertical: 34),
         header: (context) => _buildHeader(logoBytes),
@@ -371,6 +379,7 @@ class PdfReportService {
     // ==========================================
     pdf.addPage(
       pw.MultiPage(
+        maxPages: contentPageLimit,
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.symmetric(horizontal: 40, vertical: 34),
         header: (context) => _buildHeader(logoBytes),
@@ -395,6 +404,7 @@ class PdfReportService {
     // ==========================================
     pdf.addPage(
       pw.MultiPage(
+        maxPages: contentPageLimit,
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.symmetric(horizontal: 40, vertical: 34),
         header: (context) => _buildHeader(logoBytes),
@@ -419,6 +429,7 @@ class PdfReportService {
     // ==========================================
     pdf.addPage(
       pw.MultiPage(
+        maxPages: contentPageLimit,
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.symmetric(horizontal: 40, vertical: 34),
         header: (context) => _buildHeader(logoBytes),
@@ -439,6 +450,27 @@ class PdfReportService {
     );
 
     return pdf.save();
+  }
+
+  static int _contentPageLimit(List<WorkspaceData> workspaces) {
+    // MultiPage's debug guard counts consecutive pages for a single spanning
+    // widget. A valid long Table can exceed the default of 20. Retain a finite
+    // guard with conservative room for narrow columns and explicit newlines.
+    var estimatedPages = 20;
+    for (final workspace in workspaces) {
+      for (final text in [
+        workspace.itemDescription,
+        workspace.notes,
+        workspace.engineeringComments,
+        workspace.actionDescription,
+        ...workspace.comments.map((comment) => comment.content),
+      ]) {
+        estimatedPages +=
+            (text.length / 500).ceil() +
+            ('\n'.allMatches(text).length / 30).ceil();
+      }
+    }
+    return estimatedPages;
   }
 
   // ── Header on Every Page ──────────────────────────────────────────────────
